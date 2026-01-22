@@ -1,0 +1,589 @@
+import { format } from 'date-fns';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as rrulePkg from 'rrule';
+
+// Handle both ESM and CJS module formats
+const RRule = (rrulePkg as any).RRule ?? (rrulePkg as any).default?.RRule;
+
+import {
+  InfoIcon,
+  PauseIcon,
+  PlayIcon,
+  RepeatIcon,
+  Trash2Icon,
+} from '@/components/icons';
+import { MovePicker } from '@/components/ui/move-picker';
+import { RepeatPicker } from '@/components/ui/repeat-picker';
+import { TagPicker } from '@/components/ui/tag-picker';
+import { generateId } from '@/db/schema';
+import type {
+  AreaRecord,
+  ProjectRecord,
+  RepeatingRuleRecord,
+  TagRecord,
+} from '@/db/validation';
+import {
+  useAreas,
+  useDeleteRepeatingRule,
+  useProjects,
+  useTags,
+  useUpdateRepeatingRule,
+} from '@/lib/hooks/useData';
+import { useTaskEditorForm } from '@/lib/hooks/useTaskEditorForm';
+import { cn, parseLocalDate } from '@/lib/utils';
+import { ChecklistEditor, type ChecklistItem } from './ChecklistEditor';
+import { ItemDetailLayout } from './ItemDetailLayout';
+
+const TRANSITION_DURATION_MS = 250;
+
+function computeNextOccurrences(
+  rruleStr: string,
+  startDate: string,
+  count: number,
+): string[] {
+  try {
+    const start = new Date(`${startDate}T00:00:00Z`);
+    const rule = RRule.fromString(rruleStr);
+    const options = { ...rule.options, dtstart: start };
+    const ruleWithStart = new RRule(options);
+
+    const occurrences = ruleWithStart.all(
+      (_date: Date, i: number) => i < count,
+    );
+
+    return occurrences.map((d: Date) => {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    });
+  } catch {
+    return [];
+  }
+}
+
+interface TemplateCardProps {
+  template: RepeatingRuleRecord;
+  expanded: boolean;
+  selected: boolean;
+  onSelect: (templateId: string | null) => void;
+  onExpand: (templateId: string) => void;
+  onDelete?: (templateId: string) => void;
+  projects?: ProjectRecord[];
+  areas?: AreaRecord[];
+  allTags?: TagRecord[];
+  showNextDate?: boolean;
+}
+
+// Collapsed state - simple button row
+function TemplateRow({
+  template,
+  selected,
+  onSelect,
+  onExpand,
+  showNextDate,
+}: {
+  template: RepeatingRuleRecord;
+  selected: boolean;
+  onSelect: (templateId: string | null) => void;
+  onExpand: (templateId: string) => void;
+  showNextDate?: boolean;
+}) {
+  const selectedStyle = selected
+    ? { backgroundColor: 'var(--task-selected)' }
+    : undefined;
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        'flex items-center gap-2 py-2 px-4 rounded-md cursor-pointer hover:bg-secondary/50 transition-colors w-full text-left',
+        template.status === 'paused' && 'opacity-60',
+      )}
+      style={selectedStyle}
+      onClick={() => onSelect(template.id)}
+      onDoubleClick={() => onExpand(template.id)}
+    >
+      <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center text-muted-foreground">
+        <RepeatIcon className="w-4 h-4" />
+      </span>
+      <input
+        type="text"
+        value={template.title}
+        readOnly
+        tabIndex={-1}
+        className="flex-1 bg-transparent text-[15px] leading-tight outline-none border-0 p-0 cursor-inherit pointer-events-none truncate text-foreground"
+      />
+      {template.status === 'paused' && (
+        <span className="text-xs text-amber-600 font-medium">Paused</span>
+      )}
+      {showNextDate && (
+        <span className="text-xs text-muted-foreground">
+          {format(parseLocalDate(template.nextOccurrence), 'MMM d')}
+        </span>
+      )}
+    </button>
+  );
+}
+
+export function TemplateCard({
+  template,
+  expanded,
+  selected,
+  onSelect,
+  onExpand,
+  onDelete,
+  projects: propProjects,
+  areas: propAreas,
+  allTags: propTags,
+  showNextDate,
+}: TemplateCardProps) {
+  const updateRule = useUpdateRepeatingRule();
+  const deleteRule = useDeleteRepeatingRule();
+
+  // Parse checklist from JSON, ensuring each item has an id
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    if (!template.checklistTemplate) return [];
+    const parsed = JSON.parse(template.checklistTemplate) as Array<{
+      title: string;
+      id?: string;
+    }>;
+    return parsed.map((item, idx) => ({
+      id: item.id ?? generateId(),
+      title: item.title,
+      completed: false,
+      position: idx + 1,
+    }));
+  });
+  const [showInfo, setShowInfo] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const lastTemplateIdRef = useRef(template.id);
+
+  const projectsResource = useProjects();
+  const areasResource = useAreas();
+  const tagsResource = useTags();
+
+  const projects = useMemo(
+    () =>
+      propProjects ??
+      projectsResource.data.filter((p) => p.status === 'active'),
+    [propProjects, projectsResource.data],
+  );
+  const areas = useMemo(
+    () => propAreas ?? areasResource.data,
+    [propAreas, areasResource.data],
+  );
+  const allTags = useMemo(
+    () => propTags ?? tagsResource.data,
+    [propTags, tagsResource.data],
+  );
+
+  // Parse tags template
+  const selectedTagIds = useMemo(() => {
+    const tmpl = template.tagsTemplate;
+    if (!tmpl) return [];
+    try {
+      return JSON.parse(tmpl) as string[];
+    } catch {
+      return [];
+    }
+  }, [template.tagsTemplate]);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+
+    setIsClosing(true);
+    onExpand(template.id);
+
+    setTimeout(() => {
+      setIsClosing(false);
+    }, TRANSITION_DURATION_MS);
+  }, [isClosing, onExpand, template.id]);
+
+  const form = useTaskEditorForm({
+    initialTitle: template.title,
+    initialNotes: template.notes ?? '',
+    onTitleChange: (title) =>
+      updateRule.mutate({ id: template.id, updates: { title } }),
+    onNotesChange: (notes) =>
+      updateRule.mutate({ id: template.id, updates: { notes } }),
+    onClose: handleClose,
+  });
+
+  // Sync checklist when template ID changes
+  useEffect(() => {
+    if (template.id !== lastTemplateIdRef.current) {
+      lastTemplateIdRef.current = template.id;
+      if (template.checklistTemplate) {
+        const parsed = JSON.parse(template.checklistTemplate) as Array<{
+          title: string;
+          id?: string;
+        }>;
+        setChecklist(
+          parsed.map((item, idx) => ({
+            id: item.id ?? generateId(),
+            title: item.title,
+            completed: false,
+            position: idx + 1,
+          })),
+        );
+      } else {
+        setChecklist([]);
+      }
+    }
+  }, [template.id, template.checklistTemplate]);
+
+  // Focus title input when expanded
+  useEffect(() => {
+    if (expanded) {
+      form.focusTitle();
+    }
+  }, [expanded, form.focusTitle]);
+
+  // Click outside handler
+  useEffect(() => {
+    if (!expanded) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isClosing) return;
+      if (!cardRef.current) return;
+
+      const target = e.target as HTMLElement;
+
+      if (cardRef.current.contains(target)) return;
+
+      const isInPopover =
+        target.closest('[data-popover]') ||
+        target.closest('[role="listbox"]') ||
+        target.closest('[role="dialog"]') ||
+        target.closest('[role="menu"]');
+      if (isInPopover) return;
+
+      const closestWithBg = target.closest('div');
+      if (closestWithBg) {
+        const bg = getComputedStyle(closestWithBg).backgroundColor;
+        if (bg === 'rgb(44, 44, 46)') return;
+      }
+
+      const anyExpandedCard = target.closest('[data-template-detail-card]');
+      if (anyExpandedCard) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      handleClose();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [expanded, isClosing, handleClose]);
+
+  const nextOccurrences = useMemo(
+    () => computeNextOccurrences(template.rrule, template.nextOccurrence, 4),
+    [template.rrule, template.nextOccurrence],
+  );
+
+  const formattedOccurrences = useMemo(
+    () =>
+      nextOccurrences.map((dateStr) => {
+        const date = parseLocalDate(dateStr);
+        return format(date, 'MMM d');
+      }),
+    [nextOccurrences],
+  );
+
+  const handleChecklistChange = useCallback(
+    (items: ChecklistItem[]) => {
+      setChecklist(items);
+      // Convert to storage format (just titles for templates)
+      const storageItems = items
+        .filter((item) => item.title.trim() !== '')
+        .map((item) => ({ id: item.id, title: item.title }));
+      updateRule.mutate({
+        id: template.id,
+        updates: {
+          checklistTemplate: storageItems.length
+            ? JSON.stringify(storageItems)
+            : null,
+        },
+      });
+    },
+    [template.id, updateRule],
+  );
+
+  const handleRepeatChange = useCallback(
+    (rrule: string | undefined, startDate: string) => {
+      if (!rrule) return;
+      updateRule.mutate({
+        id: template.id,
+        updates: { rrule, nextOccurrence: startDate },
+      });
+    },
+    [template.id, updateRule],
+  );
+
+  const handleMoveChange = useCallback(
+    (projectId: string | null, areaId?: string | null) => {
+      updateRule.mutate({
+        id: template.id,
+        updates: { projectId, areaId: areaId ?? null, headingId: null },
+      });
+    },
+    [template.id, updateRule],
+  );
+
+  const handleTagAdd = useCallback(
+    (tagId: string) => {
+      if (selectedTagIds.includes(tagId)) return;
+      const next = [...selectedTagIds, tagId];
+      updateRule.mutate({
+        id: template.id,
+        updates: { tagsTemplate: JSON.stringify(next) },
+      });
+    },
+    [selectedTagIds, template.id, updateRule],
+  );
+
+  const handleTagRemove = useCallback(
+    (tagId: string) => {
+      const next = selectedTagIds.filter((id) => id !== tagId);
+      updateRule.mutate({
+        id: template.id,
+        updates: { tagsTemplate: next.length ? JSON.stringify(next) : null },
+      });
+    },
+    [selectedTagIds, template.id, updateRule],
+  );
+
+  const handlePauseResume = useCallback(() => {
+    const status = template.status === 'active' ? 'paused' : 'active';
+    updateRule.mutate({ id: template.id, updates: { status } });
+  }, [template.status, template.id, updateRule]);
+
+  const handleDelete = useCallback(() => {
+    if (
+      !confirm('Delete this repeating template? Spawned tasks will remain.')
+    ) {
+      return;
+    }
+
+    if (onDelete) {
+      onDelete(template.id);
+    } else {
+      deleteRule.mutate(template.id);
+    }
+    handleClose();
+  }, [onDelete, template.id, deleteRule, handleClose]);
+
+  const isPaused = template.status === 'paused';
+
+  const toolbarBtnClass =
+    'inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors';
+
+  const showExpanded = expanded || isClosing;
+
+  if (!showExpanded) {
+    return (
+      <div className="mx-4">
+        <TemplateRow
+          template={template}
+          selected={selected}
+          onSelect={onSelect}
+          onExpand={onExpand}
+          showNextDate={showNextDate}
+        />
+      </div>
+    );
+  }
+
+  const headerContent = (
+    <button
+      type="button"
+      className={cn(
+        'flex items-center gap-2 px-4 pb-2 transition-all duration-300 ease-in-out rounded-md w-full text-left',
+        expanded ? 'pt-4' : 'pt-2',
+      )}
+      onClick={() => handleClose()}
+    >
+      <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center text-muted-foreground">
+        <RepeatIcon className="w-4 h-4" />
+      </span>
+
+      <input
+        ref={form.titleRef}
+        type="text"
+        value={form.title}
+        onChange={(e) => form.setTitle(e.target.value)}
+        onBlur={form.handleTitleBlur}
+        onKeyDown={form.handleTitleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          'flex-1 bg-transparent text-[15px] leading-tight outline-none border-0 p-0',
+          'text-foreground caret-things-blue',
+          isPaused && 'text-muted-foreground',
+        )}
+        placeholder="Template title"
+      />
+
+      {isPaused && (
+        <span className="text-xs text-amber-600 font-medium px-2">Paused</span>
+      )}
+    </button>
+  );
+
+  const toolbarContent = (
+    <>
+      {/* Repeat picker (change schedule) */}
+      <RepeatPicker
+        value={template.rrule}
+        startDate={template.nextOccurrence}
+        onChange={handleRepeatChange}
+        onClear={() => {
+          // Templates always have repeat
+        }}
+        placeholder="Schedule"
+        className={toolbarBtnClass}
+      />
+
+      {/* Move picker */}
+      {projects.length > 0 && (
+        <MovePicker
+          value={template.projectId}
+          areaValue={template.areaId}
+          onChange={handleMoveChange}
+          projects={projects}
+          areas={areas}
+          placeholder="Move"
+          className={toolbarBtnClass}
+        />
+      )}
+
+      {/* Tags picker */}
+      {allTags.length > 0 && (
+        <TagPicker
+          selectedTagIds={selectedTagIds}
+          tags={allTags}
+          onAdd={handleTagAdd}
+          onRemove={handleTagRemove}
+        />
+      )}
+
+      {/* Pause/Resume button */}
+      <button
+        type="button"
+        onClick={handlePauseResume}
+        className={cn(
+          toolbarBtnClass,
+          isPaused
+            ? 'text-green-600 hover:text-green-700'
+            : 'text-amber-600 hover:text-amber-700',
+        )}
+      >
+        {isPaused ? (
+          <PlayIcon className="w-3.5 h-3.5" />
+        ) : (
+          <PauseIcon className="w-3.5 h-3.5" />
+        )}
+        <span>{isPaused ? 'Resume' : 'Pause'}</span>
+      </button>
+    </>
+  );
+
+  const footerContent = (
+    <>
+      {/* Info button */}
+      <div className="relative flex items-center">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInfo(!showInfo);
+          }}
+          className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-muted-foreground hover:bg-secondary transition-colors"
+        >
+          <InfoIcon className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Info popover */}
+        {showInfo && (
+          <div
+            role="dialog"
+            className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-popover rounded-lg shadow-lg border border-border text-[12px] z-50"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-1.5 text-notes">
+              <div>
+                <span className="text-muted-foreground">Created:</span>{' '}
+                {format(template.createdAt, 'PPP p')}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Updated:</span>{' '}
+                {format(template.updatedAt, 'PPP p')}
+              </div>
+              <div className="pt-1.5 border-t border-border">
+                <span className="text-muted-foreground">ID:</span>{' '}
+                <code className="text-[10px] bg-secondary px-1 py-0.5 rounded select-all">
+                  {template.id}
+                </code>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete button */}
+      <button
+        type="button"
+        onClick={handleDelete}
+        className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-destructive hover:bg-destructive/10 transition-colors"
+      >
+        <Trash2Icon className="w-3.5 h-3.5" />
+      </button>
+    </>
+  );
+
+  return (
+    <ItemDetailLayout
+      expanded={expanded}
+      cardRef={cardRef}
+      dataAttribute="data-template-detail-card"
+      header={headerContent}
+      toolbar={toolbarContent}
+      toolbarPrefix={
+        formattedOccurrences.length > 0 && (
+          <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground pl-2">
+            <span>Next: {formattedOccurrences.join(', ')}</span>
+          </div>
+        )
+      }
+      footer={footerContent}
+    >
+      {/* Notes Section */}
+      <textarea
+        ref={form.notesRef}
+        value={form.notes}
+        onChange={(e) => form.setNotes(e.target.value)}
+        onBlur={form.handleNotesBlur}
+        placeholder="Notes"
+        rows={1}
+        className={cn(
+          'w-full bg-transparent text-[15px] leading-relaxed resize-none',
+          'outline-none border-0 p-0 text-notes',
+          'placeholder:text-muted-foreground',
+        )}
+      />
+
+      {/* Checklist Section */}
+      <ChecklistEditor
+        items={checklist}
+        variant="inline"
+        mode="controlled"
+        onChange={handleChecklistChange}
+      />
+    </ItemDetailLayout>
+  );
+}

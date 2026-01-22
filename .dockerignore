@@ -1,0 +1,9 @@
+node_modules
+packages/*/node_modules
+packages/web/dist
+packages/web/data
+data/
+.git
+*.md
+.env*
+cookies.txt
