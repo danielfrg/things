@@ -178,8 +178,8 @@ function NavItem(props: NavItemProps) {
       onPointerDown={handlePointerDown}
       onClick={handleClick}
       className={cn(
-        'group flex items-center gap-3 mx-2 md:mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md text-base md:text-[13px] font-semibold transition-colors',
-        'hover:bg-sidebar-accent',
+        'group flex items-center gap-3 mx-2 md:mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md text-lg md:text-[13px] font-semibold transition-colors',
+        'md:hover:bg-sidebar-accent',
         !isMobile && isActive && 'bg-sidebar-accent',
         props.secondary && 'text-muted-foreground',
         isTaskOver && 'bg-things-blue/20 ring-2 ring-things-blue',
@@ -325,7 +325,7 @@ function AreaHeader(props: AreaHeaderProps) {
   return (
     <button
       type="button"
-      className="flex-1 text-left text-base md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
+      className="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
@@ -515,7 +515,7 @@ function AreaItem(props: AreaItemProps) {
           <div
             ref={dragHandleRef}
             className={cn(
-              'flex items-center justify-between mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md group md:cursor-grab md:active:cursor-grabbing hover:bg-sidebar-accent',
+              'flex items-center justify-between mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md group md:cursor-grab md:active:cursor-grabbing md:hover:bg-sidebar-accent',
               !isMobile && isActive && 'bg-sidebar-accent',
               state.type === 'is-task-over' &&
                 'bg-things-blue/20 ring-2 ring-things-blue',
@@ -849,7 +849,7 @@ function ProjectItem(props: ProjectItemProps) {
   };
 
   const linkStyles: Partial<Record<ProjectItemState['type'], string>> = {
-    idle: 'hover:bg-sidebar-accent md:cursor-grab',
+    idle: 'md:hover:bg-sidebar-accent md:cursor-grab',
     'is-dragging': 'opacity-40',
     'is-dragging-and-left-self': 'h-0 py-0 overflow-hidden',
     'is-task-over': 'bg-things-blue/20 ring-2 ring-things-blue',
@@ -869,7 +869,7 @@ function ProjectItem(props: ProjectItemProps) {
           params={{ projectId: props.projectId }}
           onClick={handleClick}
           className={cn(
-            'flex items-center gap-2 mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md text-base md:text-[13px] font-medium transition-colors',
+            'flex items-center gap-2 mx-2 px-3 md:px-2 py-3 md:py-1.5 rounded-md text-lg md:text-[13px] font-medium transition-colors',
             !isMobile && isActive && 'bg-sidebar-accent',
             linkStyles[state.type],
           )}
@@ -1416,7 +1416,7 @@ export function Sidebar() {
   const createMenu = createDropdownController();
 
   return (
-    <aside className="w-full md:w-64 bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
+    <aside className="w-full md:w-64 bg-white md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
       <div className="h-8 flex-shrink-0" />
 
       <ScrollArea className="flex-1 min-h-0">
@@ -1494,7 +1494,7 @@ export function Sidebar() {
         </div>
       </ScrollArea>
 
-      <div className="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-2 h-[52px] flex items-center">
+      <div className="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-8 md:px-2 h-[52px] flex items-center">
         <div className="flex items-center justify-between w-full">
           <button
             type="button"

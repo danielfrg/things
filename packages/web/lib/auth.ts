@@ -4,6 +4,20 @@ import { db } from '@/db';
 import * as schema from '@/db/schema';
 
 const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+const isDev = process.env.NODE_ENV === 'development';
+
+const getAllowedOrigins = () => {
+  if (!isDev) return [baseUrl];
+
+  const origins = [baseUrl, 'http://localhost:3000'];
+
+  // Add additional dev origins from env if specified
+  if (process.env.ALLOWED_ORIGINS) {
+    origins.push(...process.env.ALLOWED_ORIGINS.split(','));
+  }
+
+  return origins;
+};
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -25,7 +39,23 @@ export const auth = betterAuth({
     },
   },
   baseURL: baseUrl,
-  trustedOrigins: [baseUrl],
+  trustedOrigins: isDev
+    ? (req) => {
+        const origin = req?.headers.get('origin');
+        if (!origin) return getAllowedOrigins();
+
+        // Allow localhost and local network IPs in dev
+        if (
+          origin.startsWith('http://localhost:') ||
+          origin.match(/^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/) ||
+          origin.match(/^http:\/\/.*\.local:\d+$/)
+        ) {
+          return [origin];
+        }
+
+        return getAllowedOrigins();
+      }
+    : [baseUrl],
 });
 
 export type Session = typeof auth.$Infer.Session;

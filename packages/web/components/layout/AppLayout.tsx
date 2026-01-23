@@ -42,7 +42,7 @@ function AppLayoutInner({ children }: { children: ReactNode }) {
         {/* Mobile: Full-screen sliding panels (hidden on desktop via CSS) */}
         <aside
           className={cn(
-            'md:hidden absolute inset-0 z-10 bg-sidebar transition-transform duration-300 ease-out',
+            'md:hidden absolute inset-0 z-10 bg-white transition-transform duration-300 ease-out',
             view === 'sidebar' ? 'translate-x-0' : '-translate-x-full',
           )}
         >

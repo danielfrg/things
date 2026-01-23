@@ -393,7 +393,7 @@ export function TaskCard({
       tabIndex={0}
       className={cn(
         'flex items-center gap-2 px-4 pb-2 transition-all duration-300 ease-in-out md:rounded-md overflow-hidden',
-        expanded ? 'pt-4' : 'pt-2 md:cursor-grab',
+        expanded ? 'pt-4' : 'py-3 md:py-2 md:cursor-grab',
         !expanded && selected && 'bg-task-selected',
         !expanded && !selected && 'hover:bg-secondary/50',
       )}
