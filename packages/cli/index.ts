@@ -105,6 +105,46 @@ function printJson(data: unknown) {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
 }
 
+function formatError(error: unknown): string {
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    if ('error' in error && typeof error.error === 'string') {
+      return error.error;
+    }
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+    return JSON.stringify(error);
+  }
+  return String(error);
+}
+
+function validateApiResponse(data: unknown, resourceName: string): void {
+  if (typeof data === 'string') {
+    if (data.includes('<!DOCTYPE html>') || data.includes('<html')) {
+      throw new Error(
+        [
+          `Received HTML instead of JSON from API. This usually means:`,
+          `  1. THINGS_API_BASE_URL is incorrect (should end with /api)`,
+          `  2. API key is invalid or expired`,
+          ``,
+          `Current config:`,
+          `  THINGS_API_BASE_URL=${process.env.THINGS_API_BASE_URL ?? 'http://localhost:3000/api'}`,
+          `  THINGS_API_KEY=${process.env.THINGS_API_KEY ? `${process.env.THINGS_API_KEY.substring(0, 10)}...` : 'not set'}`,
+        ].join('\n'),
+      );
+    }
+  }
+  if (data === undefined || data === null) {
+    throw new Error(`API returned no data for ${resourceName}`);
+  }
+  if (!Array.isArray(data)) {
+    throw new Error(
+      `Expected ${resourceName} to be an array, got ${typeof data}`,
+    );
+  }
+}
+
 type TaskStatus = Task['status'];
 
 async function main() {
@@ -125,13 +165,15 @@ async function main() {
     if (resource === 'tasks') {
       if (action === 'list') {
         const { data: tasks, error } = await getV1Tasks();
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
+        validateApiResponse(tasks, 'tasks');
 
         if (jsonOut) return printJson(tasks);
 
         const { data: projects } = await getV1Projects();
+        validateApiResponse(projects, 'projects');
         const projectTitleById = new Map(
-          (projects ?? []).map((p) => [p.id, p.title]),
+          (projects as Project[]).map((p) => [p.id, p.title]),
         );
 
         for (const t of tasks ?? []) {
@@ -144,7 +186,7 @@ async function main() {
         const id = maybeId;
         if (!id) usage(1);
         const { data: task, error } = await getV1TasksById({ path: { id } });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         if (jsonOut) return printJson(task);
         process.stdout.write(`${formatTaskDetail(task)}\n`);
@@ -165,7 +207,7 @@ async function main() {
             deadline: getArg('--deadline'),
           },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(task)
@@ -188,7 +230,7 @@ async function main() {
             deadline: getArg('--deadline'),
           },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(task)
@@ -202,7 +244,7 @@ async function main() {
           path: { id },
           body: { completed: true },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(task)
@@ -216,7 +258,7 @@ async function main() {
           path: { id },
           body: { completed: false },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(task)
@@ -227,7 +269,7 @@ async function main() {
         const id = maybeId;
         if (!id) usage(1);
         const { data, error } = await deleteV1TasksById({ path: { id } });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(data)
@@ -240,7 +282,7 @@ async function main() {
         const { data: task, error } = await postV1TasksByIdRestore({
           path: { id },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(task)
@@ -253,7 +295,7 @@ async function main() {
         const { data, error } = await deleteV1TasksByIdPermanent({
           path: { id },
         });
-        if (error) throw new Error(error.error);
+        if (error) throw new Error(formatError(error));
 
         return jsonOut
           ? printJson(data)
@@ -266,16 +308,18 @@ async function main() {
     if (resource === 'projects') {
       if (action === 'list') {
         const { data: projects, error } = await getV1Projects();
-        if (error) throw new Error('Failed to fetch projects');
+        if (error) throw new Error(formatError(error));
+        validateApiResponse(projects, 'projects');
 
         if (jsonOut) return printJson(projects);
 
         const { data: areas } = await getV1Areas();
+        validateApiResponse(areas, 'areas');
         const areaTitleById = new Map(
-          (areas ?? []).map((a) => [a.id, a.title]),
+          (areas as Area[]).map((a) => [a.id, a.title]),
         );
 
-        for (const p of projects ?? []) {
+        for (const p of projects as Project[]) {
           process.stdout.write(`${formatProjectLine(p, areaTitleById)}\n`);
         }
         return;
@@ -286,11 +330,12 @@ async function main() {
     if (resource === 'areas') {
       if (action === 'list') {
         const { data: areas, error } = await getV1Areas();
-        if (error) throw new Error('Failed to fetch areas');
+        if (error) throw new Error(formatError(error));
+        validateApiResponse(areas, 'areas');
 
         if (jsonOut) return printJson(areas);
 
-        for (const a of areas ?? []) {
+        for (const a of areas as Area[]) {
           process.stdout.write(`${formatAreaLine(a)}\n`);
         }
         return;
