@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    })
+    }),
   );
   self.skipWaiting();
 });
@@ -25,9 +25,9 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .map((name) => caches.delete(name)),
       );
-    })
+    }),
   );
   self.clients.claim();
 });
@@ -39,15 +39,23 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests and server functions
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_server/')) {
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/_server/')
+  ) {
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        // Skip caching redirects (iOS Safari doesn't allow SW to handle redirects)
+        if (response.type === 'opaqueredirect') {
+          return response;
+        }
+
         // Clone the response before caching
-        if (response.status === 200) {
+        if (response.status === 200 && response.type === 'basic') {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
@@ -58,6 +66,6 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // Fallback to cache if network fails
         return caches.match(event.request);
-      })
+      }),
   );
 });
