@@ -3,6 +3,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/db';
 import * as schema from '@/db/schema';
 
+const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'sqlite',
@@ -22,6 +24,8 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
+  baseURL: baseUrl,
+  trustedOrigins: [baseUrl],
 });
 
 export type Session = typeof auth.$Infer.Session;
