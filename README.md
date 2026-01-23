@@ -4,6 +4,15 @@ My own task management app **inspired** by Things, built with TanStack Start, Dr
 
 This is vibecoded so use at your own risk. I built it and self-hosted it for my own personal use.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="docs/images/desktop-today.png" alt="Desktop Today View" height="400"/></td>
+    <td><img src="docs/images/mobile-today.png" alt="Mobile Today View" height="400"/></td>
+  </tr>
+</table>
+
 ## Why?
 
 Things is pretty much perfect and I have used it for more than a decade.
