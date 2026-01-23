@@ -1,5 +1,5 @@
 repomix:
-    repomix --copy
+    repomix --copy --ignore "packages/web/drizzle/meta/*.json"
     rm repomix-output.md 
 
 

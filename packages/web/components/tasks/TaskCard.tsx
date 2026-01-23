@@ -330,13 +330,17 @@ export function TaskCard({
   );
 
   // Clean up empty last checklist item when collapsing
+  const wasExpandedRef = useRef(expanded);
   useEffect(() => {
-    if (expanded) return;
-    if (checklistItems.length === 0) return;
+    const wasExpanded = wasExpandedRef.current;
+    wasExpandedRef.current = expanded;
 
-    const last = checklistItems[checklistItems.length - 1];
-    if (last && !last.title.trim()) {
-      deleteChecklistItem.mutate(last.id);
+    // Only run cleanup when transitioning from expanded to collapsed
+    if (wasExpanded && !expanded && checklistItems.length > 0) {
+      const last = checklistItems[checklistItems.length - 1];
+      if (last && !last.title.trim()) {
+        deleteChecklistItem.mutate(last.id);
+      }
     }
   }, [expanded, checklistItems, deleteChecklistItem]);
 
