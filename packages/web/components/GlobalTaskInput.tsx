@@ -1,6 +1,6 @@
 import { useLocation } from '@tanstack/react-router';
 import { addDays, format, isToday, isTomorrow } from 'date-fns';
-import { Calendar, FolderOpen } from 'lucide-react';
+import { Calendar, FolderOpen, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoxIcon, CheckIcon, InboxIcon } from '@/components/icons';
@@ -42,16 +42,19 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
   const areas = areasResource.data;
 
   const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [scheduledDate, setScheduledDate] = useState<string | undefined>(
     undefined,
   );
   const [projectId, setProjectId] = useState<string | null>(null);
   const [areaId, setAreaId] = useState<string | null>(null);
+  const [createMore, setCreateMore] = useState(false);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const notesInputRef = useRef<HTMLTextAreaElement>(null);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const projectButtonRef = useRef<HTMLButtonElement>(null);
   const projectPopoverRef = useOverlay({
@@ -104,13 +107,14 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
     if (open) {
       const context = getViewContext();
       setTitle('');
+      setNotes('');
       setScheduledDate(context.scheduledDate);
       setProjectId(context.projectId ?? null);
       setAreaId(context.areaId ?? null);
       setDatePickerOpen(false);
       setProjectPickerOpen(false);
 
-      setTimeout(() => inputRef.current?.focus(), 10);
+      setTimeout(() => titleInputRef.current?.focus(), 50);
     }
   }, [open, getViewContext]);
 
@@ -157,7 +161,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
     createTask.mutate({
       id: generateId(),
       title: trimmedTitle,
-      notes: null,
+      notes: notes.trim() || null,
       status: scheduledDate ? 'scheduled' : context.status,
       scheduledDate: scheduledDate ?? null,
       deadline: null,
@@ -167,7 +171,13 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
       repeatingRuleId: null,
     });
 
-    onClose();
+    if (createMore) {
+      setTitle('');
+      setNotes('');
+      setTimeout(() => titleInputRef.current?.focus(), 10);
+    } else {
+      onClose();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -257,36 +267,59 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[20vh]"
+        className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center pt-[10vh]"
         onClick={handleOverlayClick}
-        role="presentation"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleOverlayClick(e as unknown as React.MouseEvent);
+          }
+        }}
+        role="button"
+        tabIndex={-1}
       >
         <div
-          className="w-full max-w-[480px] bg-popover-dark rounded-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+          className="w-full max-w-[900px] bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
-            // Let Escape propagate so the document handler can close the dialog
             if (e.key !== 'Escape') {
               e.stopPropagation();
             }
           }}
         >
-          <div className="px-4 py-3">
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="New To-Do"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-popover-dark-foreground text-[17px] font-medium placeholder:text-popover-dark-muted outline-none"
+          {/* Main input area */}
+          <div className="px-6 py-4">
+            <div className="flex items-start gap-2">
+              <input
+                ref={titleInputRef}
+                type="text"
+                placeholder="Task title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 text-2xl font-bold placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-1"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <textarea
+              ref={notesInputRef}
+              placeholder="Add description..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full mt-3 bg-transparent text-gray-900 dark:text-gray-100 text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none resize-none min-h-[100px]"
             />
           </div>
 
-          <div className="px-3 pb-3 flex items-center gap-2">
+          {/* Properties bar */}
+          <div className="px-6 pb-4 flex items-center gap-2">
             <button
               ref={dateButtonRef}
               type="button"
@@ -295,10 +328,10 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                 setDatePickerOpen(!datePickerOpen);
               }}
               className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors border',
                 scheduledDate
-                  ? 'bg-popover-dark-accent text-popover-dark-foreground'
-                  : 'bg-popover-dark-accent/50 text-popover-dark-muted hover:bg-popover-dark-accent hover:text-popover-dark-foreground',
+                  ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
               )}
             >
               <Calendar className="size-3.5" />
@@ -313,17 +346,17 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                 setProjectPickerOpen(!projectPickerOpen);
               }}
               className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors border',
                 projectId || areaId
-                  ? 'bg-popover-dark-accent text-popover-dark-foreground'
-                  : 'bg-popover-dark-accent/50 text-popover-dark-muted hover:bg-popover-dark-accent hover:text-popover-dark-foreground',
+                  ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
               )}
             >
               {projectId ? (
                 <ProjectProgressIcon
                   progress={0}
                   size={14}
-                  className="text-popover-dark-selected"
+                  className="text-things-blue"
                 />
               ) : areaId ? (
                 <BoxIcon className="size-3.5 text-things-green" />
@@ -332,37 +365,48 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
               )}
               <span>{projectDisplay}</span>
             </button>
+          </div>
 
-            <div className="flex-1" />
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setCreateMore(!createMore)}
+                  className={cn(
+                    'relative w-9 h-5 rounded-full transition-colors',
+                    createMore
+                      ? 'bg-things-blue'
+                      : 'bg-gray-300 dark:bg-gray-600',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform',
+                      createMore && 'translate-x-4',
+                    )}
+                  />
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-400">
+                  Create more
+                </span>
+              </label>
+            </div>
 
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!title.trim()}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-colors',
+                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 title.trim()
-                  ? 'bg-popover-dark-selected text-popover-dark-foreground hover:bg-popover-dark-selected/90'
-                  : 'bg-popover-dark-accent text-popover-dark-muted cursor-not-allowed',
+                  ? 'bg-things-blue text-white hover:bg-things-blue/90 shadow-sm'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed',
               )}
             >
-              Save
+              Create task
             </button>
-          </div>
-
-          <div className="px-4 py-2 border-t border-popover-dark-border flex items-center gap-4 text-popover-dark-muted text-xs">
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-popover-dark-border text-popover-dark-muted">
-                ↵
-              </kbd>
-              <span>Save</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 rounded bg-popover-dark-border text-popover-dark-muted">
-                esc
-              </kbd>
-              <span>Close</span>
-            </span>
           </div>
         </div>
       </div>
@@ -426,7 +470,6 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                     )}
                   </button>
                 ))}
-                <div className="my-1 border-t border-popover-dark-border" />
               </>
             )}
 
