@@ -10,8 +10,8 @@ import {
 } from '@/components/icons';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Linkify } from '@/components/ui/linkify';
 import { MovePicker } from '@/components/ui/move-picker';
+import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
 import type {
@@ -387,6 +387,7 @@ export function TaskCard({
     if ((e.target as HTMLElement).closest('button')) return;
     if ((e.target as HTMLElement).closest('input')) return;
     if ((e.target as HTMLElement).closest('textarea')) return;
+    if ((e.target as HTMLElement).closest('.prose-editor')) return;
     onExpand(task.id);
   };
 
@@ -749,36 +750,16 @@ export function TaskCard({
 
         {/* Notes */}
         <div className="relative min-h-[26px]">
-          <textarea
-            ref={form.notesRef}
+          <ProseEditor
             value={form.notes}
-            onChange={(e) => form.setNotes(e.target.value)}
+            onChange={form.setNotes}
             onBlur={form.handleNotesBlur}
             placeholder="Notes"
             disabled={isCompleted}
-            className={cn(
-              'w-full bg-transparent text-lg md:text-[15px] leading-[1.625] resize-none min-h-[26px]',
-              'outline-none border-0 p-0 m-0 text-foreground/80',
-              'placeholder:text-muted-foreground',
-              isCompleted && 'text-muted-foreground',
-              !form.isEditingNotes &&
-                form.notes &&
-                'opacity-0 pointer-events-none',
-            )}
+            isEditing={form.isEditingNotes}
+            onStartEditing={() => !isCompleted && form.setIsEditingNotes(true)}
+            className={cn(isCompleted && 'text-muted-foreground')}
           />
-          {!form.isEditingNotes && form.notes && (
-            <div
-              onClick={() => !isCompleted && form.setIsEditingNotes(true)}
-              className={cn(
-                'absolute inset-0 text-lg md:text-[15px] leading-[1.625] whitespace-pre-wrap break-words min-h-[26px]',
-                'text-foreground/80',
-                isCompleted && 'text-muted-foreground',
-                !isCompleted && 'cursor-text',
-              )}
-            >
-              <Linkify>{form.notes}</Linkify>
-            </div>
-          )}
         </div>
 
         {/* Checklist Section */}

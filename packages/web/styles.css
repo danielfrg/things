@@ -245,3 +245,69 @@ body:not(.hydrating) main {
 ::view-transition-new(root) {
   animation: none;
 }
+
+/* ProseMirror editor styles */
+.prose-editor .ProseMirror {
+  outline: none;
+}
+
+.prose-editor .ProseMirror p {
+  margin: 0;
+}
+
+.prose-editor .ProseMirror-focused {
+  outline: none;
+}
+
+.prose-editor .ProseMirror[data-placeholder]::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  position: absolute;
+}
+
+/* Markdown styling */
+.prose-editor .md-marker {
+  color: var(--muted-foreground);
+}
+
+.prose-editor .md-heading-marker {
+  color: var(--muted-foreground);
+}
+
+.prose-editor .md-heading-text {
+  font-weight: 600;
+}
+
+.prose-editor .md-bold {
+  font-weight: 600;
+}
+
+.prose-editor .md-italic {
+  font-style: italic;
+}
+
+.prose-editor .md-code {
+  background: var(--muted);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+
+.prose-editor .md-link-text {
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.prose-editor .md-link-url {
+  color: var(--muted-foreground);
+  font-size: 0.875em;
+}
+
+.prose-editor .md-url {
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+}

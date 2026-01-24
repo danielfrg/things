@@ -94,6 +94,7 @@ export function useTaskEditorForm({
   const handleNotesBlur = useCallback(() => {
     const trimmed = notes.trim();
     setNotes(trimmed);
+
     if (trimmed !== initialNotes) {
       onNotesChange?.(trimmed || null);
     }
@@ -114,13 +115,9 @@ export function useTaskEditorForm({
     [handleTitleBlur, initialTitle, onClose],
   );
 
-  const handleSetNotes = useCallback(
-    (value: string) => {
-      setNotes(value);
-      resizeNotes();
-    },
-    [resizeNotes],
-  );
+  const handleSetNotes = useCallback((value: string) => {
+    setNotes(value);
+  }, []);
 
   return {
     title,
