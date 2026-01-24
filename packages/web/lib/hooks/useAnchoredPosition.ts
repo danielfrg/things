@@ -134,6 +134,7 @@ export function useAnchoredPosition({
 /**
  * Simple function to get position styles from an anchor rect.
  * Use this for simpler cases where you don't need reactivity.
+ * On mobile (< 768px), centers the popover on screen.
  */
 export function getAnchoredPosition(
   anchorRect: DOMRect | null,
@@ -149,6 +150,20 @@ export function getAnchoredPosition(
   } = options;
 
   const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const isMobile = viewportWidth < 768;
+
+  // On mobile, center the popover
+  if (isMobile) {
+    return {
+      position: 'fixed',
+      zIndex: 50,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    };
+  }
+
   const spaceBelow = viewportHeight - anchorRect.bottom;
   const spaceAbove = anchorRect.top;
 

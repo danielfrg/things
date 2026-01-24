@@ -131,7 +131,7 @@ function SomedayView() {
   return (
     <ViewContainer
       title="Someday"
-      icon={<SomedayIcon className="w-6 h-6" color="white" />}
+      icon={<SomedayIcon className="w-6 h-6" />}
       iconColor="text-things-beige"
       toolbar={
         <ViewToolbar>

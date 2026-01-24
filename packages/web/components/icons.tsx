@@ -36,7 +36,6 @@ import {
   X,
 } from 'lucide-react';
 import type { SVGProps } from 'react';
-import { cn } from '@/lib/utils';
 
 // Re-export base icons from lucide-react
 export {
@@ -93,20 +92,9 @@ export function EveningIcon(props: IconProps) {
   return <Moon fill="#80a4d6" color="#80a4d6" {...props} />;
 }
 
-/** Someday icon - archive with fill and adaptive stroke */
+/** Someday icon - archive with beige stroke */
 export function SomedayIcon(props: IconProps) {
-  const { className, ...rest } = props;
-  return (
-    <Archive
-      fill="#ccbf7e"
-      stroke="currentColor"
-      className={cn(
-        '[stroke:var(--sidebar)] group-hover:[stroke:var(--sidebar-accent)] group-[.bg-sidebar-accent]:[stroke:var(--sidebar-accent)]',
-        className,
-      )}
-      {...rest}
-    />
-  );
+  return <Archive strokeWidth={2} color="#ccbf7e" {...props} />;
 }
 
 /** Inbox icon for sidebar/header */

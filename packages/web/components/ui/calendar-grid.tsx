@@ -81,32 +81,32 @@ export function CalendarGrid({
   return (
     <div className={className}>
       {/* Month navigation */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-2 max-md:mb-3">
         <button
           type="button"
           onClick={() => setViewDate(subMonths(viewDate, 1))}
-          className="p-1 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded"
+          className="p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded"
         >
-          <ChevronLeftIcon className="h-4 w-4" />
+          <ChevronLeftIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />
         </button>
-        <span className="text-sm font-semibold text-popover-dark-foreground">
+        <span className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">
           {format(viewDate, 'MMMM yyyy')}
         </span>
         <button
           type="button"
           onClick={() => setViewDate(addMonths(viewDate, 1))}
-          className="p-1 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded"
+          className="p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded"
         >
-          <ChevronRightIcon className="h-4 w-4" />
+          <ChevronRightIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />
         </button>
       </div>
 
       {/* Day names header */}
-      <div className="grid grid-cols-7 gap-0.5 mb-1">
+      <div className="grid grid-cols-7 mb-1 max-md:mb-2">
         {dayNames.map((day) => (
           <div
             key={day}
-            className="text-[11px] font-bold text-popover-dark-muted text-center py-1"
+            className="text-[11px] max-md:text-sm font-bold text-popover-dark-muted text-center py-1 max-md:py-2"
           >
             {day}
           </div>
@@ -114,10 +114,10 @@ export function CalendarGrid({
       </div>
 
       {/* Calendar days */}
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7">
         {calendarDays.map((day, index) => {
           if (!day) {
-            return <div key={`empty-${index}`} className="h-8 w-8" />;
+            return <div key={`empty-${index}`} className="h-8 w-8 max-md:h-11 max-md:w-full" />;
           }
 
           const isPast = isBefore(day, today);
@@ -127,7 +127,7 @@ export function CalendarGrid({
 
           // Show empty cell for past dates (keep grid structure)
           if (hidePastDates && isPast && !dayIsToday) {
-            return <div key={day.toISOString()} className="h-8 w-8" />;
+            return <div key={day.toISOString()} className="h-8 w-8 max-md:h-11 max-md:w-full" />;
           }
 
           return (
@@ -136,7 +136,7 @@ export function CalendarGrid({
               type="button"
               onClick={() => onSelect(day)}
               className={cn(
-                'h-8 w-8 rounded-md text-sm font-bold transition-colors flex items-center justify-center',
+                'h-8 w-8 max-md:h-11 max-md:w-full rounded-md text-sm max-md:text-base font-bold transition-colors flex items-center justify-center',
                 !isCurrentMonth && 'opacity-30',
                 dayIsSelected
                   ? 'bg-popover-dark-selected text-popover-dark-foreground'
@@ -146,7 +146,7 @@ export function CalendarGrid({
               )}
             >
               {dayIsToday && !dayIsSelected ? (
-                <StarIcon className="h-3 w-3" fill="#8E8E93" color="#8E8E93" />
+                <StarIcon className="h-3 w-3 max-md:h-4 max-md:w-4" fill="#8E8E93" color="#8E8E93" />
               ) : (
                 day.getDate()
               )}

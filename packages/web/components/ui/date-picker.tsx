@@ -19,6 +19,7 @@ interface DatePickerProps {
   icon?: ReactNode;
   showEvening?: boolean;
   isEvening?: boolean;
+  title?: string;
 }
 
 export function DatePicker({
@@ -33,6 +34,7 @@ export function DatePicker({
   icon,
   showEvening,
   isEvening,
+  title,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -72,18 +74,28 @@ export function DatePicker({
 
       {open &&
         createPortal(
-          <div data-popover style={popoverStyle}>
-            <CalendarPopover
-              value={value}
-              onChange={onChange ?? (() => {})}
-              onSomedaySelect={onSomedaySelect}
-              isSomeday={isSomeday}
-              showSomeday={showSomeday}
-              showEvening={showEvening}
-              isEvening={isEvening}
-              onClose={handleClose}
+          <>
+            {/* Mobile backdrop - captures taps to close popover without affecting task */}
+            <div
+              data-popover
+              className="fixed inset-0 z-40 md:hidden"
+              onClick={handleClose}
+              onKeyDown={(e) => e.key === 'Escape' && handleClose()}
             />
-          </div>,
+            <div data-popover style={popoverStyle} className="z-50">
+              <CalendarPopover
+                value={value}
+                onChange={onChange ?? (() => {})}
+                onSomedaySelect={onSomedaySelect}
+                isSomeday={isSomeday}
+                showSomeday={showSomeday}
+                showEvening={showEvening}
+                isEvening={isEvening}
+                onClose={handleClose}
+                title={title}
+              />
+            </div>
+          </>,
           document.body,
         )}
     </div>

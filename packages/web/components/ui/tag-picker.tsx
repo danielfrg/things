@@ -92,6 +92,20 @@ export function TagPicker({
   }, [open]);
 
   const getPopoverStyle = (): React.CSSProperties => {
+    const viewportWidth = window.innerWidth;
+    const isMobile = viewportWidth < 768;
+
+    // On mobile, center the popover
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 50,
+      };
+    }
+
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
     const popoverHeight = 300;
@@ -158,13 +172,33 @@ export function TagPicker({
       {/* Popover */}
       {open &&
         createPortal(
-          <div
-            ref={popoverRef}
-            data-popover
-            className="w-[220px] rounded-xl bg-popover-dark overflow-hidden shadow-xl"
-            style={getPopoverStyle()}
-          >
-            <div className="p-2 max-h-[280px] overflow-y-auto">
+          <>
+            {/* Mobile backdrop - captures taps to close popover without affecting task */}
+            <div
+              data-popover
+              className="fixed inset-0 z-40 md:hidden"
+              onClick={() => setOpen(false)}
+              onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+            />
+            <div
+              ref={popoverRef}
+              data-popover
+              className="w-[220px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark overflow-hidden shadow-xl z-50"
+              style={getPopoverStyle()}
+            >
+            {/* Header with title and close button */}
+            <div className="flex items-center justify-center relative px-3 pt-3 max-md:pt-4 pb-2">
+              <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Tags</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-3"
+              >
+                <XIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-2 max-h-[280px] max-md:max-h-[60vh] overflow-y-auto">
               {tags.length > 0 ? (
                 tags.map((tag) => {
                   const selected = selectedTagIds.includes(tag.id);
@@ -173,7 +207,7 @@ export function TagPicker({
                       key={tag.id}
                       type="button"
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 max-md:py-3 rounded-lg text-sm max-md:text-base text-left transition-colors',
                         'hover:bg-popover-dark-accent',
                         selected && 'bg-popover-dark-accent',
                       )}
@@ -181,22 +215,23 @@ export function TagPicker({
                     >
                       <span
                         className={cn(
-                          'w-3 h-3 rounded-full',
+                          'w-3 h-3 max-md:w-4 max-md:h-4 rounded-full',
                           TAG_COLORS[tag.color ?? 'gray'] ?? 'bg-gray-500',
                         )}
                       />
                       <span className="flex-1 text-popover-dark-foreground truncate">{tag.title}</span>
-                      {selected && <CheckIcon className="w-4 h-4 text-popover-dark-selected" />}
+                      {selected && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
                     </button>
                   );
                 })
               ) : (
-                <div className="px-3 py-4 text-center text-sm text-popover-dark-muted">
+                <div className="px-3 py-4 text-center text-sm max-md:text-base text-popover-dark-muted">
                   No tags created yet
                 </div>
               )}
             </div>
-          </div>,
+          </div>
+          </>,
           document.body,
         )}
     </div>

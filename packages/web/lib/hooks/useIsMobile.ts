@@ -2,13 +2,9 @@ import { useEffect, useState } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
 
-function getInitialValue() {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth < MOBILE_BREAKPOINT;
-}
-
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(getInitialValue);
+  // Always start with false to avoid hydration mismatch
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);

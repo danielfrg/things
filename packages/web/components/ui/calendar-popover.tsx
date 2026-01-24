@@ -1,11 +1,12 @@
 import { addDays, format, isToday, isTomorrow } from 'date-fns';
 import { useCallback, useMemo } from 'react';
 import {
-  BoxIcon,
   CalendarIcon,
   CheckIcon,
   EveningIcon,
+  SomedayIcon,
   StarIcon,
+  XIcon,
 } from '@/components/icons';
 import { CalendarGrid } from '@/components/ui/calendar-grid';
 import { useOverlay } from '@/lib/hooks/useOverlay';
@@ -20,6 +21,7 @@ interface CalendarPopoverProps {
   showEvening?: boolean;
   isEvening?: boolean;
   onClose?: () => void;
+  title?: string;
 }
 
 export function CalendarPopover({
@@ -31,6 +33,7 @@ export function CalendarPopover({
   showEvening,
   isEvening,
   onClose,
+  title = 'When',
 }: CalendarPopoverProps) {
   const overlayRef = useOverlay({
     open: true,
@@ -90,23 +93,35 @@ export function CalendarPopover({
   return (
     <div
       ref={overlayRef}
-      className="w-[260px] rounded-xl bg-popover-dark p-2.5 overflow-hidden"
+      className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden"
     >
+      {/* Header with title and close button */}
+      <div className="flex items-center justify-center relative mb-3 max-md:mb-4">
+        <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">{title}</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-0"
+        >
+          <XIcon className="h-5 w-5" />
+        </button>
+      </div>
+
       {/* Quick Select Options */}
-      <div className="space-y-0.5">
+      <div className="space-y-0.5 max-md:space-y-1">
         <button
           type="button"
           onClick={handleToday}
           className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors',
+            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 max-md:py-3 text-sm max-md:text-base font-semibold transition-colors',
             isTodaySelected
               ? 'bg-popover-dark-selected text-popover-dark-foreground'
               : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
           )}
         >
-          <StarIcon className="h-4 w-4" fill="#FFD60A" color="#FFD60A" />
+          <StarIcon className="h-4 w-4 max-md:h-5 max-md:w-5" fill="#FFD60A" color="#FFD60A" />
           <span className="flex-1 text-left">Today</span>
-          {isTodaySelected && <CheckIcon className="h-4 w-4" />}
+          {isTodaySelected && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
         </button>
 
         {showEvening && (
@@ -114,15 +129,15 @@ export function CalendarPopover({
             type="button"
             onClick={handleThisEvening}
             className={cn(
-              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors',
+              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 max-md:py-3 text-sm max-md:text-base font-semibold transition-colors',
               isEveningSelected
                 ? 'bg-popover-dark-selected text-popover-dark-foreground'
                 : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
             )}
           >
-            <EveningIcon className="h-4 w-4" />
+            <EveningIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />
             <span className="flex-1 text-left">This Evening</span>
-            {isEveningSelected && <CheckIcon className="h-4 w-4" />}
+            {isEveningSelected && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
           </button>
         )}
 
@@ -130,15 +145,15 @@ export function CalendarPopover({
           type="button"
           onClick={handleTomorrow}
           className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors',
+            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 max-md:py-3 text-sm max-md:text-base font-semibold transition-colors',
             isTomorrowSelected
               ? 'bg-popover-dark-selected text-popover-dark-foreground'
               : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
           )}
         >
-          <CalendarIcon className="h-4 w-4 text-things-pink" />
+          <CalendarIcon className="h-4 w-4 max-md:h-5 max-md:w-5 text-things-pink" />
           <span className="flex-1 text-left">Tomorrow</span>
-          {isTomorrowSelected && <CheckIcon className="h-4 w-4" />}
+          {isTomorrowSelected && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
         </button>
       </div>
 
@@ -147,25 +162,25 @@ export function CalendarPopover({
         selectedDate={selectedDate}
         onSelect={(date) => handleSelect(date, false)}
         hidePastDates
-        className="mt-3"
+        className="mt-3 max-md:mt-4"
       />
 
       {/* Bottom Options */}
-      <div className="mt-3 space-y-0.5">
+      <div className="mt-3 max-md:mt-4 space-y-0.5 max-md:space-y-1">
         {showSomeday && (
           <button
             type="button"
             onClick={handleSomeday}
             className={cn(
-              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors',
+              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 max-md:py-3 text-sm max-md:text-base font-semibold transition-colors',
               isSomeday
                 ? 'bg-popover-dark-selected text-popover-dark-foreground'
                 : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
             )}
           >
-            <BoxIcon className="h-4 w-4 text-things-beige" />
+            <SomedayIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />
             <span className="flex-1 text-left">Someday</span>
-            {isSomeday && <CheckIcon className="h-4 w-4" />}
+            {isSomeday && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
           </button>
         )}
       </div>
@@ -175,7 +190,7 @@ export function CalendarPopover({
         <button
           type="button"
           onClick={handleClear}
-          className="mt-2 w-full rounded-md bg-popover-dark-accent-hover py-2 text-sm font-semibold text-popover-dark-foreground transition-colors hover:bg-popover-dark-accent-hover/80"
+          className="mt-2 max-md:mt-4 w-full rounded-md bg-popover-dark-accent-hover py-2 max-md:py-3 text-sm max-md:text-base font-semibold text-popover-dark-foreground transition-colors hover:bg-popover-dark-accent-hover/80"
         >
           Clear
         </button>

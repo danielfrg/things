@@ -302,6 +302,20 @@ export function RepeatPicker({
   }, [open]);
 
   const getPopoverStyle = (): React.CSSProperties => {
+    const viewportWidth = window.innerWidth;
+    const isMobile = viewportWidth < 768;
+
+    // On mobile, center the popover
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 50,
+      };
+    }
+
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
     const popoverHeight = 320;
@@ -350,18 +364,38 @@ export function RepeatPicker({
 
       {open &&
         createPortal(
-          <div
-            ref={popoverRef}
-            data-popover
-            className="w-[280px] rounded-xl bg-popover-dark overflow-hidden p-3"
-            style={getPopoverStyle()}
-          >
-            <div className="space-y-3">
+          <>
+            {/* Mobile backdrop - captures taps to close popover without affecting task */}
+            <div
+              data-popover
+              className="fixed inset-0 z-40 md:hidden"
+              onClick={() => setOpen(false)}
+              onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+            />
+            <div
+              ref={popoverRef}
+              data-popover
+              className="w-[280px] md:w-[280px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark overflow-hidden p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto z-50"
+              style={getPopoverStyle()}
+            >
+            {/* Header with title and close button */}
+            <div className="flex items-center justify-center relative mb-3 max-md:mb-4">
+              <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Repeat</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-0"
+              >
+                <XIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 max-md:space-y-4">
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   className={cn(
-                    'h-9 rounded-lg px-3 text-sm font-medium transition-colors',
+                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
                     mode === 'daily'
                       ? 'bg-popover-dark-selected text-white'
                       : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
@@ -380,7 +414,7 @@ export function RepeatPicker({
                 <button
                   type="button"
                   className={cn(
-                    'h-9 rounded-lg px-3 text-sm font-medium transition-colors',
+                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
                     mode === 'weekly'
                       ? 'bg-popover-dark-selected text-white'
                       : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
@@ -397,7 +431,7 @@ export function RepeatPicker({
                 <button
                   type="button"
                   className={cn(
-                    'h-9 rounded-lg px-3 text-sm font-medium transition-colors',
+                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
                     mode === 'monthly'
                       ? 'bg-popover-dark-selected text-white'
                       : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
@@ -530,7 +564,8 @@ export function RepeatPicker({
                 </button>
               )}
             </div>
-          </div>,
+          </div>
+          </>,
           document.body,
         )}
     </div>

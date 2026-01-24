@@ -553,6 +553,7 @@ export function TaskCard({
           disabled={isCompleted}
           className={toolbarBtnClass}
           icon={<FlagIcon className="h-3.5 w-3.5 opacity-70" />}
+          title="Deadline"
         />
       )}
 
@@ -727,24 +728,42 @@ export function TaskCard({
           scheduleDatePickerOpen &&
           cardRef.current &&
           createPortal(
-            <div
-              className="fixed z-50 shadow-lg"
-              style={{
-                top: `${cardRef.current.getBoundingClientRect().top}px`,
-                right: `${window.innerWidth - cardRef.current.getBoundingClientRect().left + 16}px`,
-              }}
-            >
-              <CalendarPopover
-                value={task.scheduledDate ?? undefined}
-                onChange={handleScheduledDateChange}
-                onSomedaySelect={handleSomedaySelect}
-                isSomeday={isSomeday}
-                showSomeday
-                showEvening
-                isEvening={task.isEvening}
-                onClose={onScheduleDatePickerClose}
+            <>
+              {/* Mobile backdrop */}
+              <div
+                data-popover
+                className="fixed inset-0 z-40 md:hidden"
+                onClick={onScheduleDatePickerClose}
+                onKeyDown={(e) =>
+                  e.key === 'Escape' && onScheduleDatePickerClose?.()
+                }
               />
-            </div>,
+              <div
+                data-popover
+                className="fixed z-50 shadow-lg inset-0 flex items-center justify-center md:inset-auto"
+                style={{
+                  top:
+                    window.innerWidth >= 768
+                      ? `${cardRef.current.getBoundingClientRect().top}px`
+                      : undefined,
+                  right:
+                    window.innerWidth >= 768
+                      ? `${window.innerWidth - cardRef.current.getBoundingClientRect().left + 16}px`
+                      : undefined,
+                }}
+              >
+                <CalendarPopover
+                  value={task.scheduledDate ?? undefined}
+                  onChange={handleScheduledDateChange}
+                  onSomedaySelect={handleSomedaySelect}
+                  isSomeday={isSomeday}
+                  showSomeday
+                  showEvening
+                  isEvening={task.isEvening}
+                  onClose={onScheduleDatePickerClose}
+                />
+              </div>
+            </>,
             document.body,
           )}
 

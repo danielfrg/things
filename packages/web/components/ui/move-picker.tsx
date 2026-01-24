@@ -133,6 +133,20 @@ export function MovePicker({
   }, [open]);
 
   const getPopoverStyle = useCallback(() => {
+    const viewportWidth = window.innerWidth;
+    const isMobile = viewportWidth < 768;
+
+    // On mobile, center the popover
+    if (isMobile) {
+      return {
+        position: 'fixed' as const,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 50,
+      };
+    }
+
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
     const popoverHeight = 320;
@@ -179,37 +193,57 @@ export function MovePicker({
       </button>
 
       {open && createPortal(
-        <div
-          ref={popoverRef}
-          data-popover
-          className="w-[260px] rounded-xl bg-popover-dark overflow-hidden"
-          style={getPopoverStyle()}
-        >
-          <div className="max-h-80 overflow-y-auto overscroll-contain py-2">
+        <>
+          {/* Mobile backdrop - captures taps to close popover without affecting task */}
+          <div
+            data-popover
+            className="fixed inset-0 z-40 md:hidden"
+            onClick={() => setOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+          />
+          <div
+            ref={popoverRef}
+            data-popover
+            className="w-[260px] md:w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark overflow-hidden z-50"
+            style={getPopoverStyle()}
+          >
+          {/* Header with title and close button */}
+          <div className="flex items-center justify-center relative px-3 pt-3 max-md:pt-4 pb-2">
+            <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Move</h3>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-3"
+            >
+              <XIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="max-h-80 max-md:max-h-[70vh] overflow-y-auto overscroll-contain py-2 max-md:py-3">
             <button
               type="button"
               onClick={handleSelectInbox}
               className={cn(
-                'flex items-center gap-2 w-full h-[30px] px-3 text-[14px] font-bold text-white',
+                'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-bold text-white',
                 'hover:bg-popover-dark-accent transition-colors',
               )}
             >
-              <InboxIcon className="w-4 h-4 text-popover-dark-muted" />
+              <InboxIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-muted" />
               <span className="flex-1 text-left">Inbox</span>
-              {isInbox && <CheckIcon className="w-4 h-4 text-popover-dark-selected" />}
+              {isInbox && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
             </button>
 
             <button
               type="button"
               onClick={handleSelectNoProject}
               className={cn(
-                'flex items-center gap-2 w-full h-[30px] px-3 text-[14px] font-bold text-white',
+                'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-bold text-white',
                 'hover:bg-popover-dark-accent transition-colors',
               )}
             >
-              <XIcon className="w-4 h-4 text-popover-dark-muted" />
+              <XIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-muted" />
               <span className="flex-1 text-left">No Project</span>
-              {!value && areaValue && <CheckIcon className="w-4 h-4 text-popover-dark-selected" />}
+              {!value && areaValue && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
             </button>
 
             <div className="my-1 border-t border-popover-dark-border" />
@@ -222,22 +256,21 @@ export function MovePicker({
                     type="button"
                     onClick={() => handleSelectProject(project.id)}
                     className={cn(
-                      'flex items-center gap-2 w-full h-[30px] px-3 text-[14px] font-semibold text-white',
+                      'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-semibold text-white',
                       'hover:bg-popover-dark-accent transition-colors',
                     )}
                   >
                     <ProjectProgressIcon
                       progress={0}
                       size={14}
-                      className="text-popover-dark-selected"
+                      className="text-popover-dark-selected max-md:scale-125"
                     />
                     <span className="flex-1 text-left truncate">
                       {project.title}
                     </span>
-                    {value === project.id && <CheckIcon className="w-4 h-4 text-popover-dark-selected" />}
+                    {value === project.id && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
                   </button>
                 ))}
-                <div className="my-1 border-t border-popover-dark-border" />
               </>
             )}
 
@@ -251,14 +284,14 @@ export function MovePicker({
                   type="button"
                   onClick={() => handleSelectArea(area.id)}
                   className={cn(
-                    'flex items-center gap-2 w-full h-[30px] px-3 text-[14px] font-extrabold text-white',
+                    'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-extrabold text-white',
                     'hover:bg-popover-dark-accent transition-colors',
                   )}
                 >
-                  <BoxIcon className="w-[14px] h-[14px] text-things-green" />
+                  <BoxIcon className="w-[14px] h-[14px] max-md:w-[18px] max-md:h-[18px] text-things-green" />
                   <span className="flex-1 text-left truncate">{area.title}</span>
                   {!value && areaValue === area.id && (
-                    <CheckIcon className="w-4 h-4 text-popover-dark-selected" />
+                    <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />
                   )}
                 </button>
 
@@ -268,25 +301,26 @@ export function MovePicker({
                     type="button"
                     onClick={() => handleSelectProject(project.id)}
                     className={cn(
-                      'flex items-center gap-2 w-full h-[30px] px-3 text-[14px] font-semibold text-white',
+                      'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-semibold text-white',
                       'hover:bg-popover-dark-accent transition-colors',
                     )}
                   >
                     <ProjectProgressIcon
                       progress={0}
                       size={14}
-                      className="text-popover-dark-selected"
+                      className="text-popover-dark-selected max-md:scale-125"
                     />
                     <span className="flex-1 text-left truncate">
                       {project.title}
                     </span>
-                    {value === project.id && <CheckIcon className="w-4 h-4 text-popover-dark-selected" />}
+                    {value === project.id && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
                   </button>
                 ))}
               </div>
             ))}
           </div>
-        </div>,
+        </div>
+        </>,
         document.body
       )}
     </div>
