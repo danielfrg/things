@@ -13,6 +13,7 @@ import {
   Trash2Icon,
 } from '@/components/icons';
 import { MovePicker } from '@/components/ui/move-picker';
+import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
 import { generateId } from '@/db/schema';
@@ -563,19 +564,16 @@ export function TemplateCard({
       footer={footerContent}
     >
       {/* Notes Section */}
-      <textarea
-        ref={form.notesRef}
-        value={form.notes}
-        onChange={(e) => form.setNotes(e.target.value)}
-        onBlur={form.handleNotesBlur}
-        placeholder="Notes"
-        rows={1}
-        className={cn(
-          'w-full bg-transparent text-[15px] leading-relaxed resize-none',
-          'outline-none border-0 p-0 text-notes',
-          'placeholder:text-muted-foreground',
-        )}
-      />
+      <div className="relative min-h-[26px]">
+        <ProseEditor
+          value={form.notes}
+          onChange={form.setNotes}
+          onBlur={form.handleNotesBlur}
+          placeholder="Notes"
+          isEditing={form.isEditingNotes}
+          onStartEditing={() => form.setIsEditingNotes(true)}
+        />
+      </div>
 
       {/* Checklist Section */}
       <ChecklistEditor

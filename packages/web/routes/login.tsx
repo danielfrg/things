@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useId, useState } from 'react';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { signIn } from '@/lib/auth-client';
+import { signIn, useSession } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -14,6 +14,15 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const emailId = useId();
   const passwordId = useId();
+  const navigate = useNavigate();
+  const { data: session, isPending } = useSession();
+
+  // Redirect to /today if already logged in
+  useEffect(() => {
+    if (!isPending && session) {
+      navigate({ to: '/today' as '/inbox', search: {} as any });
+    }
+  }, [session, isPending, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
