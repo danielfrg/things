@@ -13,9 +13,15 @@ import { useAreas, useProjects, useTasks } from '@/lib/contexts/DataContext';
 
 export const Route = createFileRoute('/someday')({
   component: SomedayView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function SomedayView() {
+  const search = Route.useSearch();
   const { data: allTasks, loading: tasksLoading } = useTasks();
   const { data: allProjects, loading: projectsLoading } = useProjects();
   const { data: areas, loading: areasLoading } = useAreas();
@@ -139,6 +145,7 @@ function SomedayView() {
         loading={loading}
         emptyMessage="No someday tasks. Tasks you might want to do later will appear here."
         uncompleteStatus="someday"
+        initialSelectedTaskId={search.task}
       />
     </ViewContainer>
   );

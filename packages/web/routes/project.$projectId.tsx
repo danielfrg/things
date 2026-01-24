@@ -65,6 +65,11 @@ import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/project/$projectId')({
   component: ProjectView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function EditableText(props: {
@@ -108,6 +113,7 @@ function EditableText(props: {
 
 function ProjectView() {
   const { projectId } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
 
   const { data: allTasks, loading: tasksLoading } = useTasks();
@@ -167,6 +173,14 @@ function ProjectView() {
     string | null
   >(null);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
+
+  // Handle initial task selection from command palette
+  useEffect(() => {
+    if (search.task) {
+      setSelectedTaskId(search.task);
+      setExpandedTaskId(search.task);
+    }
+  }, [search.task]);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,

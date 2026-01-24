@@ -13,9 +13,15 @@ import { useAreas, useProjects, useTasks } from '@/lib/contexts/DataContext';
 
 export const Route = createFileRoute('/anytime')({
   component: AnytimeView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function AnytimeView() {
+  const search = Route.useSearch();
   const { data: allTasks, loading: tasksLoading } = useTasks();
   const { data: allProjects, loading: projectsLoading } = useProjects();
   const { data: areas, loading: areasLoading } = useAreas();
@@ -139,6 +145,7 @@ function AnytimeView() {
         loading={loading}
         emptyMessage="No tasks to do anytime. Tasks without a scheduled date will appear here."
         uncompleteStatus="anytime"
+        initialSelectedTaskId={search.task}
       />
     </ViewContainer>
   );

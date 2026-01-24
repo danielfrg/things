@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarIcon } from '@/components/icons';
 import { ViewContainer } from '@/components/layout/ViewContainer';
 import {
@@ -26,9 +26,15 @@ import { useUpcomingData } from '@/lib/hooks/useUpcomingData';
 
 export const Route = createFileRoute('/upcoming')({
   component: UpcomingView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function UpcomingView() {
+  const search = Route.useSearch();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
@@ -40,6 +46,14 @@ function UpcomingView() {
   const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
     string | null
   >(null);
+
+  // Handle initial task selection from command palette
+  useEffect(() => {
+    if (search.task) {
+      setSelectedTaskId(search.task);
+      setExpandedTaskId(search.task);
+    }
+  }, [search.task]);
 
   const { dayGroups, loading } = useUpcomingData();
   const { data: projects } = useProjects();

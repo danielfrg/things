@@ -79,7 +79,7 @@ function ChecklistCircle({
       onClick={onChange}
       disabled={disabled}
       className={cn(
-        'w-[12px] h-[12px] rounded-full border-[1.5px] flex-shrink-0 transition-colors',
+        'w-[13px] h-[13px] rounded-full border-[1.5px] flex-shrink-0 transition-colors',
         checked
           ? 'bg-things-blue border-things-blue'
           : 'border-things-blue bg-transparent hover:bg-things-blue/10',
@@ -250,10 +250,10 @@ function ChecklistItemRow({
     <div
       ref={rowRef}
       className={cn(
-        'group flex items-center gap-2 relative',
+        'group flex items-center gap-2 relative pt-4 pb-4',
         isInline
           ? cn('h-[30px] px-2 border-border', isFirst && 'border-t', 'border-b')
-          : 'py-1',
+          : 'py-2 md:py-1',
         state.type === 'dragging' &&
           (isInline ? 'opacity-50 bg-secondary' : 'opacity-50'),
       )}
@@ -294,11 +294,11 @@ function ChecklistItemRow({
           'flex-1 bg-transparent outline-none',
           isInline
             ? cn(
-                'text-[13px] text-foreground/80',
+                'text-base md:text-[15px]',
                 isCompleted && 'line-through text-muted-foreground',
               )
             : cn(
-                'text-sm',
+                'text-base md:text-[15px]',
                 isCompleted && 'line-through text-muted-foreground',
               ),
         )}

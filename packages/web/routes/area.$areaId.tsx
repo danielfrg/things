@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GroupedTaskList,
   type TaskGroupsData,
@@ -42,6 +42,11 @@ import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/area/$areaId')({
   component: AreaView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function EditableText(props: {
@@ -85,6 +90,7 @@ function EditableText(props: {
 
 function AreaView() {
   const { areaId } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const areaMenu = createDropdownController();
 
@@ -112,6 +118,14 @@ function AreaView() {
   const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(
     null,
   );
+
+  // Handle initial task selection from command palette
+  useEffect(() => {
+    if (search.task) {
+      setSelectedTaskId(search.task);
+      setExpandedTaskId(search.task);
+    }
+  }, [search.task]);
 
   const area = useMemo(
     () => areas.find((a) => a.id === areaId),
@@ -169,16 +183,6 @@ function AreaView() {
     [tasks, areaId],
   );
 
-  // Upcoming tasks: everything except someday
-  const upcomingTasks = useMemo(() => {
-    return areaTasks.filter((t) => t.status !== 'someday');
-  }, [areaTasks]);
-
-  // Someday tasks
-  const somedayTasks = useMemo(() => {
-    return areaTasks.filter((t) => t.status === 'someday');
-  }, [areaTasks]);
-
   // Area repeating templates
   const areaTemplates = useMemo(
     () =>
@@ -188,32 +192,22 @@ function AreaView() {
     [repeatingRules, areaId],
   );
 
-  // Build board data with sections
+  // Build board data with a single section for area tasks
   const boardData = useMemo((): TaskGroupsData => {
     const sections: TSection[] = [];
 
-    // Upcoming section
-    if (upcomingTasks.length > 0) {
+    // Single section for all area tasks
+    if (areaTasks.length > 0) {
       sections.push({
-        id: 'section:upcoming',
-        title: 'Upcoming',
-        tasks: upcomingTasks,
-        areaId,
-      });
-    }
-
-    // Someday section
-    if (somedayTasks.length > 0) {
-      sections.push({
-        id: 'section:someday',
-        title: 'Someday',
-        tasks: somedayTasks,
+        id: 'section:area-tasks',
+        title: '',
+        tasks: areaTasks,
         areaId,
       });
     }
 
     return { sections };
-  }, [upcomingTasks, somedayTasks, areaId]);
+  }, [areaTasks, areaId]);
 
   // Flatten all tasks for keyboard navigation
   const allTasksFlat = useMemo(() => {
@@ -267,20 +261,24 @@ function AreaView() {
 
   const handleTaskMove = useCallback(
     (info: TaskMoveInfo) => {
-      const { taskId, toSection, newTaskIds } = info;
-      const changes: Record<string, unknown> = {};
+      const { taskId, newTaskIds } = info;
 
-      // Moving between upcoming and someday sections
-      if (toSection.id === 'section:someday') {
-        changes.status = 'someday';
-      } else if (toSection.id === 'section:upcoming') {
-        changes.status = 'anytime';
-      }
-
-      updateTask.mutate({ id: taskId, changes });
+      // Just handle reordering within the area tasks
       reorderTasks.mutate(newTaskIds);
+
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        // Keep task in the area, no section changes needed
+        updateTask.mutate({
+          id: taskId,
+          changes: {
+            areaId,
+            projectId: null,
+          },
+        });
+      }
     },
-    [updateTask, reorderTasks],
+    [reorderTasks, tasks, updateTask, areaId],
   );
 
   const handleTaskUpdate = useCallback(
@@ -360,10 +358,8 @@ function AreaView() {
   ]);
 
   const isReady = !tasksLoading && !areasLoading;
-  const hasUpcoming = upcomingTasks.length > 0 || areaTemplates.length > 0;
-  const hasSomeday = somedayTasks.length > 0;
+  const hasTasks = boardData.sections.length > 0 || areaTemplates.length > 0;
   const hasProjects = areaProjects.length > 0;
-  const hasTasks = boardData.sections.length > 0;
 
   const areaHeader = (
     <header className="px-4 md:px-10 pt-10 pb-6">
@@ -438,9 +434,9 @@ function AreaView() {
           Area not found
         </div>
       ) : (
-        <div className="px-10 pb-10 space-y-10">
+        <div className="space-y-8">
           {/* Task sections using GroupedTaskList */}
-          {hasTasks && (
+          {boardData.sections.length > 0 && (
             <GroupedTaskList
               initial={boardData}
               onComplete={handleTaskComplete}
@@ -462,10 +458,16 @@ function AreaView() {
             />
           )}
 
-          {/* Repeating templates below tasks */}
+          {/* Repeating templates section */}
           {areaTemplates.length > 0 && (
             <section>
-              <div className={cn('space-y-1', hasTasks && 'mt-2')}>
+              <div className="mb-2 space-y-2 px-4 md:px-8">
+                <div className="text-[15px] font-semibold text-muted-foreground">
+                  Repeating
+                </div>
+                <div className="border-b border-border" />
+              </div>
+              <div className="space-y-1">
                 {areaTemplates.map((template) => (
                   <TemplateCard
                     key={template.id}
@@ -488,10 +490,16 @@ function AreaView() {
             </section>
           )}
 
-          {/* Active Projects List - below tasks */}
+          {/* Active Projects List */}
           {hasProjects && (
             <section>
-              <div className="space-y-1">
+              <div className="mb-2 space-y-2 px-4 md:px-8">
+                <div className="text-[15px] font-semibold text-muted-foreground">
+                  Projects
+                </div>
+                <div className="border-b border-border" />
+              </div>
+              <div className="space-y-1 px-4 md:px-10">
                 {areaProjects.map((project) => {
                   const count = getProjectTaskCount(project.id);
                   const progress = getProjectProgress(project.id);
@@ -523,7 +531,7 @@ function AreaView() {
           )}
 
           {/* Empty state */}
-          {!hasProjects && !hasUpcoming && !hasSomeday && (
+          {!hasProjects && !hasTasks && (
             <div className="py-12 text-center text-muted-foreground">
               <p>No projects or tasks in this area yet.</p>
             </div>

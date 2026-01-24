@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { InboxIcon } from '@/components/icons';
 import { ViewContainer } from '@/components/layout/ViewContainer';
 import {
@@ -27,14 +27,28 @@ import { useTaskKeyboardNav } from '@/lib/hooks/useTaskKeyboardNav';
 
 export const Route = createFileRoute('/inbox')({
   component: InboxView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function InboxView() {
+  const search = Route.useSearch();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
     string | null
   >(null);
+
+  // Select task from URL if present
+  useEffect(() => {
+    if (search.task) {
+      setSelectedTaskId(search.task);
+      setExpandedTaskId(search.task);
+    }
+  }, [search.task]);
 
   // Get resources from context
   const { data: tasks, loading: tasksLoading } = useTasks();

@@ -26,6 +26,7 @@ interface SearchResult {
   subtitle?: string;
   icon: () => ReactNode;
   route: string;
+  taskId?: string;
 }
 
 const staticViews: SearchResult[] = [
@@ -197,6 +198,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             <div className="size-4 rounded-full border-2 border-things-blue flex-shrink-0" />
           ),
           route,
+          taskId: task.id,
         };
       });
     results.push(...matchingTasks);
@@ -249,21 +251,26 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }, [searchResults.length, selectedIndex]);
 
   const goToRoute = useCallback(
-    (route: string) => {
+    (route: string, taskId?: string) => {
       if (route.startsWith('/project/')) {
         const projectId = route.replace('/project/', '');
         navigate({
           to: '/project/$projectId' as '/inbox',
           params: { projectId },
+          search: taskId ? { task: taskId } : undefined,
         });
       } else if (route.startsWith('/area/')) {
         const areaId = route.replace('/area/', '');
         navigate({
           to: '/area/$areaId' as '/inbox',
           params: { areaId },
+          search: taskId ? { task: taskId } : undefined,
         });
       } else {
-        navigate({ to: route as '/inbox' });
+        navigate({
+          to: route as '/inbox',
+          search: taskId ? { task: taskId } : undefined,
+        });
       }
     },
     [navigate],
@@ -289,7 +296,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         e.preventDefault();
         const selected = results[selectedIndex];
         if (selected) {
-          goToRoute(selected.route);
+          goToRoute(selected.route, selected.taskId);
           onClose();
         }
         break;
@@ -298,7 +305,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   };
 
   const handleSelect = (result: SearchResult) => {
-    goToRoute(result.route);
+    goToRoute(result.route, result.taskId);
     onClose();
   };
 

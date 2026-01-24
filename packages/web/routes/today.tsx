@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { format, isBefore, isToday, startOfDay } from 'date-fns';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   TaskGroupsData,
   TaskMoveInfo,
@@ -26,9 +26,15 @@ import { parseLocalDate } from '@/lib/utils';
 
 export const Route = createFileRoute('/today')({
   component: TodayView,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      task: (search.task as string) || undefined,
+    };
+  },
 });
 
 function TodayView() {
+  const search = Route.useSearch();
   const { data: tasks, loading: tasksLoading } = useTasks();
   const { data: projects, loading: projectsLoading } = useProjects();
   const { data: areas, loading: areasLoading } = useAreas();
@@ -277,6 +283,7 @@ function TodayView() {
         uncompleteStatus="scheduled"
         hideToday
         onTaskMove={handleTaskMove}
+        initialSelectedTaskId={search.task}
       />
     </ViewContainer>
   );

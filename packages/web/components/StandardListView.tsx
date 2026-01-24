@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GroupedTaskList,
   type TaskGroupsData,
@@ -43,6 +43,8 @@ interface StandardListViewProps {
   onHeadingEdit?: (headingId: string, title: string) => void;
   /** Callback for deleting a heading (project view) */
   onHeadingDelete?: (headingId: string) => void;
+  /** Initial task to select and expand */
+  initialSelectedTaskId?: string;
 }
 
 export function StandardListView({
@@ -58,12 +60,21 @@ export function StandardListView({
   onTaskMove,
   onHeadingEdit,
   onHeadingDelete,
+  initialSelectedTaskId,
 }: StandardListViewProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
     string | null
   >(null);
+
+  // Handle initial task selection from command palette
+  useEffect(() => {
+    if (initialSelectedTaskId) {
+      setSelectedTaskId(initialSelectedTaskId);
+      setExpandedTaskId(initialSelectedTaskId);
+    }
+  }, [initialSelectedTaskId]);
 
   const { data: projects } = useProjects();
   const { data: areas } = useAreas();
