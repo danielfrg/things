@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import {
   FlagIcon,
   InfoIcon,
+  ListChecksIcon,
   RepeatIcon,
   RestoreIcon,
   Trash2Icon,
@@ -14,6 +15,7 @@ import { MovePicker } from '@/components/ui/move-picker';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
+import { generateId } from '@/db/schema';
 import type {
   AreaRecord,
   ChecklistItemRecord,
@@ -22,6 +24,7 @@ import type {
   TaskRecord,
 } from '@/db/validation';
 import {
+  useCreateChecklistItem,
   useDeleteChecklistItem,
   useDeleteRepeatingRule,
   useRepeatingRules,
@@ -324,6 +327,7 @@ export function TaskCard({
   const repeatingRulesResource = useRepeatingRules();
   const deleteRepeatingRule = useDeleteRepeatingRule();
   const deleteChecklistItem = useDeleteChecklistItem();
+  const createChecklistItem = useCreateChecklistItem();
   const repeatingRules = useMemo(
     () => repeatingRulesResource.data,
     [repeatingRulesResource.data],
@@ -382,6 +386,16 @@ export function TaskCard({
     },
     [task.id, onUpdate],
   );
+
+  const handleAddChecklist = useCallback(() => {
+    createChecklistItem.mutate({
+      id: generateId(),
+      taskId: task.id,
+      title: '',
+      completed: false,
+      position: 1,
+    });
+  }, [task.id, createChecklistItem]);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -612,7 +626,20 @@ export function TaskCard({
           placeholder="Move"
           disabled={isCompleted}
           className={toolbarBtnClass}
+          isInbox={task.status === 'inbox'}
         />
+      )}
+
+      {/* Add checklist button - only show if no checklist items exist */}
+      {!isCompleted && checklistItems.length === 0 && (
+        <button
+          type="button"
+          onClick={handleAddChecklist}
+          className={toolbarBtnClass}
+        >
+          <ListChecksIcon className="h-3.5 w-3.5 opacity-70" />
+          <span>Checklist</span>
+        </button>
       )}
 
       {/* Tags picker */}
@@ -723,7 +750,7 @@ export function TaskCard({
           )
         }
       >
-        {/* Floating date picker - shown to the left when CTRL+S is pressed */}
+        {/* Floating date picker - shown below task when CTRL+S is pressed */}
         {!expanded &&
           scheduleDatePickerOpen &&
           cardRef.current &&
@@ -741,16 +768,20 @@ export function TaskCard({
               <div
                 data-popover
                 className="fixed z-50 shadow-lg inset-0 flex items-center justify-center md:inset-auto"
-                style={{
-                  top:
-                    window.innerWidth >= 768
-                      ? `${cardRef.current.getBoundingClientRect().top}px`
-                      : undefined,
-                  right:
-                    window.innerWidth >= 768
-                      ? `${window.innerWidth - cardRef.current.getBoundingClientRect().left + 16}px`
-                      : undefined,
-                }}
+                style={(() => {
+                  if (window.innerWidth < 768) return {};
+                  const rect = cardRef.current!.getBoundingClientRect();
+                  const popoverHeight = 400;
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  const showAbove =
+                    spaceBelow < popoverHeight && rect.top > spaceBelow;
+                  return {
+                    left: `${rect.left}px`,
+                    ...(showAbove
+                      ? { bottom: `${window.innerHeight - rect.top + 8}px` }
+                      : { top: `${rect.bottom + 8}px` }),
+                  };
+                })()}
               >
                 <CalendarPopover
                   value={task.scheduledDate ?? undefined}

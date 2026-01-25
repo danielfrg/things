@@ -250,7 +250,7 @@ function ChecklistItemRow({
     <div
       ref={rowRef}
       className={cn(
-        'group flex items-center gap-2 relative pt-4 pb-4',
+        'group flex items-center gap-2 relative',
         isInline
           ? cn('h-[30px] px-2 border-border', isFirst && 'border-t', 'border-b')
           : 'py-2 md:py-1',
@@ -592,28 +592,6 @@ export function ChecklistEditor({
     inputRefs.current.set(itemId, el);
   }, []);
 
-  // Add first checklist item when user clicks placeholder (inline variant)
-  const handleAddFirstItem = useCallback(() => {
-    const newId = generateId();
-
-    if (isControlled && onChange) {
-      onChange([{ id: newId, title: '', completed: false, position: 1 }]);
-    } else if (taskId) {
-      createItem.mutate({
-        id: newId,
-        taskId,
-        title: '',
-        completed: false,
-        position: 1,
-      });
-    }
-
-    setTimeout(() => {
-      const newInput = inputRefs.current.get(newId);
-      if (newInput) newInput.focus();
-    }, 50);
-  }, [isControlled, onChange, taskId, createItem]);
-
   // Auto-create first item for default variant
   useEffect(() => {
     if (variant === 'default' && items.length === 0 && !disabled) {
@@ -648,18 +626,9 @@ export function ChecklistEditor({
     ) : null;
   }
 
-  // Show "Add item" button for inline variant when empty
+  // Return null for inline variant when empty (button is in toolbar now)
   if (sortedItems.length === 0 && variant === 'inline') {
-    return (
-      <button
-        type="button"
-        onClick={handleAddFirstItem}
-        className="my-4 flex items-center gap-2 h-[30px] px-2 text-[13px] text-muted-foreground hover:text-foreground/80 transition-colors"
-      >
-        <div className="w-[12px] h-[12px] rounded-full border-[1.5px] border-border flex-shrink-0" />
-        <span>Add checklist item...</span>
-      </button>
-    );
+    return null;
   }
 
   return (

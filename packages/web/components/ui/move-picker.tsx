@@ -30,6 +30,8 @@ interface MovePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Whether the task is actually in the Inbox (status === 'inbox') */
+  isInbox?: boolean;
 }
 
 export function MovePicker({
@@ -41,6 +43,7 @@ export function MovePicker({
   placeholder,
   disabled,
   className,
+  isInbox: isInboxProp,
 }: MovePickerProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -96,7 +99,7 @@ export function MovePicker({
     [areas, projects]
   );
 
-  const isInbox = !value && !areaValue;
+  const isInbox = isInboxProp ?? false;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -243,7 +246,7 @@ export function MovePicker({
             >
               <XIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-muted" />
               <span className="flex-1 text-left">No Project</span>
-              {!value && areaValue && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
+              {!value && !isInbox && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
             </button>
 
             <div className="my-1 border-t border-popover-dark-border" />

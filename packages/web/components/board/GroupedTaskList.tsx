@@ -322,7 +322,21 @@ export function GroupedTaskList({
   }, [data, onReorder, onMoveTask]);
 
   return (
-    <div className="h-full overflow-y-auto" ref={scrollableRef}>
+    <div
+      className="h-full overflow-y-auto"
+      ref={scrollableRef}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (
+          target.closest(
+            '[data-task-row], [data-task-detail-card], [data-popover], button, input, textarea, a',
+          )
+        ) {
+          return;
+        }
+        onSelect(null);
+      }}
+    >
       <div className="py-2">
         {data.sections.map((section) => (
           <TaskSection

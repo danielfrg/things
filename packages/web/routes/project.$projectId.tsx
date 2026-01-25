@@ -174,6 +174,13 @@ function ProjectView() {
   >(null);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  );
+  const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(
+    null,
+  );
+
   // Handle initial task selection from command palette
   useEffect(() => {
     if (search.task) {
@@ -181,13 +188,6 @@ function ProjectView() {
       setExpandedTaskId(search.task);
     }
   }, [search.task]);
-
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
-    null,
-  );
-  const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(
-    null,
-  );
 
   const projectTemplates = useMemo(
     () =>
