@@ -7,6 +7,9 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig({
   ssr: { external: ['drizzle-orm'] },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || 'dev'),
+  },
   plugins: [
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],

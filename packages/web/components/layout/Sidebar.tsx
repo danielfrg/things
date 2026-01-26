@@ -10,9 +10,8 @@ import {
   InboxIcon,
   LayersIcon,
   PlusIcon,
-  SettingsIcon,
+  Settings2Icon,
   SomedayIcon,
-  TagIcon,
   TodayStarIcon,
   Trash2Icon,
 } from '@/components/icons';
@@ -1538,14 +1537,6 @@ export function Sidebar() {
           </Link>
 
           <Link
-            to={'/tags' as any}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Tags"
-          >
-            <TagIcon className="w-5 h-5" />
-          </Link>
-
-          <Link
             to={'/trash' as any}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
             aria-label="Trash"
@@ -1554,11 +1545,11 @@ export function Sidebar() {
           </Link>
 
           <Link
-            to={'/admin' as any}
+            to={'/settings' as any}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Admin"
+            aria-label="Settings"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <Settings2Icon className="w-5 h-5" />
           </Link>
         </div>
       </div>

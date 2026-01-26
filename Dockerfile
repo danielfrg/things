@@ -2,6 +2,8 @@
 FROM oven/bun:debian AS builder
 WORKDIR /app
 
+ARG APP_VERSION=dev
+
 # Copy package files first for layer caching
 COPY package.json bun.lock tsconfig.json ./
 COPY packages/web/package.json ./packages/web/
@@ -12,7 +14,8 @@ RUN bun install
 # Copy source code
 COPY packages/web/ ./packages/web/
 
-# Build the app
+# Build the app with version
+ENV APP_VERSION=$APP_VERSION
 RUN bun run --filter @things/web build
 
 # Stage 2: Serve
