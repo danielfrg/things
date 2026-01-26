@@ -11,7 +11,9 @@
     "db:clean": "bun run scripts/clean.ts",
     "db:seed": "bun run scripts/seed.ts",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "bunx --bun drizzle-kit push",
+    "db:migrate": "bun run scripts/migrate.ts",
+    "db:migrate-drizzle": "bunx --bun drizzle-kit migrate"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",

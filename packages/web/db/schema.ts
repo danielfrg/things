@@ -197,6 +197,9 @@ export const headings = sqliteTable('headings', {
     .references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   position: real('position').notNull().default(0),
+  isBacklog: integer('is_backlog', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   projectId: text('project_id')
     .notNull()
     .references(() => projects.id, { onDelete: 'cascade' }),

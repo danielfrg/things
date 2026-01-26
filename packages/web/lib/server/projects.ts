@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { projects } from '@/db/schema';
+import { headings, projects } from '@/db/schema';
 import type {
   InsertProject,
   ProjectRecord,
@@ -45,6 +45,14 @@ export const createProject = createServerFn({ method: 'POST' })
       .insert(projects)
       .values({ ...data, userId })
       .returning();
+    // Auto-create backlog heading for the new project
+    await db.insert(headings).values({
+      userId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+      projectId: project.id,
+    });
     return { project, txid: Date.now() };
   });
 

@@ -17,6 +17,7 @@ import {
   BoxIcon,
   EveningIcon,
   MoreHorizontalIcon,
+  SomedayIcon,
   Trash2Icon,
 } from '@/components/icons';
 import { TaskCard } from '@/components/tasks/TaskCard';
@@ -136,6 +137,7 @@ const TaskList = memo(function TaskList({
         onTagRemove={onTagRemove}
         projects={projects}
         areas={areas}
+        headingId={section.headingId}
         projectId={section.projectId}
         isEvening={section.isEvening}
         showProjectInfo={section.isEvening}
@@ -352,6 +354,9 @@ export function TaskSection({
   const isEditableHeading =
     section.headingId && onHeadingEdit && onHeadingDelete;
 
+  // Backlog heading can be edited but not deleted
+  const canDeleteHeading = isEditableHeading && !section.isBacklog;
+
   const handleHeadingBlur = () => {
     if (!section.headingId || !onHeadingEdit) return;
     const trimmed = editValue.trim();
@@ -379,7 +384,9 @@ export function TaskSection({
         <div className="space-y-2 group mb-2 px-4 md:px-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-1">
-              <span className="w-[18px] shrink-0" />
+              <span className="w-[18px] shrink-0 flex items-center justify-center">
+                {section.isBacklog && <SomedayIcon className="w-4 h-4" />}
+              </span>
               <input
                 ref={inputRef}
                 type="text"
@@ -390,34 +397,36 @@ export function TaskSection({
                 className="flex-1 bg-transparent text-lg md:text-[15px] font-semibold text-things-blue outline-none border-0 p-0"
               />
             </div>
-            <div className="relative">
-              <button
-                type="button"
-                className="p-1 text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => menu.toggleFromEvent(e)}
-              >
-                <MoreHorizontalIcon className="w-4 h-4" />
-              </button>
-              <DropdownMenuContent
-                open={menu.open}
-                onClose={menu.close}
-                anchorRect={menu.anchorRect}
-                align="end"
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (section.headingId && onHeadingDelete) {
-                      onHeadingDelete(section.headingId);
-                    }
-                    menu.close();
-                  }}
-                  className="text-destructive"
+            {canDeleteHeading && (
+              <div className="relative">
+                <button
+                  type="button"
+                  className="p-1 text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => menu.toggleFromEvent(e)}
                 >
-                  <Trash2Icon className="w-4 h-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </div>
+                  <MoreHorizontalIcon className="w-4 h-4" />
+                </button>
+                <DropdownMenuContent
+                  open={menu.open}
+                  onClose={menu.close}
+                  anchorRect={menu.anchorRect}
+                  align="end"
+                >
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (section.headingId && onHeadingDelete) {
+                        onHeadingDelete(section.headingId);
+                      }
+                      menu.close();
+                    }}
+                    className="text-destructive"
+                  >
+                    <Trash2Icon className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </div>
+            )}
           </div>
           <div className="border-b border-border" />
         </div>

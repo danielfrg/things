@@ -144,12 +144,24 @@ function ProjectView() {
     [allProjects],
   );
 
-  const headings = useMemo(
+  const allProjectHeadings = useMemo(
     () =>
       allHeadings
         .filter((h) => h.projectId === projectId)
         .sort((a, b) => a.position - b.position),
     [allHeadings, projectId],
+  );
+
+  // Separate backlog heading from regular headings
+  const backlogHeading = useMemo(
+    () => allProjectHeadings.find((h) => h.isBacklog),
+    [allProjectHeadings],
+  );
+
+  // Regular headings (non-backlog), sorted by position
+  const headings = useMemo(
+    () => allProjectHeadings.filter((h) => !h.isBacklog),
+    [allProjectHeadings],
   );
 
   const projectNotesRef = useRef<HTMLTextAreaElement>(null);
@@ -262,6 +274,7 @@ function ProjectView() {
     [projectTasks],
   );
 
+  // Backlog tasks are those with status === 'someday' (and should have headingId === backlogHeading.id after migration)
   const backlogTasks = useMemo(
     () =>
       projectTasks
@@ -296,7 +309,7 @@ function ProjectView() {
       });
     }
 
-    // 2. Each heading's tasks
+    // 2. Each heading's tasks (non-backlog headings)
     for (const heading of headings) {
       const headingTasks = filterByTag(getTasksForHeading(heading.id));
       sections.push({
@@ -308,14 +321,16 @@ function ProjectView() {
       });
     }
 
-    // 3. Backlog tasks
-    const filteredBacklog = filterByTag(backlogTasks);
-    if (filteredBacklog.length > 0 || headings.length > 0) {
+    // 3. Backlog section (always appears, using real backlog heading)
+    if (backlogHeading) {
+      const filteredBacklog = filterByTag(backlogTasks);
       sections.push({
-        id: 'section:backlog',
-        title: 'Backlog',
+        id: `section:heading:${backlogHeading.id}`,
+        title: backlogHeading.title,
         tasks: filteredBacklog,
         projectId,
+        headingId: backlogHeading.id,
+        isBacklog: true,
       });
     }
 
@@ -337,6 +352,7 @@ function ProjectView() {
     headings,
     getTasksForHeading,
     backlogTasks,
+    backlogHeading,
     completedTodayTasks,
     filterByTag,
     projectId,
@@ -435,8 +451,9 @@ function ProjectView() {
       const changes: Record<string, unknown> = {};
 
       // Determine destination based on section
-      if (toSection.id === 'section:backlog') {
-        changes.headingId = null;
+      if (toSection.isBacklog && toSection.headingId) {
+        // Moving to backlog heading
+        changes.headingId = toSection.headingId;
         changes.status = 'someday';
       } else if (toSection.id === 'section:unheaded') {
         // Moving to unheaded section - ensure not someday
@@ -447,7 +464,7 @@ function ProjectView() {
           changes.status = 'anytime';
         }
       } else if (toSection.headingId) {
-        // Moving to a heading section
+        // Moving to a regular heading section
         const task = allTasks.find((t) => t.id === taskId);
         const needsStatusChange = task?.status === 'someday';
         changes.headingId = toSection.headingId;
@@ -603,7 +620,7 @@ function ProjectView() {
                 }}
                 placeholder="Notes"
                 rows={1}
-                className="w-full h-full max-w-[300px] bg-transparent text-[15px] text-notes leading-relaxed resize-none overflow-hidden outline-none border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-muted-foreground"
+                className="w-full h-[24px] max-w-[300px] bg-transparent text-[15px] text-notes leading-relaxed resize-none overflow-hidden outline-none border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-muted-foreground"
               />
             </div>
 

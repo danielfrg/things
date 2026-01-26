@@ -25,6 +25,8 @@ export type TSection = {
   isCompleted?: boolean;
   /** Heading ID if this is a heading section (for project view) */
   headingId?: string;
+  /** Whether this is the backlog heading (cannot be deleted) */
+  isBacklog?: boolean;
   /** Date string for date-based sections (for upcoming view) */
   dateStr?: string;
 };

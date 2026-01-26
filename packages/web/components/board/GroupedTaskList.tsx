@@ -152,15 +152,15 @@ export function GroupedTaskList({
               // Find destination section based on drop target properties
               const destinationSectionIndex = data.sections.findIndex(
                 (section) => {
-                  if (
-                    dropTargetData.projectId &&
-                    section.projectId === dropTargetData.projectId
-                  ) {
-                    return true;
+                  // First, try to match by headingId (most specific)
+                  if (dropTargetData.headingId !== undefined) {
+                    return section.headingId === dropTargetData.headingId;
                   }
+                  // Match evening sections
                   if (dropTargetData.isEvening && section.isEvening) {
                     return true;
                   }
+                  // Fall back to finding the section containing the drop target task
                   return section.tasks.some(
                     (t) => t.id === dropTargetData.task.id,
                   );

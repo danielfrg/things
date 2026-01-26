@@ -64,6 +64,14 @@ export const deleteHeading = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const userId = await getUserId();
+    // Check if this is a backlog heading - cannot be deleted
+    const [existing] = await db
+      .select()
+      .from(headings)
+      .where(and(eq(headings.id, data.id), eq(headings.userId, userId)));
+    if (existing?.isBacklog) {
+      throw new Error('Cannot delete backlog heading');
+    }
     await db
       .delete(headings)
       .where(and(eq(headings.id, data.id), eq(headings.userId, userId)));
