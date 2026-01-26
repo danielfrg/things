@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { signIn, useSession } from '@/lib/auth-client';
@@ -14,15 +14,15 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const emailId = useId();
   const passwordId = useId();
-  const navigate = useNavigate();
   const { data: session, isPending } = useSession();
 
   // Redirect to /today if already logged in
+  // Use full page reload to ensure root loader runs with proper context
   useEffect(() => {
     if (!isPending && session) {
-      navigate({ to: '/today' as '/inbox', search: {} as any });
+      window.location.href = '/today';
     }
-  }, [session, isPending, navigate]);
+  }, [session, isPending]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
