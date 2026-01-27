@@ -269,7 +269,7 @@ function AreaHeader(props: AreaHeaderProps) {
       className="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
       onClick={handleClick}
     >
-      <BoxIcon className="w-4 h-4 md:w-3.5 md:h-3.5 text-muted-foreground" />
+      <BoxIcon className="w-4 h-4 text-muted-foreground" />
       <span className="truncate">{props.title}</span>
     </button>
   );
@@ -828,8 +828,9 @@ function ProjectItem(props: ProjectItemProps) {
         >
           <ProjectProgressIcon
             progress={props.progress}
-            size={14}
-            className="text-muted-foreground md:w-[14px] md:h-[14px] w-4 h-4"
+            size={16}
+            variant="sidebar"
+            className="text-project-progress"
           />
           <span className="flex-1 truncate text-sidebar-foreground">
             {props.label}
@@ -852,8 +853,9 @@ function ProjectItem(props: ProjectItemProps) {
           >
             <ProjectProgressIcon
               progress={props.progress}
-              size={14}
-              className="text-muted-foreground"
+              size={16}
+              variant="sidebar"
+              className="text-project-progress"
             />
             <span className="flex-1 truncate text-sidebar-foreground">
               {props.label}
@@ -1352,7 +1354,7 @@ export function AppSidebar() {
   }, []);
 
   return (
-    <aside className="w-full md:w-64 bg-white md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
+    <aside className="w-full md:w-64 bg-background md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
       <div className="h-8 flex-shrink-0" />
 
       <div className="flex-1 min-h-0 overflow-auto">

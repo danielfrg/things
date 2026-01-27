@@ -50,9 +50,9 @@ export function ItemDetailLayout({
           ref={cardRef}
           {...dataAttr}
           className={cn(
-            'md:rounded-xl bg-background transition-all duration-300 ease-in-out',
+            'md:rounded-xl transition-all duration-300 ease-in-out',
             expanded
-              ? 'border-y md:border border-border shadow-sm'
+              ? 'border-y md:border border-border dark:border-transparent shadow-sm bg-card-expanded'
               : 'border border-transparent select-none',
           )}
           onDoubleClick={onDoubleClick}

@@ -14,6 +14,7 @@ import {
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
+
 import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
 import {
@@ -74,6 +75,9 @@ function AreaView() {
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
+    string | null
+  >(null);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
@@ -139,6 +143,21 @@ function AreaView() {
         .filter((t) => {
           if (t.trashedAt) return false;
           if (t.status === 'completed') return false;
+          if (t.status === 'someday') return false;
+          if (t.projectId) return false;
+          return t.areaId === areaId;
+        })
+        .sort((a, b) => a.position - b.position),
+    [tasks, areaId],
+  );
+
+  // Someday tasks directly in the area (not in a project)
+  const somedayTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => {
+          if (t.trashedAt) return false;
+          if (t.status !== 'someday') return false;
           if (t.projectId) return false;
           return t.areaId === areaId;
         })
@@ -169,8 +188,19 @@ function AreaView() {
       });
     }
 
+    // Someday section
+    if (somedayTasks.length > 0 || areaTasks.length > 0) {
+      sections.push({
+        id: 'section:someday',
+        title: 'Someday',
+        tasks: somedayTasks,
+        areaId,
+        isBacklog: true,
+      });
+    }
+
     return { sections };
-  }, [areaTasks, areaId]);
+  }, [areaTasks, somedayTasks, areaId]);
 
   // Flatten all tasks for keyboard navigation
   const allTasksFlat = useMemo(() => {
@@ -202,6 +232,30 @@ function AreaView() {
     },
   });
 
+  // Ctrl+S to open schedule date picker
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (selectedTaskId && !expandedTaskId) {
+          setScheduleDatePickerTaskId(selectedTaskId);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedTaskId, expandedTaskId]);
+
+  // Close date picker when task is expanded
+  useEffect(() => {
+    setScheduleDatePickerTaskId(null);
+  }, [expandedTaskId]);
+
+  // Close date picker when selection changes
+  useEffect(() => {
+    setScheduleDatePickerTaskId(null);
+  }, [selectedTaskId]);
+
   const handleTaskComplete = useCallback(
     (taskId: string, completed: boolean) => {
       updateTask.mutate({
@@ -224,22 +278,26 @@ function AreaView() {
 
   const handleTaskMove = useCallback(
     (info: TaskMoveInfo) => {
-      const { taskId, newTaskIds } = info;
+      const { taskId, toSection, newTaskIds } = info;
+      const changes: Record<string, unknown> = {
+        areaId,
+        projectId: null,
+      };
 
-      // Just handle reordering within the area tasks
-      reorderTasks.mutate(newTaskIds);
-
-      const task = tasks.find((t) => t.id === taskId);
-      if (task) {
-        // Keep task in the area, no section changes needed
-        updateTask.mutate({
-          id: taskId,
-          changes: {
-            areaId,
-            projectId: null,
-          },
-        });
+      // Handle status change based on destination section
+      if (toSection.isBacklog) {
+        // Moving to someday section
+        changes.status = 'someday';
+      } else {
+        // Moving to regular area tasks section
+        const task = tasks.find((t) => t.id === taskId);
+        if (task?.status === 'someday') {
+          changes.status = 'anytime';
+        }
       }
+
+      updateTask.mutate({ id: taskId, changes });
+      reorderTasks.mutate(newTaskIds);
     },
     [reorderTasks, tasks, updateTask, areaId],
   );
@@ -402,6 +460,10 @@ function AreaView() {
               onTagRemove={handleTagRemove}
               selectedTaskId={selectedTaskId}
               expandedTaskId={expandedTaskId}
+              scheduleDatePickerTaskId={scheduleDatePickerTaskId}
+              onScheduleDatePickerClose={() =>
+                setScheduleDatePickerTaskId(null)
+              }
               projects={activeProjects}
               areas={areas}
               checklistItems={checklistItems}
@@ -414,7 +476,7 @@ function AreaView() {
           {areaTemplates.length > 0 && (
             <section>
               <div className="mb-2 space-y-2 px-4 md:px-8">
-                <div className="text-[15px] font-semibold text-muted-foreground">
+                <div className="text-[15px] font-bold text-things-blue">
                   Repeating
                 </div>
                 <div className="border-b border-border" />
@@ -446,7 +508,7 @@ function AreaView() {
           {hasProjects && (
             <section>
               <div className="mb-2 space-y-2 px-4 md:px-8">
-                <div className="text-[15px] font-semibold text-muted-foreground">
+                <div className="text-[15px] font-semibold text-things-blue">
                   Projects
                 </div>
                 <div className="border-b border-border" />
@@ -465,6 +527,7 @@ function AreaView() {
                       <ProjectProgressIcon
                         progress={progress}
                         size={16}
+                        variant="sidebar"
                         className="text-things-blue shrink-0"
                       />
                       <span className="text-[15px] font-semibold text-foreground">

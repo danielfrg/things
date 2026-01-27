@@ -497,7 +497,7 @@ function ProjectView() {
 
   const projectHeader = (
     <>
-      <header className="px-4 md:px-20 pt-8 pb-4">
+      <header className="px-4 md:px-24 pt-8 pb-4">
         {project ? (
           <>
             <div className="flex items-center gap-3 px-2">
@@ -525,10 +525,7 @@ function ProjectView() {
                     <CheckCircleIcon className="w-4 h-4 mr-2" />
                     Complete Project
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleDeleteProject}
-                    className="text-destructive"
-                  >
+                  <DropdownMenuItem onClick={handleDeleteProject}>
                     <Trash2Icon className="w-4 h-4 mr-2" />
                     Delete Project
                   </DropdownMenuItem>

@@ -52,6 +52,7 @@ function SomedayView() {
         emptyMessage="No someday tasks. Tasks you might want to do later will appear here."
         uncompleteStatus="someday"
         initialSelectedTaskId={search.task}
+        showProjectLink
       />
     </ViewContainer>
   );

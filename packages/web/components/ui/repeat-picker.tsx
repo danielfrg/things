@@ -292,7 +292,7 @@ export function RepeatPicker({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[280px] max-md:w-[calc(100vw-32px)] p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto bg-popover-dark border-0 shadow-xl ring-0 gap-0"
+        className="w-[280px] max-md:w-[calc(100vw-32px)] p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto bg-popover-dark border border-popover-dark-border shadow-xl ring-0 gap-0"
         align="start"
         sideOffset={4}
       >

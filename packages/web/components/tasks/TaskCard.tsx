@@ -279,6 +279,28 @@ export function TaskCard({
     });
   }, [addChange]);
 
+  // Immediate date change for hotkey picker (ctrl+s when collapsed)
+  const handleHotkeyDateChange = useCallback(
+    (date: string | undefined, isEveningValue?: boolean) => {
+      onUpdate(task.id, {
+        scheduledDate: date ?? null,
+        status: date ? 'scheduled' : 'anytime',
+        isEvening: isEveningValue ?? false,
+      });
+      onScheduleDatePickerClose?.();
+    },
+    [onUpdate, task.id, onScheduleDatePickerClose],
+  );
+
+  const handleHotkeySomedaySelect = useCallback(() => {
+    onUpdate(task.id, {
+      scheduledDate: null,
+      status: 'someday',
+      isEvening: false,
+    });
+    onScheduleDatePickerClose?.();
+  }, [onUpdate, task.id, onScheduleDatePickerClose]);
+
   const handleDeadlineChange = useCallback(
     (date: string | undefined) => {
       addChange({
@@ -690,8 +712,8 @@ export function TaskCard({
         >
           <CalendarPopover
             value={task.scheduledDate ?? undefined}
-            onChange={handleScheduledDateChange}
-            onSomedaySelect={handleSomedaySelect}
+            onChange={handleHotkeyDateChange}
+            onSomedaySelect={handleHotkeySomedaySelect}
             isSomeday={isSomeday}
             showSomeday
             showEvening

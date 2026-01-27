@@ -42,8 +42,8 @@ function InboxView() {
   return (
     <ViewContainer
       title="Inbox"
-      icon={<InboxIcon className="w-6 h-6 text-things-blue" />}
-      iconColor="text-things-blue"
+      icon={<InboxIcon className="w-6 h-6 text-[#1aadf8]" />}
+      iconColor="text-[#1aadf8]"
       toolbar={
         <ViewToolbar>
           <NewTaskButton />

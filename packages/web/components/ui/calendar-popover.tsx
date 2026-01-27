@@ -88,7 +88,7 @@ export function CalendarPopover({
   }, [selectedDate]);
 
   return (
-    <div className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden">
+    <div className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark border border-popover-dark-border p-2.5 max-md:p-4 overflow-hidden">
       {/* Header with title */}
       <div className="flex items-center justify-center relative mb-2 max-md:mb-4">
         <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">

@@ -12,14 +12,14 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         secondary: "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive: "bg-destructive/10 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20",
-        outline: "border-border text-muted-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+        outline: "border-task-inline text-task-inline [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-5 px-2 py-0.5 text-xs rounded-4xl has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:size-3!",
         sm: "h-auto px-1.5 py-0.5 text-[11px] rounded [&>svg]:size-3",
-        xs: "h-auto px-1.5 py-0.5 text-[10px] rounded [&>svg]:size-2.5",
+        xs: "h-auto px-1.5 py-0.5 text-[10px] rounded-full [&>svg]:size-2.5",
       },
     },
     defaultVariants: {

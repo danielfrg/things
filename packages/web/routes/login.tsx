@@ -50,6 +50,11 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 p-6">
         <div className="space-y-2 text-center">
+          <img
+            src="/apple-touch-icon.png"
+            alt="Things"
+            className="w-16 h-16 mx-auto rounded-xl"
+          />
           <h1 className="text-2xl font-semibold tracking-tight">Things</h1>
           <p className="text-sm text-muted-foreground">
             Sign in to your account
@@ -94,7 +99,7 @@ function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <Link to="/register" className="text-primary hover:underline">
+          <Link to="/register" className="text-things-blue hover:underline">
             Sign up
           </Link>
         </p>

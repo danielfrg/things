@@ -8,6 +8,7 @@ import {
 import { type ReactNode, useEffect } from 'react';
 
 import { AppLayout } from '@/components/layout/AppLayout';
+import { useTheme } from '@/lib/hooks/useTheme';
 import { getAreas } from '@/lib/server/areas';
 import { getSession } from '@/lib/server/auth';
 import { getChecklistItems } from '@/lib/server/checklistItems';
@@ -66,6 +67,11 @@ export const Route = createRootRoute({
       {
         rel: 'apple-touch-icon',
         href: '/apple-touch-icon.png',
+      },
+    ],
+    scripts: [
+      {
+        children: `(function(){try{var t=localStorage.getItem('things-theme')||'system';var d=t==='system'?window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light':t;if(d==='dark')document.documentElement.classList.add('dark')}catch(e){}})()`,
       },
     ],
   }),
@@ -208,6 +214,9 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  // Initialize theme from localStorage/system preference
+  useTheme();
+
   // Remove hydrating class once JS is loaded
   useEffect(() => {
     document.body.classList.remove('hydrating');

@@ -377,7 +377,7 @@ export function TemplateCard({
 
       {/* Next occurrence - only shown when collapsed */}
       {!expanded && showNextDate && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs font-bold bg-scheduled-badge-bg text-scheduled-badge-text px-1.5 py-0.5 rounded">
           {format(parseLocalDate(template.nextOccurrence), 'MMM d')}
         </span>
       )}

@@ -52,6 +52,7 @@ function AnytimeView() {
         emptyMessage="No tasks to do anytime. Tasks without a scheduled date will appear here."
         uncompleteStatus="anytime"
         initialSelectedTaskId={search.task}
+        showProjectLink
       />
     </ViewContainer>
   );

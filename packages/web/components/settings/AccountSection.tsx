@@ -1,16 +1,39 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Check, LogOut, Pencil, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  LogOut,
+  Monitor,
+  Moon,
+  Pencil,
+  Sun,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { signOut, useSession } from '@/lib/auth-client';
+import { type Theme, useTheme } from '@/lib/hooks/useTheme';
 import { updateEmailFn, updatePasswordFn } from '@/lib/server/auth';
+
+const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+];
 
 export function AccountSection() {
   const { data: session, refetch } = useSession();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -36,6 +59,40 @@ export function AccountSection() {
 
         {/* Password Row */}
         <PasswordRow />
+
+        {/* Theme Row */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+          <span className="text-sm font-medium text-foreground">Theme</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              {(() => {
+                const current = themeOptions.find((o) => o.value === theme);
+                if (!current) return null;
+                return (
+                  <>
+                    <current.icon className="h-4 w-4" />
+                    {current.label}
+                    <ChevronDown className="h-4 w-4" />
+                  </>
+                );
+              })()}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {themeOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setTheme(option.value)}
+                >
+                  <option.icon className="h-4 w-4" />
+                  {option.label}
+                  {theme === option.value && (
+                    <Check className="h-4 w-4 ml-auto" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Sign Out Row */}
         <div className="flex items-center justify-between px-4 py-4">
@@ -112,12 +169,16 @@ function EmailRow({
   return (
     <div className="flex items-center justify-between px-4 py-4 border-b border-border">
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm font-medium text-foreground shrink-0">Email</span>
+        <span className="text-sm font-medium text-foreground shrink-0">
+          Email
+        </span>
         {status === 'success' && (
           <span className="text-xs text-green-600 shrink-0">Saved</span>
         )}
         {status === 'error' && (
-          <span className="text-xs text-destructive truncate">{errorMessage}</span>
+          <span className="text-xs text-destructive truncate">
+            {errorMessage}
+          </span>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -234,12 +295,16 @@ function PasswordRow() {
   return (
     <div className="flex items-center justify-between px-4 py-4 border-b border-border">
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm font-medium text-foreground shrink-0">Password</span>
+        <span className="text-sm font-medium text-foreground shrink-0">
+          Password
+        </span>
         {status === 'success' && (
           <span className="text-xs text-green-600 shrink-0">Saved</span>
         )}
         {status === 'error' && (
-          <span className="text-xs text-destructive truncate">{errorMessage}</span>
+          <span className="text-xs text-destructive truncate">
+            {errorMessage}
+          </span>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -263,9 +328,7 @@ function PasswordRow() {
               autoFocus
             />
           ) : (
-            <span className="text-sm text-muted-foreground">
-              ••••••••
-            </span>
+            <span className="text-sm text-muted-foreground">••••••••</span>
           )}
         </div>
         <div className="flex items-center gap-1 w-[62px] justify-end">

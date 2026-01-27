@@ -1,9 +1,16 @@
-import { format, isPast, isToday, isTomorrow, startOfDay } from 'date-fns';
+import {
+  format,
+  isPast,
+  isThisWeek,
+  isToday,
+  isTomorrow,
+  startOfDay,
+} from 'date-fns';
 import { parseLocalDate } from '@/lib/utils';
 
 /**
  * Format a date string for display in task metadata.
- * Returns 'Today', 'Tomorrow', or 'MMM d' format.
+ * Returns 'Today', 'Tmrw', day of week for this week, or 'Jan 30' format.
  */
 export function formatTaskDate(
   dateStr: string | null | undefined,
@@ -11,8 +18,9 @@ export function formatTaskDate(
   if (!dateStr) return null;
   const date = parseLocalDate(dateStr);
   if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'MMM d').toUpperCase();
+  if (isTomorrow(date)) return 'Tmrw';
+  if (isThisWeek(date, { weekStartsOn: 1 })) return format(date, 'EEE');
+  return format(date, 'MMM d');
 }
 
 /**

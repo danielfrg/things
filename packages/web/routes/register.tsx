@@ -44,6 +44,11 @@ function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 p-6">
         <div className="space-y-2 text-center">
+          <img
+            src="/apple-touch-icon.png"
+            alt="Things"
+            className="w-16 h-16 mx-auto rounded-xl"
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
             Create an account
           </h1>
@@ -106,7 +111,7 @@ function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login" className="text-things-blue hover:underline">
             Sign in
           </Link>
         </p>

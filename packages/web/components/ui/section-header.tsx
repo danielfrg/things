@@ -16,7 +16,7 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        'pb-2 mb-2 border-b border-border px-4 md:px-8',
+        'pb-2 mb-2 border-b border-muted-foreground px-4 md:px-8',
         className,
       )}
     >

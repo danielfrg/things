@@ -44,13 +44,13 @@ code {
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.5rem;
-  --sidebar: #F8F9F9;
+  --sidebar: #f8f9f9;
   --sidebar-foreground: #373B3F;
   --sidebar-primary: #0062c1;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #E0E3E8;
   --sidebar-accent-foreground: #373B3F;
-  --sidebar-border: #E5E5EA;
+  --sidebar-border: #f0f2f5;
   --sidebar-ring: #0062c1;
   
   /* Things accent colors */
@@ -84,41 +84,116 @@ code {
   
   /* Notes text color */
   --notes: #3A3A3C;
+  
+  /* Section divider color */
+  --section-border: #dfe3e8;
+  
+  /* Upcoming date label text */
+  --date-label: #74777c;
+  
+  /* Task inline details color (tags, checklist icons, etc) */
+  --task-inline: #c3c7cc;
+  
+  /* Project progress circle color */
+  --project-progress: #b1b5ba;
+  
+  /* Expanded task card background */
+  --card-expanded: #FFFFFF;
+  
+  /* Scheduled date badge */
+  --scheduled-badge-bg: #e6e8ec;
+  --scheduled-badge-text: #5e6268;
+  
+  /* Toggle group */
+  --toggle-selected-bg: #b6b9be;
+  --toggle-selected-text: #ffffff;
+  --toggle-unselected-text: #8e9196;
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.274 0.006 286.033);
-  --input: oklch(0.274 0.006 286.033);
-  --ring: oklch(0.442 0.017 285.786);
+  --background: #23262a;
+  --foreground: #F5F5F7;
+  --card: transparent;
+  --card-foreground: #F5F5F7;
+  --popover: #262a30;
+  --popover-foreground: #F5F5F7;
+  --primary: #254174;
+  --primary-foreground: #FFFFFF;
+  --secondary: #3A3A3C;
+  --secondary-foreground: #F5F5F7;
+  --muted: #3A3A3C;
+  --muted-foreground: #98989D;
+  --accent: #3A3A3C;
+  --accent-foreground: #F5F5F7;
+  --destructive: #FF453A;
+  --destructive-foreground: #FFFFFF;
+  --border: #3a3e43;
+  --input: #3A3A3C;
+  --ring: #254174;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.274 0.006 286.033);
-  --sidebar-ring: oklch(0.442 0.017 285.786);
+  --sidebar: #1d1f22;
+  --sidebar-foreground: #d3d3d4;
+  --sidebar-primary: #254174;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #3c3e42;
+  --sidebar-accent-foreground: #d3d3d4;
+  --sidebar-border: #191b1c;
+  --sidebar-ring: #254174;
+  
+  /* Things accent colors (adjusted for dark mode visibility) */
+  --things-blue: #65abff;
+  --things-yellow: #FFD60A;
+  --things-pink: #FF6B6B;
+  --things-green: #30D158;
+  --things-teal: #64D2D2;
+  --things-beige: #D4C98A;
+  --things-grey: #98989D;
+  --things-evening: #A0C4F0;
+  --things-project-sidebar: #8E9297;
+  
+  /* Task selection */
+  --task-selected: #254174;
+  
+  /* Hint/subtle icon color */
+  --hint: #48484A;
+  
+  /* Subtle text color */
+  --subtle: #98989D;
+  
+  /* Notes text color */
+  --notes: #EBEBF0;
+  
+  /* Section divider color */
+  --section-border: #44464a;
+  
+  /* Upcoming date label text */
+  --date-label: #b4b5b6;
+  
+  /* Task inline details color (tags, checklist icons, etc) */
+  --task-inline: #6c6e70;
+  
+  /* Project progress circle color */
+  --project-progress: #828a97;
+  
+  /* Expanded task card background */
+  --card-expanded: #2d3033;
+  
+  /* Scheduled date badge */
+  --scheduled-badge-bg: #44464a;
+  --scheduled-badge-text: #dadadb;
+  
+  /* Dark popover colors (adjusted for dark mode) */
+  --popover-dark: #262a30;
+  --popover-dark-border: #3a3e43;
+  
+  /* Toggle group */
+  --toggle-selected-bg: #5a5d62;
+  --toggle-selected-text: #ffffff;
+  --toggle-unselected-text: #8e9196;
 }
 
 @theme inline {
@@ -190,6 +265,30 @@ code {
   
   /* Notes text color */
   --color-notes: var(--notes);
+  
+  /* Section divider color */
+  --color-section-border: var(--section-border);
+  
+  /* Upcoming date label text */
+  --color-date-label: var(--date-label);
+  
+  /* Task inline details color (tags, checklist icons, etc) */
+  --color-task-inline: var(--task-inline);
+  
+  /* Project progress circle color */
+  --color-project-progress: var(--project-progress);
+  
+  /* Expanded task card background */
+  --color-card-expanded: var(--card-expanded);
+  
+  /* Scheduled date badge */
+  --color-scheduled-badge-bg: var(--scheduled-badge-bg);
+  --color-scheduled-badge-text: var(--scheduled-badge-text);
+  
+  /* Toggle group */
+  --color-toggle-selected-bg: var(--toggle-selected-bg);
+  --color-toggle-selected-text: var(--toggle-selected-text);
+  --color-toggle-unselected-text: var(--toggle-unselected-text);
 }
 
 @layer base {
@@ -209,7 +308,7 @@ body.hydrating::before {
   left: 0;
   height: 3px;
   width: 30%;
-  background: var(--primary);
+  background: var(--things-blue);
   animation: loading-bar 1.5s ease-in-out infinite;
   z-index: 9999;
 }
@@ -296,7 +395,7 @@ body:not(.hydrating) main {
 }
 
 .prose-editor .md-link-text {
-  color: var(--primary);
+  color: var(--things-blue);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -307,7 +406,7 @@ body:not(.hydrating) main {
 }
 
 .prose-editor .md-url {
-  color: var(--primary);
+  color: var(--things-blue);
   text-decoration: underline;
   cursor: pointer;
 }

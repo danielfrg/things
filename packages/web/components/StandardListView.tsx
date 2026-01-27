@@ -46,6 +46,8 @@ interface StandardListViewProps {
   onHeadingDelete?: (headingId: string) => void;
   /** Initial task to select and expand */
   initialSelectedTaskId?: string;
+  /** Show project link button on hover for project sections */
+  showProjectLink?: boolean;
 }
 
 export function StandardListView({
@@ -62,6 +64,7 @@ export function StandardListView({
   onHeadingEdit,
   onHeadingDelete,
   initialSelectedTaskId,
+  showProjectLink,
 }: StandardListViewProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -196,6 +199,7 @@ export function StandardListView({
       isTrash={isTrash}
       onHeadingEdit={onHeadingEdit}
       onHeadingDelete={onHeadingDelete}
+      showProjectLink={showProjectLink}
     />
   );
 }

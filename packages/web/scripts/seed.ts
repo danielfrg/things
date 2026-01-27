@@ -9,6 +9,7 @@ import {
   areas,
   checklistItems,
   generateId,
+  headings,
   projects,
   repeatingRules,
   tags,
@@ -79,6 +80,7 @@ async function seed() {
     await db.delete(checklistItems).where(eq(checklistItems.userId, userId));
     await db.delete(tasks).where(eq(tasks.userId, userId));
     await db.delete(repeatingRules).where(eq(repeatingRules.userId, userId));
+    await db.delete(headings).where(eq(headings.userId, userId));
     await db.delete(projects).where(eq(projects.userId, userId));
     await db.delete(areas).where(eq(areas.userId, userId));
     await db.delete(tags).where(eq(tags.userId, userId));
@@ -238,6 +240,76 @@ async function seed() {
     },
   ]);
   console.log('Projects created');
+
+  // Create backlog headings for each project
+  console.log('\nCreating backlog headings...');
+  await db.insert(headings).values([
+    {
+      id: generateId(),
+      userId,
+      projectId: webAppProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: mobileAppProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: fitnessProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: homeProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: shoppingProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: programmingCourseId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: freelanceProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+    {
+      id: generateId(),
+      userId,
+      projectId: bookWritingProjectId,
+      title: 'Backlog',
+      position: 9999,
+      isBacklog: true,
+    },
+  ]);
+  console.log('Backlog headings created');
 
   // Create tags
   console.log('\nCreating tags...');

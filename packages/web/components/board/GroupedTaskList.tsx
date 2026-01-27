@@ -60,6 +60,8 @@ interface GroupedTaskListProps {
   onHeadingEdit?: (headingId: string, title: string) => void;
   /** Callback for deleting a heading (for project view) */
   onHeadingDelete?: (headingId: string) => void;
+  /** Show project link button on hover for project sections */
+  showProjectLink?: boolean;
 }
 
 export function GroupedTaskList({
@@ -89,6 +91,7 @@ export function GroupedTaskList({
   isTrash,
   onHeadingEdit,
   onHeadingDelete,
+  showProjectLink,
 }: GroupedTaskListProps) {
   const [data, setData] = useState(initial);
   const scrollableRef = useRef<HTMLDivElement | null>(null);
@@ -368,6 +371,7 @@ export function GroupedTaskList({
             isTrash={isTrash}
             onHeadingEdit={onHeadingEdit}
             onHeadingDelete={onHeadingDelete}
+            showProjectLink={showProjectLink}
           />
         ))}
       </div>

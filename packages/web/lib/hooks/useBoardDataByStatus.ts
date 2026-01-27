@@ -22,7 +22,10 @@ export function useBoardDataByStatus({
   areas,
 }: UseBoardDataByStatusOptions): TaskGroupsData {
   const activeProjects = useMemo(
-    () => projects.filter((p) => p.status === 'active'),
+    () =>
+      projects
+        .filter((p) => p.status === 'active')
+        .sort((a, b) => a.position - b.position),
     [projects],
   );
 

@@ -51,7 +51,7 @@ function Checkbox({
       onCheckedChange={handleCheckedChange}
       className={cn(
         checkboxVariants({ variant }),
-        variant === "task" && dashed && "border-dashed border-hint",
+        variant === "task" && dashed && "border-dashed",
         className
       )}
       {...props}

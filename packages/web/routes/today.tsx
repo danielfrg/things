@@ -287,6 +287,7 @@ function TodayView() {
         hideToday
         onTaskMove={handleTaskMove}
         initialSelectedTaskId={search.task}
+        showProjectLink
       />
     </ViewContainer>
   );

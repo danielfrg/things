@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
 import {
   type KeyboardEvent,
   memo,
@@ -41,6 +43,7 @@ import {
   sectionDropTargetIdle,
   useSectionDropTarget,
 } from '@/lib/hooks/useDnd';
+import { cn } from '@/lib/utils';
 import { getSectionData, type TSection } from './data';
 
 type TSectionState = SectionDropTargetState;
@@ -176,6 +179,8 @@ interface TaskSectionProps {
   onHeadingEdit?: (headingId: string, title: string) => void;
   /** Callback for deleting a heading */
   onHeadingDelete?: (headingId: string) => void;
+  /** Show project link button on hover for project sections */
+  showProjectLink?: boolean;
 }
 
 export function TaskSection({
@@ -203,6 +208,7 @@ export function TaskSection({
   isTrash,
   onHeadingEdit,
   onHeadingDelete,
+  showProjectLink,
 }: TaskSectionProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<TSectionState>(idle);
@@ -240,6 +246,9 @@ export function TaskSection({
   const renderIcon = () => {
     if (section.isEvening) {
       return <EveningIcon className="w-4 h-4" />;
+    }
+    if (section.isBacklog) {
+      return <SomedayIcon className="w-4 h-4" />;
     }
     if (section.projectId) {
       return (
@@ -294,12 +303,13 @@ export function TaskSection({
     <div className="mb-6" ref={containerRef}>
       {/* Editable Heading Section Header */}
       {showHeader && isEditableHeading && (
-        <div className="space-y-2 group mb-2 px-4 md:px-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1">
-              <span className="w-[18px] shrink-0 flex items-center justify-center">
-                {section.isBacklog && <SomedayIcon className="w-4 h-4" />}
-              </span>
+        <div className="group mb-2 px-4 md:px-2">
+          <div className="flex items-center gap-2">
+            <span className="w-[18px] shrink-0" />
+            <div className="flex items-center gap-2 flex-1 border-b border-section-border pb-2">
+              {section.isBacklog && (
+                <SomedayIcon className="w-4 h-4 shrink-0" />
+              )}
               <Input
                 ref={inputRef}
                 variant="ghost"
@@ -308,53 +318,91 @@ export function TaskSection({
                 onChange={(e) => setEditValue(e.currentTarget.value)}
                 onBlur={handleHeadingBlur}
                 onKeyDown={handleHeadingKeyDown}
-                className="flex-1 text-lg md:text-[15px] font-semibold text-things-blue"
+                className="flex-1 text-lg md:text-[15px] font-bold text-things-blue"
               />
+              {canDeleteHeading && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 rounded-md text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 hover:bg-accent transition-colors">
+                    <MoreHorizontalIcon className="w-4 h-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (section.headingId && onHeadingDelete) {
+                          onHeadingDelete(section.headingId);
+                        }
+                      }}
+                    >
+                      <Trash2Icon className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-            {canDeleteHeading && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="p-1 rounded-md text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 hover:bg-accent transition-colors">
-                  <MoreHorizontalIcon className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (section.headingId && onHeadingDelete) {
-                        onHeadingDelete(section.headingId);
-                      }
-                    }}
-                    className="text-destructive"
-                  >
-                    <Trash2Icon className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
-          <div className="border-b border-border" />
         </div>
       )}
 
       {/* Regular Section Header */}
       {showHeader && !isEditableHeading && (
-        <div className="pb-2 mb-2 border-b border-border px-4 md:px-8">
-          <h2 className="text-lg md:text-base font-bold text-foreground flex items-center gap-2">
-            <span className="w-[18px] flex items-center justify-center shrink-0">
-              {renderIcon()}
-            </span>
-            <span>{section.title}</span>
-          </h2>
+        <div className="mb-2 px-4 md:px-2">
+          <div className="flex items-center gap-2">
+            <span className="w-[18px] shrink-0" />
+            <div className="text-lg md:text-base font-bold pb-2 flex-1 border-b border-section-border flex items-center gap-2">
+              {showProjectLink && section.projectId ? (
+                <Link
+                  to="/project/$projectId"
+                  params={{ projectId: section.projectId }}
+                  className="group flex items-center gap-2 text-foreground hover:text-things-blue transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="w-[18px] flex items-center justify-center shrink-0">
+                    {renderIcon()}
+                  </span>
+                  <span>{section.title}</span>
+                  <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              ) : showProjectLink && section.areaId && !section.projectId ? (
+                <Link
+                  to="/area/$areaId"
+                  params={{ areaId: section.areaId }}
+                  className="group flex items-center gap-2 text-foreground hover:text-things-blue transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="w-[18px] flex items-center justify-center shrink-0">
+                    {renderIcon()}
+                  </span>
+                  <span>{section.title}</span>
+                  <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              ) : (
+                <span
+                  className={cn(
+                    'flex items-center gap-2',
+                    section.isBacklog ? 'text-things-blue' : 'text-foreground',
+                  )}
+                >
+                  <span className="w-[18px] flex items-center justify-center shrink-0">
+                    {renderIcon()}
+                  </span>
+                  <span>{section.title}</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Completed section header */}
       {section.isCompleted && (
-        <div className="pb-2 mb-2 border-b border-border px-4 md:px-2">
-          <h2 className="text-lg md:text-base font-bold text-foreground flex items-center gap-2">
+        <div className="mb-2 px-4 md:px-2">
+          <div className="flex items-center gap-2">
             <span className="w-[18px] shrink-0" />
-            <span>{section.title}</span>
-          </h2>
+            <h2 className="text-lg md:text-base font-bold text-foreground pb-2 flex-1 border-b border-section-border">
+              {section.title}
+            </h2>
+          </div>
         </div>
       )}
 
@@ -392,8 +440,11 @@ export function TaskSection({
 
         {/* Empty state */}
         {section.tasks.length === 0 && state.type === 'idle' && (
-          <div className="mx-4 md:mx-0 rounded-lg border-2 border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-            No tasks yet
+          <div className="flex items-center gap-2 px-4 md:px-2">
+            <span className="w-[18px] shrink-0" />
+            <div className="flex-1 rounded border border-dashed border-border py-2 text-center text-sm text-muted-foreground">
+              No tasks
+            </div>
           </div>
         )}
       </div>

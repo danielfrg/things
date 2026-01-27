@@ -70,15 +70,15 @@ export function TaskMetadata({
   return (
     <span className="flex items-center gap-2 ml-auto shrink-0 overflow-hidden">
       {hasNotes && (
-        <FileTextIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <FileTextIcon className="w-3.5 h-3.5 text-task-inline shrink-0" />
       )}
 
       {isRepeating && (
-        <RepeatIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <RepeatIcon className="w-3.5 h-3.5 text-task-inline shrink-0" />
       )}
 
       {hasChecklist && (
-        <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+        <span className="flex items-center gap-1 text-xs text-task-inline shrink-0">
           <ListChecksIcon className="w-3.5 h-3.5" />
           {completedCount}/{totalCount}
         </span>
@@ -93,9 +93,7 @@ export function TaskMetadata({
             </Badge>
           ))}
           {tagCount > 2 && (
-            <span className="text-xs text-muted-foreground">
-              +{tagCount - 2}
-            </span>
+            <span className="text-xs text-task-inline">+{tagCount - 2}</span>
           )}
         </span>
       )}
@@ -104,7 +102,10 @@ export function TaskMetadata({
         <Badge
           variant="secondary"
           size="sm"
-          className={cn(scheduledOverdue && 'bg-transparent text-things-pink')}
+          className={cn(
+            'font-bold bg-scheduled-badge-bg text-scheduled-badge-text',
+            scheduledOverdue && 'bg-transparent text-things-pink',
+          )}
         >
           {scheduledDateStr}
         </Badge>

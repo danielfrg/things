@@ -290,20 +290,20 @@ export function UpcomingDaySection({
   return (
     <div>
       {/* Day header */}
-      <div className="mb-3 px-4 md:px-0">
+      <div className="mb-3 px-4 md:px-8">
         {group.date ? (
           <div className="flex items-start gap-2">
             <div className="text-[28px] font-bold text-foreground leading-none">
               {format(group.date, 'd')}
             </div>
-            <div className="flex-1 mt-2 border-t border-border">
-              <div className="text-[16px] text-sidebar-foreground">
+            <div className="flex-1 mt-[5px] border-t border-section-border">
+              <div className="text-[16px] font-bold text-date-label">
                 {group.label}
               </div>
             </div>
           </div>
         ) : (
-          <div className="pt-3 border-t border-border">
+          <div className="pt-3 border-t border-section-border">
             <div className="text-[20px] font-bold text-foreground leading-none">
               {group.label}
             </div>
