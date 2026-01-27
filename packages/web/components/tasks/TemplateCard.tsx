@@ -28,6 +28,10 @@ import { MovePicker } from '@/components/ui/move-picker';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
+import {
+  ToolbarButton,
+  toolbarButtonVariants,
+} from '@/components/ui/toolbar-button';
 import { generateId } from '@/db/schema';
 import type {
   AreaRecord,
@@ -294,9 +298,6 @@ export function TemplateCard({
 
   const isPaused = template.status === 'paused';
 
-  const toolbarBtnClass =
-    'inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors';
-
   const handleDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
     if ((e.target as HTMLElement).closest('input')) return;
@@ -393,7 +394,7 @@ export function TemplateCard({
           // Templates always have repeat
         }}
         placeholder="Schedule"
-        className={toolbarBtnClass}
+        className={toolbarButtonVariants()}
       />
 
       {/* Move picker */}
@@ -405,7 +406,7 @@ export function TemplateCard({
           projects={projects}
           areas={areas}
           placeholder="Move"
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
         />
       )}
 
@@ -420,23 +421,19 @@ export function TemplateCard({
       )}
 
       {/* Pause/Resume button */}
-      <Button
-        variant="ghost"
+      <ToolbarButton
         onClick={handlePauseResume}
-        className={cn(
-          toolbarBtnClass,
-          isPaused
-            ? 'text-green-600 hover:text-green-700'
-            : 'text-amber-600 hover:text-amber-700',
-        )}
+        intent={isPaused ? 'success' : 'warning'}
+        icon={
+          isPaused ? (
+            <PlayIcon className="w-3.5 h-3.5" />
+          ) : (
+            <PauseIcon className="w-3.5 h-3.5" />
+          )
+        }
       >
-        {isPaused ? (
-          <PlayIcon className="w-3.5 h-3.5" />
-        ) : (
-          <PauseIcon className="w-3.5 h-3.5" />
-        )}
-        <span>{isPaused ? 'Resume' : 'Pause'}</span>
-      </Button>
+        {isPaused ? 'Resume' : 'Pause'}
+      </ToolbarButton>
     </>
   );
 

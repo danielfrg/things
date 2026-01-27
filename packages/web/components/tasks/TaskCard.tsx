@@ -11,14 +11,16 @@ import {
 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Input } from '@/components/ui/input';
 import { MovePicker } from '@/components/ui/move-picker';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
+import {
+  ToolbarButton,
+  toolbarButtonVariants,
+} from '@/components/ui/toolbar-button';
 import { generateId } from '@/db/schema';
 import type {
   AreaRecord,
@@ -49,9 +51,11 @@ import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 import { ChecklistEditor } from './ChecklistEditor';
 import { ItemDetailLayout } from './ItemDetailLayout';
+import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
+import { TaskProjectBadge } from './TaskProjectBadge';
 import { TaskShadow } from './TaskRow';
-import { toolbarBtnClass } from './taskUtils';
+import { TaskTitle } from './TaskTitle';
 
 type DragState =
   | { type: 'idle' }
@@ -407,47 +411,24 @@ export function TaskCard({
         }
       }}
     >
-      <span
-        role="button"
-        tabIndex={0}
-        className="shrink-0"
-        onClick={(e) => {
-          e.stopPropagation();
-          onComplete(task.id, !isCompleted);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            onComplete(task.id, !isCompleted);
-          }
-        }}
-      >
-        <Checkbox
-          variant="task"
-          checked={isCompleted}
-          onChange={(checked) => onComplete(task.id, checked)}
-          dashed={isSomeday}
-        />
-      </span>
+      <TaskCheckbox
+        checked={isCompleted}
+        onChange={(checked) => onComplete(task.id, checked)}
+        dashed={isSomeday}
+      />
 
       {expanded ? (
-        <Input
-          ref={form.titleRef}
-          variant="ghost"
-          type="text"
+        <TaskTitle
+          inputRef={form.titleRef}
           value={form.title}
-          onChange={(e) => form.setTitle(e.target.value)}
+          onChange={form.setTitle}
           onBlur={form.handleTitleBlur}
           onKeyDown={form.handleTitleKeyDown}
           onClick={(e) => e.stopPropagation()}
-          disabled={isCompleted}
-          className={cn(
-            'flex-1 text-lg md:text-[15px] leading-tight',
-            'text-foreground caret-things-blue',
-            isCompleted && 'line-through text-muted-foreground',
-          )}
+          status={isCompleted ? 'completed' : 'default'}
+          editable
           placeholder="Task title"
+          className="flex-1"
         />
       ) : (
         <div
@@ -455,37 +436,24 @@ export function TaskCard({
           tabIndex={0}
           className="flex-1 min-w-0"
           onClick={() => onSelect(task.id)}
-          onKeyDown={(e) => {
+          onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               onSelect(task.id);
             }
           }}
         >
-          <span
-            className={cn(
-              'block text-lg md:text-[15px] leading-tight truncate',
-              'text-foreground',
-              isCompleted && 'line-through text-muted-foreground',
-            )}
-          >
-            {form.title}
-          </span>
-          {showProjectInfo && (task.projectId || task.areaId) && (
-            <div className="text-[12px] text-muted-foreground truncate mt-0.5">
-              {(() => {
-                const project = task.projectId
-                  ? projects?.find((p) => p.id === task.projectId)
-                  : null;
-                const area = task.areaId
-                  ? areas?.find((a) => a.id === task.areaId)
-                  : null;
-                if (project && area) return `${area.title} › ${project.title}`;
-                if (project) return project.title;
-                if (area) return area.title;
-                return null;
-              })()}
-            </div>
+          <TaskTitle
+            value={form.title}
+            status={isCompleted ? 'completed' : 'default'}
+          />
+          {showProjectInfo && (
+            <TaskProjectBadge
+              projectId={task.projectId}
+              areaId={task.areaId}
+              projects={projects}
+              areas={areas}
+            />
           )}
         </div>
       )}
@@ -511,20 +479,16 @@ export function TaskCard({
     <>
       {/* Restore (trash only) */}
       {isTrash && onRestore && (
-        <Button
-          variant="ghost"
+        <ToolbarButton
           onClick={() => {
             onRestore(task.id);
             handleClose();
           }}
-          className={cn(
-            toolbarBtnClass,
-            'text-things-blue hover:text-things-blue',
-          )}
+          icon={<RestoreIcon className="w-3.5 h-3.5" />}
+          className="text-things-blue hover:text-things-blue"
         >
-          <RestoreIcon className="w-3.5 h-3.5" />
-          <span>Restore</span>
-        </Button>
+          Restore
+        </ToolbarButton>
       )}
 
       {/* Schedule picker */}
@@ -539,7 +503,7 @@ export function TaskCard({
           isSomeday={isSomeday}
           showEvening
           isEvening={task.isEvening}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
         />
       )}
 
@@ -550,7 +514,7 @@ export function TaskCard({
           onChange={handleDeadlineChange}
           placeholder="Deadline"
           disabled={isCompleted}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
           icon={<FlagIcon className="h-3.5 w-3.5 opacity-70" />}
           title="Deadline"
         />
@@ -586,7 +550,7 @@ export function TaskCard({
           }}
           placeholder="Repeat"
           disabled={isCompleted}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
         />
       )}
 
@@ -610,21 +574,19 @@ export function TaskCard({
           areas={areas}
           placeholder="Move"
           disabled={isCompleted}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
           isInbox={task.status === 'inbox'}
         />
       )}
 
       {/* Add checklist button - only show if no checklist items exist */}
       {!isCompleted && checklistItems.length === 0 && (
-        <Button
-          variant="ghost"
+        <ToolbarButton
           onClick={handleAddChecklist}
-          className={toolbarBtnClass}
+          icon={<ListChecksIcon className="h-3.5 w-3.5 opacity-70" />}
         >
-          <ListChecksIcon className="h-3.5 w-3.5 opacity-70" />
-          <span>Checklist</span>
-        </Button>
+          Checklist
+        </ToolbarButton>
       )}
 
       {/* Tags picker */}
@@ -810,15 +772,12 @@ export function TaskCard({
               height: `${dragState.dragging.height}px`,
             }}
           >
-            <Checkbox
-              variant="task"
+            <TaskCheckbox
               checked={isCompleted}
               onChange={() => {}}
               dashed={isSomeday}
             />
-            <span className="text-[15px] leading-tight text-foreground">
-              {form.title}
-            </span>
+            <TaskTitle value={form.title} />
           </div>,
           dragState.container,
         )}

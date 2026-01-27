@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
   getTaskDragData,
@@ -19,7 +17,10 @@ import {
 } from '@/lib/hooks/useDnd';
 import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
+import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
+import { TaskProjectBadge } from './TaskProjectBadge';
+import { TaskTitle } from './TaskTitle';
 import { formatTaskDate, getDayOfWeekBadge } from './taskUtils';
 
 interface TaskRowProps {
@@ -139,6 +140,12 @@ function TaskDisplay({
     ? { backgroundColor: 'var(--task-selected)' }
     : undefined;
 
+  const titleStatus = isCompleted
+    ? 'completed'
+    : isSomeday
+      ? 'someday'
+      : 'default';
+
   return (
     <div ref={outerRef} className={outerClass}>
       {state.type === 'is-over' && state.closestEdge === 'top' && (
@@ -153,20 +160,11 @@ function TaskDisplay({
         className={getInnerClass()}
         style={{ ...previewStyle, ...selectedStyle }}
       >
-        <span
-          className="shrink-0 cursor-pointer"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
-          }}
-        >
-          <Checkbox
-            variant="task"
-            checked={isCompleted}
-            onChange={(checked) => onComplete?.(task.id, checked)}
-            dashed={isSomeday}
-          />
-        </span>
+        <TaskCheckbox
+          checked={isCompleted}
+          onChange={(checked) => onComplete?.(task.id, checked)}
+          dashed={isSomeday}
+        />
 
         {dayBadgeStr && (
           <Badge
@@ -186,36 +184,18 @@ function TaskDisplay({
         )}
 
         <div className="flex-1 min-w-0">
-          <Input
-            variant="ghost"
-            type="text"
+          <TaskTitle
             value={task.title}
-            readOnly
-            tabIndex={-1}
-            className={cn(
-              'w-full text-lg md:text-[15px] leading-tight cursor-inherit pointer-events-none truncate',
-              isCompleted
-                ? 'line-through text-muted-foreground'
-                : isSomeday
-                  ? 'text-foreground/80'
-                  : 'text-foreground',
-            )}
+            status={titleStatus}
+            className="w-full cursor-inherit"
           />
-          {showProjectInfo && (task.projectId || task.areaId) && (
-            <div className="text-[12px] text-muted-foreground truncate mt-0.5">
-              {(() => {
-                const project = task.projectId
-                  ? projects?.find((p) => p.id === task.projectId)
-                  : null;
-                const area = task.areaId
-                  ? areas?.find((a) => a.id === task.areaId)
-                  : null;
-                if (project && area) return `${area.title} › ${project.title}`;
-                if (project) return project.title;
-                if (area) return area.title;
-                return null;
-              })()}
-            </div>
+          {showProjectInfo && (
+            <TaskProjectBadge
+              projectId={task.projectId}
+              areaId={task.areaId}
+              projects={projects}
+              areas={areas}
+            />
           )}
         </div>
 
