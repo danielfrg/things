@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
   type CleanupFn,
@@ -183,13 +184,14 @@ function TaskDisplay({
         )}
 
         <div className="flex-1 min-w-0">
-          <input
+          <Input
+            variant="ghost"
             type="text"
             value={task.title}
             readOnly
             tabIndex={-1}
             className={cn(
-              'w-full bg-transparent text-lg md:text-[15px] leading-tight outline-none border-0 p-0 cursor-inherit pointer-events-none truncate',
+              'w-full text-lg md:text-[15px] leading-tight cursor-inherit pointer-events-none truncate',
               isCompleted
                 ? 'line-through text-muted-foreground'
                 : isSomeday

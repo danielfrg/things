@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -221,14 +222,13 @@ function CreateApiKeyModal({
             >
               Key name
             </label>
-            <input
+            <Input
               ref={inputRef}
               id={nameId}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="A descriptive name for this API key..."
-              className="w-full h-10 px-3 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
             />
           </div>
 

@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Input } from '@/components/ui/input';
 import { MovePicker } from '@/components/ui/move-picker';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
@@ -429,8 +430,9 @@ export function TaskCard({
       </span>
 
       {expanded ? (
-        <input
+        <Input
           ref={form.titleRef}
+          variant="ghost"
           type="text"
           value={form.title}
           onChange={(e) => form.setTitle(e.target.value)}
@@ -439,7 +441,7 @@ export function TaskCard({
           onClick={(e) => e.stopPropagation()}
           disabled={isCompleted}
           className={cn(
-            'flex-1 bg-transparent text-lg md:text-[15px] leading-tight outline-none border-0 p-0',
+            'flex-1 text-lg md:text-[15px] leading-tight',
             'text-foreground caret-things-blue',
             isCompleted && 'line-through text-muted-foreground',
           )}

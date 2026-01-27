@@ -37,6 +37,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { TagFilterTabs } from '@/components/ui/tag-filter-tabs';
 import type { TaskRecord } from '@/db/validation';
@@ -97,17 +98,14 @@ function EditableText(props: {
   };
 
   return (
-    <input
+    <Input
+      variant="ghost"
       type="text"
       defaultValue={props.value}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       placeholder={props.placeholder}
-      className={cn(
-        'block w-full p-0 m-0 border-0 bg-transparent outline-none',
-        'placeholder:text-hint',
-        props.className,
-      )}
+      className={cn('block w-full', 'placeholder:text-hint', props.className)}
     />
   );
 }
@@ -572,7 +570,7 @@ function ProjectView() {
                   value={project.title ?? ''}
                   onChange={handleUpdateTitle}
                   placeholder="Project Title"
-                  className="text-[26px] font-bold text-foreground"
+                  className="text-[28px] font-bold text-foreground"
                 />
               </div>
               <div className="relative">

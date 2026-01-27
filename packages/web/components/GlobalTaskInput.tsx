@@ -1,11 +1,18 @@
 import { useLocation } from '@tanstack/react-router';
 import { addDays, format, isToday, isTomorrow } from 'date-fns';
-import { Calendar, FolderOpen, X } from 'lucide-react';
+import { Calendar, FolderOpen } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoxIcon, CheckIcon, InboxIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { generateId } from '@/db/schema';
 import {
@@ -119,40 +126,6 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
     }
   }, [open, getViewContext]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (datePickerOpen) {
-          setDatePickerOpen(false);
-        } else if (projectPickerOpen) {
-          setProjectPickerOpen(false);
-        } else {
-          onClose();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, datePickerOpen, projectPickerOpen, onClose]);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
   const handleSubmit = () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
@@ -185,12 +158,6 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
-    }
-  };
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
     }
   };
 
@@ -263,60 +230,34 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
     popoverHeight: 280,
   });
 
-  if (!open) return null;
-
-  return createPortal(
+  return (
     <>
-      <div
-        className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center pt-[10vh]"
-        onClick={handleOverlayClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleOverlayClick(e as unknown as React.MouseEvent);
-          }
-        }}
-        role="button"
-        tabIndex={-1}
-      >
-        <div
-          className="w-full max-w-[900px] bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
-          role="dialog"
-          aria-modal="true"
-          tabIndex={-1}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key !== 'Escape') {
-              e.stopPropagation();
-            }
-          }}
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent
+          showCloseButton
+          position="top"
+          className="sm:max-w-[900px] p-0 gap-0"
         >
-          {/* Main input area */}
-          <div className="px-6 py-4">
-            <div className="flex items-start gap-2">
-              <input
-                ref={titleInputRef}
-                type="text"
-                placeholder="Task title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 text-2xl font-bold placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1"
-              >
-                <X className="size-5" />
-              </Button>
-            </div>
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <Input
+              ref={titleInputRef}
+              variant="ghost"
+              type="text"
+              placeholder="Task title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="text-[28px] font-bold text-foreground placeholder:text-muted-foreground"
+            />
+          </DialogHeader>
+
+          <div className="px-6 pb-4">
             <textarea
               ref={notesInputRef}
               placeholder="Add description..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full mt-3 bg-transparent text-gray-900 dark:text-gray-100 text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none resize-none min-h-[100px]"
+              className="w-full mt-3 bg-transparent text-foreground text-base placeholder:text-muted-foreground outline-none resize-none min-h-[100px]"
             />
           </div>
 
@@ -333,8 +274,8 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
               className={cn(
                 'flex items-center gap-1.5 rounded-lg text-[13px] font-medium',
                 scheduledDate
-                  ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
+                  ? 'border-border text-foreground'
+                  : 'border-border text-muted-foreground hover:text-foreground',
               )}
             >
               <Calendar className="size-3.5" />
@@ -352,8 +293,8 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
               className={cn(
                 'flex items-center gap-1.5 rounded-lg text-[13px] font-medium',
                 projectId || areaId
-                  ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
+                  ? 'border-border text-foreground'
+                  : 'border-border text-muted-foreground hover:text-foreground',
               )}
             >
               {projectId ? (
@@ -372,162 +313,150 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <button
-                  type="button"
-                  onClick={() => setCreateMore(!createMore)}
+          <DialogFooter className="px-6 py-4 border-t border-border flex-row items-center justify-between sm:justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setCreateMore(!createMore)}
+                className={cn(
+                  'relative w-9 h-5 rounded-full transition-colors',
+                  createMore ? 'bg-things-blue' : 'bg-muted',
+                )}
+              >
+                <span
                   className={cn(
-                    'relative w-9 h-5 rounded-full transition-colors',
-                    createMore
-                      ? 'bg-things-blue'
-                      : 'bg-gray-300 dark:bg-gray-600',
+                    'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm',
+                    createMore && 'translate-x-4',
                   )}
-                >
-                  <span
-                    className={cn(
-                      'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform',
-                      createMore && 'translate-x-4',
-                    )}
-                  />
-                </button>
-                <span className="text-sm text-gray-700 dark:text-gray-400">
-                  Create more
-                </span>
-              </label>
-            </div>
+                />
+              </button>
+              <span className="text-sm text-muted-foreground">Create more</span>
+            </label>
 
-            <Button
-              onClick={handleSubmit}
-              disabled={!title.trim()}
-              className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium',
-                title.trim()
-                  ? 'bg-things-blue text-white hover:bg-things-blue/90 shadow-sm'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed',
-              )}
-            >
+            <Button onClick={handleSubmit} disabled={!title.trim()}>
               Create task
             </Button>
-          </div>
-        </div>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {datePickerOpen && (
-        <div style={{ ...datePopoverStyle, zIndex: 60 }}>
-          <CalendarPopover
-            value={scheduledDate}
-            onChange={handleDateChange}
-            onClose={() => setDatePickerOpen(false)}
-          />
-        </div>
-      )}
+      {datePickerOpen &&
+        createPortal(
+          <div style={{ ...datePopoverStyle, zIndex: 60 }}>
+            <CalendarPopover
+              value={scheduledDate}
+              onChange={handleDateChange}
+              onClose={() => setDatePickerOpen(false)}
+            />
+          </div>,
+          document.body,
+        )}
 
-      {projectPickerOpen && (
-        <div
-          ref={projectPopoverRef}
-          className="w-[240px] rounded-xl bg-popover-dark overflow-hidden"
-          style={{ ...projectPopoverStyle, zIndex: 60 }}
-        >
-          <div className="max-h-64 overflow-y-auto overscroll-contain py-2">
-            <Button
-              variant="ghost"
-              onClick={handleSelectInbox}
-              className={cn(
-                'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-bold text-popover-dark-foreground justify-start',
-                'hover:bg-popover-dark-accent',
-              )}
-            >
-              <InboxIcon className="w-3.5 h-3.5 text-popover-dark-muted" />
-              <span className="flex-1 text-left">Inbox</span>
-              {!projectId && !areaId && (
-                <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
-              )}
-            </Button>
-
-            <div className="my-1 border-t border-popover-dark-border" />
-
-            {projectsWithoutArea.length > 0 && (
-              <>
-                {projectsWithoutArea.map((project) => (
-                  <Button
-                    key={project.id}
-                    variant="ghost"
-                    onClick={() => handleSelectProject(project.id)}
-                    className={cn(
-                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
-                      'hover:bg-popover-dark-accent',
-                    )}
-                  >
-                    <ProjectProgressIcon
-                      progress={0}
-                      size={12}
-                      className="text-popover-dark-selected"
-                    />
-                    <span className="flex-1 text-left truncate">
-                      {project.title}
-                    </span>
-                    {projectId === project.id && (
-                      <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
-                    )}
-                  </Button>
-                ))}
-              </>
-            )}
-
-            {areasWithProjects.map((area, index) => (
-              <div key={area.id}>
-                {(index > 0 || projectsWithoutArea.length > 0) && (
-                  <div className="my-1 border-t border-popover-dark-border" />
+      {projectPickerOpen &&
+        createPortal(
+          <div
+            ref={projectPopoverRef}
+            className="w-[240px] rounded-xl bg-popover-dark overflow-hidden"
+            style={{ ...projectPopoverStyle, zIndex: 60 }}
+          >
+            <div className="max-h-64 overflow-y-auto overscroll-contain py-2">
+              <Button
+                variant="ghost"
+                onClick={handleSelectInbox}
+                className={cn(
+                  'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-bold text-popover-dark-foreground justify-start',
+                  'hover:bg-popover-dark-accent',
                 )}
+              >
+                <InboxIcon className="w-3.5 h-3.5 text-popover-dark-muted" />
+                <span className="flex-1 text-left">Inbox</span>
+                {!projectId && !areaId && (
+                  <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
+                )}
+              </Button>
 
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSelectArea(area.id)}
-                  className={cn(
-                    'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-extrabold text-popover-dark-foreground justify-start',
-                    'hover:bg-popover-dark-accent',
-                  )}
-                >
-                  <BoxIcon className="w-3 h-3 text-things-green" />
-                  <span className="flex-1 text-left truncate">
-                    {area.title}
-                  </span>
-                  {!projectId && areaId === area.id && (
-                    <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
-                  )}
-                </Button>
+              <div className="my-1 border-t border-popover-dark-border" />
 
-                {area.projects.map((project) => (
+              {projectsWithoutArea.length > 0 && (
+                <>
+                  {projectsWithoutArea.map((project) => (
+                    <Button
+                      key={project.id}
+                      variant="ghost"
+                      onClick={() => handleSelectProject(project.id)}
+                      className={cn(
+                        'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
+                        'hover:bg-popover-dark-accent',
+                      )}
+                    >
+                      <ProjectProgressIcon
+                        progress={0}
+                        size={12}
+                        className="text-popover-dark-selected"
+                      />
+                      <span className="flex-1 text-left truncate">
+                        {project.title}
+                      </span>
+                      {projectId === project.id && (
+                        <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
+                      )}
+                    </Button>
+                  ))}
+                </>
+              )}
+
+              {areasWithProjects.map((area, index) => (
+                <div key={area.id}>
+                  {(index > 0 || projectsWithoutArea.length > 0) && (
+                    <div className="my-1 border-t border-popover-dark-border" />
+                  )}
+
                   <Button
-                    key={project.id}
                     variant="ghost"
-                    onClick={() => handleSelectProject(project.id)}
+                    onClick={() => handleSelectArea(area.id)}
                     className={cn(
-                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
+                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-extrabold text-popover-dark-foreground justify-start',
                       'hover:bg-popover-dark-accent',
                     )}
                   >
-                    <ProjectProgressIcon
-                      progress={0}
-                      size={12}
-                      className="text-popover-dark-selected"
-                    />
+                    <BoxIcon className="w-3 h-3 text-things-green" />
                     <span className="flex-1 text-left truncate">
-                      {project.title}
+                      {area.title}
                     </span>
-                    {projectId === project.id && (
+                    {!projectId && areaId === area.id && (
                       <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
                     )}
                   </Button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>,
-    document.body,
+
+                  {area.projects.map((project) => (
+                    <Button
+                      key={project.id}
+                      variant="ghost"
+                      onClick={() => handleSelectProject(project.id)}
+                      className={cn(
+                        'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
+                        'hover:bg-popover-dark-accent',
+                      )}
+                    >
+                      <ProjectProgressIcon
+                        progress={0}
+                        size={12}
+                        className="text-popover-dark-selected"
+                      />
+                      <span className="flex-1 text-left truncate">
+                        {project.title}
+                      </span>
+                      {projectId === project.id && (
+                        <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

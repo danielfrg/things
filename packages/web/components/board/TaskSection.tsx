@@ -28,6 +28,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type {
   AreaRecord,
@@ -388,14 +389,15 @@ export function TaskSection({
               <span className="w-[18px] shrink-0 flex items-center justify-center">
                 {section.isBacklog && <SomedayIcon className="w-4 h-4" />}
               </span>
-              <input
+              <Input
                 ref={inputRef}
+                variant="ghost"
                 type="text"
                 value={editValue}
                 onChange={(e) => setEditValue(e.currentTarget.value)}
                 onBlur={handleHeadingBlur}
                 onKeyDown={handleHeadingKeyDown}
-                className="flex-1 bg-transparent text-lg md:text-[15px] font-semibold text-things-blue outline-none border-0 p-0"
+                className="flex-1 text-lg md:text-[15px] font-semibold text-things-blue"
               />
             </div>
             {canDeleteHeading && (

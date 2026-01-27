@@ -21,6 +21,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -74,17 +75,14 @@ function EditableText(props: {
   };
 
   return (
-    <input
+    <Input
+      variant="ghost"
       type="text"
       defaultValue={props.value}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       placeholder={props.placeholder}
-      className={cn(
-        'block w-full p-0 m-0 border-0 bg-transparent outline-none',
-        'placeholder:text-hint',
-        props.className,
-      )}
+      className={cn('block w-full', 'placeholder:text-hint', props.className)}
     />
   );
 }

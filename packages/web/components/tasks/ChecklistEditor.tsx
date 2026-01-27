@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GripVerticalIcon } from '@/components/icons';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { generateId } from '@/db/schema';
 import type { ChecklistItemRecord } from '@/db/validation';
 import {
@@ -282,8 +283,9 @@ function ChecklistItemRow({
         />
       )}
 
-      <input
+      <Input
         ref={inputRef}
+        variant="ghost"
         type="text"
         value={localTitle}
         onChange={(e) => setLocalTitle(e.target.value)}
@@ -291,7 +293,7 @@ function ChecklistItemRow({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         className={cn(
-          'flex-1 bg-transparent outline-none',
+          'flex-1',
           isInline
             ? cn(
                 'text-base md:text-[15px]',

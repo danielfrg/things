@@ -13,6 +13,7 @@ import {
   Trash2Icon,
 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type { TaskRecord } from '@/db/validation';
 import { useAreas, useProjects, useTasks } from '@/lib/contexts/DataContext';
@@ -333,14 +334,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       >
         <div className="flex items-center gap-3 px-4 py-3 border-b border-popover-dark-border">
           <Search className="size-5 text-popover-dark-muted flex-shrink-0" />
-          <input
+          <Input
             ref={inputRef}
+            variant="ghost"
             type="text"
             placeholder="Search tasks, projects, areas..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-white text-[15px] placeholder:text-popover-dark-muted outline-none"
+            className="flex-1 text-white text-[15px] placeholder:text-popover-dark-muted"
           />
           {query && (
             <Button

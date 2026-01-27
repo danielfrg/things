@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlusIcon, Trash2Icon } from '@/components/icons';
 import { Card, SectionHeader } from '@/components/settings/AccountSection';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   useCreateTag,
   useDeleteTag,
@@ -85,7 +86,8 @@ export function TagsSection() {
         {/* Create tag input */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <PlusIcon className="w-4 h-4 text-gray-400" />
-          <input
+          <Input
+            variant="ghost"
             type="text"
             value={newTagTitle}
             onChange={(e) => setNewTagTitle(e.target.value)}
@@ -93,7 +95,7 @@ export function TagsSection() {
               if (e.key === 'Enter') handleCreateTag();
             }}
             placeholder="New tag..."
-            className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400"
+            className="flex-1 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400"
           />
           {newTagTitle.trim() && (
             <Button variant="ghost" size="sm" onClick={handleCreateTag}>
@@ -159,7 +161,8 @@ export function TagsSection() {
                 </div>
 
                 {/* Tag title (editable) */}
-                <input
+                <Input
+                  variant="ghost"
                   type="text"
                   defaultValue={tag.title}
                   onBlur={(e) => handleTagTitleChange(tag.id, e.target.value)}
@@ -168,7 +171,7 @@ export function TagsSection() {
                       e.currentTarget.blur();
                     }
                   }}
-                  className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-gray-200"
+                  className="flex-1 text-sm text-gray-800 dark:text-gray-200"
                 />
 
                 {/* Delete button */}
