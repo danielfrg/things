@@ -41,6 +41,9 @@ import {
   getTaskDragData,
   getTaskDropTargetData,
   isDraggingATask,
+  isSidebarAreaDropTargetData,
+  isSidebarNavDropTargetData,
+  isSidebarProjectDropTargetData,
   isTaskDragData,
   loadDnd,
 } from '@/lib/dnd';
@@ -228,7 +231,30 @@ export function TaskCard({
             // Haptic feedback on mobile
             if (navigator.vibrate) navigator.vibrate(10);
           },
-          onDrop() {
+          onDrop({
+            location,
+          }: {
+            location: {
+              current: {
+                dropTargets: Array<{ data: Record<string | symbol, unknown> }>;
+              };
+            };
+          }) {
+            // Check if dropped on sidebar (cross-list move)
+            const target = location.current.dropTargets[0];
+            if (target) {
+              const data = target.data;
+              if (
+                isSidebarProjectDropTargetData(data) ||
+                isSidebarNavDropTargetData(data) ||
+                isSidebarAreaDropTargetData(data)
+              ) {
+                // Keep task hidden - will be removed by optimistic update
+                // Fallback timeout in case update is slow
+                setTimeout(() => setDragState(idle), 300);
+                return;
+              }
+            }
             setDragState(idle);
           },
         }),

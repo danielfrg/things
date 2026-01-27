@@ -8,6 +8,9 @@ import {
   getTaskDragData,
   getTaskDropTargetData,
   isDraggingATask,
+  isSidebarAreaDropTargetData,
+  isSidebarNavDropTargetData,
+  isSidebarProjectDropTargetData,
   isTaskDragData,
 } from '@/lib/dnd';
 import {
@@ -268,6 +271,22 @@ export function TaskRow({
       canDrop: isDraggingATask,
       isSelf: (data) => isTaskDragData(data) && data.task.id === task.id,
       setState,
+      onDrop: ({ location }) => {
+        const target = location.current.dropTargets[0];
+        if (target) {
+          const data = target.data;
+          if (
+            isSidebarProjectDropTargetData(data) ||
+            isSidebarNavDropTargetData(data) ||
+            isSidebarAreaDropTargetData(data)
+          ) {
+            // Keep hidden for sidebar drops, add fallback timeout
+            setTimeout(() => setState(idle), 300);
+            return true;
+          }
+        }
+        return false;
+      },
     },
     [task.id, groupDate, headingId, projectId, isEvening],
   );

@@ -238,6 +238,9 @@ interface DraggableDropTargetOptions {
       | ((prev: DraggableDropTargetState) => DraggableDropTargetState),
   ) => void;
   onDragStart?: () => void;
+  onDrop?: (args: {
+    location: { current: { dropTargets: Array<{ data: DragRecord }> } };
+  }) => boolean;
 }
 
 export function useDraggableDropTarget(
@@ -289,7 +292,15 @@ export function useDraggableDropTarget(
             if (navigator.vibrate) navigator.vibrate(10);
             options.onDragStart?.();
           },
-          onDrop() {
+          onDrop({
+            location,
+          }: {
+            location: { current: { dropTargets: Array<{ data: DragRecord }> } };
+          }) {
+            // Allow custom handler to prevent default idle state
+            if (options.onDrop?.({ location })) {
+              return;
+            }
             options.setState(draggableDropTargetIdle);
           },
         }),
