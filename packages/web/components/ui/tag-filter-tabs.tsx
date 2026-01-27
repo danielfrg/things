@@ -14,18 +14,20 @@ export function TagFilterTabs({ tags, activeTagId, onTagSelect }: TagFilterTabsP
 
   return (
     <ToggleGroup
-      variant="outline"
+    // orientation="vertical"
+    spacing={2}
+      // variant="outline"
       value={[value]}
       onValueChange={(values) => {
         const selected = values[0];
         onTagSelect(selected === ALL_VALUE ? null : selected);
       }}
     >
-      <ToggleGroupItem value={ALL_VALUE}>
+      <ToggleGroupItem value={ALL_VALUE} size="sm">
         All
       </ToggleGroupItem>
       {tags.map((tag) => (
-        <ToggleGroupItem key={tag.id} value={tag.id}>
+        <ToggleGroupItem key={tag.id} value={tag.id} size="sm">
           {tag.title}
         </ToggleGroupItem>
       ))}

@@ -189,7 +189,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               <>
                 <CommandSeparator className="bg-popover-dark-border my-2" />
                 <CommandGroup heading="Tasks">
-                  {activeTasks.slice(0, 10).map((task) => (
+                  {activeTasks.map((task) => (
                     <CommandItem
                       key={task.id}
                       value={`${task.title} ${task.notes ?? ''}`}
@@ -219,7 +219,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               <>
                 <CommandSeparator className="bg-popover-dark-border my-2" />
                 <CommandGroup heading="Projects">
-                  {activeProjects.slice(0, 5).map((project) => (
+                  {activeProjects.map((project) => (
                     <CommandItem
                       key={project.id}
                       value={`${project.title} ${project.notes ?? ''}`}
@@ -245,7 +245,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               <>
                 <CommandSeparator className="bg-popover-dark-border my-2" />
                 <CommandGroup heading="Areas">
-                  {areas.slice(0, 5).map((area) => (
+                  {areas.map((area) => (
                     <CommandItem
                       key={area.id}
                       value={area.title}

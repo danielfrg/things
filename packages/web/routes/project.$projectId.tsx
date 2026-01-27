@@ -1,13 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { isToday } from 'date-fns';
 import {
-  type ChangeEvent,
-  type FocusEvent,
   type KeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
@@ -40,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
+import { ProseEditor } from '@/components/ui/prose-editor';
 import { TagFilterTabs } from '@/components/ui/tag-filter-tabs';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -164,18 +162,8 @@ function ProjectView() {
     [allProjectHeadings],
   );
 
-  const projectNotesRef = useRef<HTMLTextAreaElement>(null);
-
-  const resizeProjectNotes = useCallback(() => {
-    if (projectNotesRef.current) {
-      projectNotesRef.current.style.height = 'auto';
-      const scrollHeight = projectNotesRef.current.scrollHeight;
-      const maxHeight = 300;
-      projectNotesRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-      projectNotesRef.current.style.overflowY =
-        scrollHeight > maxHeight ? 'auto' : 'hidden';
-    }
-  }, []);
+  const [projectNotes, setProjectNotes] = useState('');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -406,9 +394,9 @@ function ProjectView() {
 
   useEffect(() => {
     if (project) {
-      setTimeout(resizeProjectNotes, 0);
+      setProjectNotes(project.notes ?? '');
     }
-  }, [project, resizeProjectNotes]);
+  }, [project]);
 
   const handleTaskSelect = useCallback((taskId: string | null) => {
     setSelectedTaskId(taskId);
@@ -591,23 +579,19 @@ function ProjectView() {
             </div>
 
             <div className="mt-1 px-2">
-              <textarea
-                key={project.id}
-                ref={projectNotesRef}
-                defaultValue={project.notes ?? ''}
-                onInput={(e: ChangeEvent<HTMLTextAreaElement>) => {
-                  handleUpdateNotes(e.currentTarget.value);
-                  resizeProjectNotes();
-                }}
-                onBlur={(e: FocusEvent<HTMLTextAreaElement>) => {
-                  const trimmed = e.currentTarget.value.trim();
+              <ProseEditor
+                value={projectNotes}
+                onChange={setProjectNotes}
+                onBlur={() => {
+                  const trimmed = projectNotes.trim();
                   if (trimmed !== (project.notes ?? '')) {
                     handleUpdateNotes(trimmed);
                   }
                 }}
                 placeholder="Notes"
-                rows={1}
-                className="w-full h-[24px] max-w-[300px] bg-transparent text-[15px] text-notes leading-relaxed resize-none overflow-hidden outline-none border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-muted-foreground"
+                isEditing={isEditingNotes}
+                onStartEditing={() => setIsEditingNotes(true)}
+                className="text-[15px]"
               />
             </div>
 
