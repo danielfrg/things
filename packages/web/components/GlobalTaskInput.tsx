@@ -1,7 +1,14 @@
 import { useLocation } from '@tanstack/react-router';
 import { addDays, format, isToday, isTomorrow } from 'date-fns';
 import { Calendar, FolderOpen } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { BoxIcon, CheckIcon, InboxIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -15,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
+import { Switch } from '@/components/ui/switch';
 import { generateId } from '@/db/schema';
 import {
   useAreas,
@@ -39,6 +47,7 @@ type ViewContext = {
 
 export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
   const location = useLocation();
+  const createMoreId = useId();
 
   const projectsResource = useProjects();
   const areasResource = useAreas();
@@ -315,24 +324,19 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
 
           {/* Footer */}
           <DialogFooter className="px-6 py-4 border-t border-border flex-row items-center justify-between sm:justify-between">
-            <Label className="cursor-pointer">
-              <button
-                type="button"
-                onClick={() => setCreateMore(!createMore)}
-                className={cn(
-                  'relative w-9 h-5 rounded-full transition-colors',
-                  createMore ? 'bg-things-blue' : 'bg-muted',
-                )}
+            <div className="flex items-center gap-2">
+              <Switch
+                id={createMoreId}
+                checked={createMore}
+                onCheckedChange={setCreateMore}
+              />
+              <Label
+                htmlFor={createMoreId}
+                className="text-muted-foreground cursor-pointer"
               >
-                <span
-                  className={cn(
-                    'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm',
-                    createMore && 'translate-x-4',
-                  )}
-                />
-              </button>
-              <span className="text-sm text-muted-foreground">Create more</span>
-            </Label>
+                Create more
+              </Label>
+            </div>
 
             <Button onClick={handleSubmit} disabled={!title.trim()}>
               Create task
