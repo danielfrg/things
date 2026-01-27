@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { MovePicker } from '@/components/ui/move-picker';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
@@ -736,54 +737,6 @@ export function TaskCard({
           )
         }
       >
-        {/* Floating date picker - shown below task when CTRL+S is pressed */}
-        {!expanded &&
-          scheduleDatePickerOpen &&
-          cardRef.current &&
-          createPortal(
-            <>
-              {/* Mobile backdrop */}
-              <div
-                data-popover
-                className="fixed inset-0 z-40 md:hidden"
-                onClick={onScheduleDatePickerClose}
-                onKeyDown={(e) =>
-                  e.key === 'Escape' && onScheduleDatePickerClose?.()
-                }
-              />
-              <div
-                data-popover
-                className="fixed z-50 shadow-lg inset-0 flex items-center justify-center md:inset-auto"
-                style={(() => {
-                  if (window.innerWidth < 768) return {};
-                  const rect = cardRef.current!.getBoundingClientRect();
-                  const popoverHeight = 400;
-                  const spaceBelow = window.innerHeight - rect.bottom;
-                  const showAbove =
-                    spaceBelow < popoverHeight && rect.top > spaceBelow;
-                  return {
-                    left: `${rect.left}px`,
-                    ...(showAbove
-                      ? { bottom: `${window.innerHeight - rect.top + 8}px` }
-                      : { top: `${rect.bottom + 8}px` }),
-                  };
-                })()}
-              >
-                <CalendarPopover
-                  value={task.scheduledDate ?? undefined}
-                  onChange={handleScheduledDateChange}
-                  onSomedaySelect={handleSomedaySelect}
-                  isSomeday={isSomeday}
-                  showSomeday
-                  showEvening
-                  isEvening={task.isEvening}
-                  onClose={onScheduleDatePickerClose}
-                />
-              </div>
-            </>,
-            document.body,
-          )}
-
         {/* Notes */}
         <div className="relative min-h-[26px]">
           <ProseEditor
@@ -822,6 +775,30 @@ export function TaskCard({
           </div>
         )}
       </ItemDetailLayout>
+
+      {/* Floating date picker - shown below task when CTRL+S is pressed */}
+      <Popover
+        open={!expanded && scheduleDatePickerOpen}
+        onOpenChange={(open) => !open && onScheduleDatePickerClose?.()}
+      >
+        <PopoverContent
+          anchor={cardRef}
+          align="start"
+          sideOffset={8}
+          className="w-auto p-0 bg-transparent border-0 shadow-none ring-0"
+        >
+          <CalendarPopover
+            value={task.scheduledDate ?? undefined}
+            onChange={handleScheduledDateChange}
+            onSomedaySelect={handleSomedaySelect}
+            isSomeday={isSomeday}
+            showSomeday
+            showEvening
+            isEvening={task.isEvening}
+            onClose={onScheduleDatePickerClose}
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* Drag preview portal */}
       {dragState.type === 'preview' &&

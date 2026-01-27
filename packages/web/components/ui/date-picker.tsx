@@ -1,4 +1,4 @@
-import { addDays, format, isToday, isTomorrow } from 'date-fns';
+import { addDays, format, isBefore, isToday, isTomorrow, startOfDay } from 'date-fns';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -8,7 +8,7 @@ import {
   SomedayIcon,
   StarIcon,
 } from '@/components/icons';
-import { CalendarGrid } from '@/components/ui/calendar-grid';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
   PopoverContent,
@@ -184,11 +184,56 @@ export function DatePicker({
         </div>
 
         {/* Calendar Grid */}
-        <CalendarGrid
-          selectedDate={selectedDate}
-          onSelect={(date) => handleSelect(date, false)}
-          hidePastDates
-          className="mt-3 max-md:mt-4"
+        <Calendar
+          mode="single"
+          selected={selectedDate ?? undefined}
+          onSelect={(date) => date && handleSelect(date, false)}
+          disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
+          className="mt-3 max-md:mt-4 p-0 bg-transparent"
+          classNames={{
+            months: 'flex flex-col',
+            month: 'space-y-2',
+            nav: 'flex items-center justify-between absolute top-0 inset-x-0',
+            button_previous: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
+            button_next: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
+            month_caption: 'flex items-center justify-center h-8 relative',
+            caption_label: 'text-sm max-md:text-base font-semibold text-popover-dark-foreground',
+            weekdays: 'flex',
+            weekday: 'text-[11px] max-md:text-sm font-bold text-popover-dark-muted text-center py-1 max-md:py-2 w-8 max-md:w-full',
+            week: 'flex mt-0.5',
+            day: 'h-8 w-8 max-md:h-11 max-md:w-full p-0 flex items-center justify-center',
+            today: 'bg-transparent',
+            outside: 'opacity-30',
+            disabled: 'opacity-0 pointer-events-none',
+          }}
+          components={{
+            DayButton: ({ day, modifiers, ...props }) => {
+              const dayIsToday = isToday(day.date);
+              const dayIsSelected = modifiers.selected;
+
+              return (
+                <button
+                  type="button"
+                  {...props}
+                  className={cn(
+                    'h-8 w-8 max-md:h-11 max-md:w-full rounded-md text-sm max-md:text-base font-bold transition-colors flex items-center justify-center',
+                    modifiers.outside && 'opacity-30',
+                    dayIsSelected
+                      ? 'bg-popover-dark-selected text-popover-dark-foreground'
+                      : dayIsToday
+                        ? 'text-popover-dark-selected'
+                        : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
+                  )}
+                >
+                  {dayIsToday && !dayIsSelected ? (
+                    <StarIcon className="h-3 w-3 max-md:h-4 max-md:w-4" fill="#8E8E93" color="#8E8E93" />
+                  ) : (
+                    day.date.getDate()
+                  )}
+                </button>
+              );
+            },
+          }}
         />
 
         {/* Bottom Options */}

@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { useSidebar } from '@/components/ui/sidebar';
 import { generateId } from '@/db/schema';
 import {
@@ -1354,7 +1354,7 @@ export function AppSidebar() {
     <aside className="w-full md:w-64 bg-white md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
       <div className="h-8 flex-shrink-0" />
 
-      <ScrollArea className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
         <div className="pb-2 pt-1">
           <div className="space-y-0.5">
             <NavItem
@@ -1424,7 +1424,7 @@ export function AppSidebar() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-8 md:px-2 h-[52px] flex items-center">
         <div className="flex items-center justify-between w-full">
