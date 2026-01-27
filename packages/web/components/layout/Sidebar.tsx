@@ -434,10 +434,10 @@ function AreaItem(props: AreaItemProps) {
 
   const outerStyles: Record<AreaItemState['type'], string | undefined> = {
     idle: undefined,
-    'is-dragging': 'opacity-40',
+    'is-dragging': 'opacity-0',
     'is-over': undefined,
     'is-task-over': undefined,
-    preview: undefined,
+    preview: 'opacity-0',
   };
 
   return (
@@ -784,17 +784,33 @@ function ProjectItem(props: ProjectItemProps) {
     // Otherwise let the link navigate normally
   };
 
+  const outerStyles: Partial<Record<ProjectItemState['type'], string>> = {
+    idle: undefined,
+    'is-dragging': 'opacity-0',
+    'is-dragging-and-left-self': 'hidden',
+    'is-over': undefined,
+    'is-task-over': undefined,
+    preview: 'opacity-0',
+  };
+
   const linkStyles: Partial<Record<ProjectItemState['type'], string>> = {
     idle: 'md:hover:bg-sidebar-accent md:cursor-grab',
-    'is-dragging': 'opacity-40',
-    'is-dragging-and-left-self': 'h-0 py-0 overflow-hidden',
+    'is-dragging': '',
+    'is-dragging-and-left-self': '',
     'is-task-over': 'bg-things-blue/20 ring-2 ring-things-blue',
-    preview: 'bg-sidebar shadow-lg border border-border',
+    'is-over': undefined,
+    preview: '',
   };
 
   return (
     <>
-      <div ref={outerRef} className={cn('m-0 flex flex-shrink-0 flex-col')}>
+      <div
+        ref={outerRef}
+        className={cn(
+          'm-0 flex flex-shrink-0 flex-col',
+          outerStyles[state.type],
+        )}
+      >
         {state.type === 'is-over' && state.closestEdge === 'top' && (
           <ProjectShadow dragging={state.dragging} />
         )}
@@ -809,14 +825,6 @@ function ProjectItem(props: ProjectItemProps) {
             !isMobile && isActive && 'bg-sidebar-accent',
             linkStyles[state.type],
           )}
-          style={
-            state.type === 'preview'
-              ? {
-                  width: `${state.dragging.width}px`,
-                  height: `${state.dragging.height}px`,
-                }
-              : undefined
-          }
         >
           <ProjectProgressIcon
             progress={props.progress}
@@ -835,14 +843,8 @@ function ProjectItem(props: ProjectItemProps) {
 
       {state.type === 'preview' &&
         createPortal(
-          <Link
-            to="/project/$projectId"
-            params={{ projectId: props.projectId }}
-            className={cn(
-              'flex items-center gap-2 mx-2 px-2 py-1.5 rounded-md text-[13px] font-medium',
-              isActive && 'bg-sidebar-accent',
-              linkStyles[state.type],
-            )}
+          <div
+            className="flex items-center gap-2 mx-2 px-2 py-1.5 rounded-md text-[13px] font-medium bg-sidebar shadow-lg border border-border"
             style={{
               width: `${state.dragging.width}px`,
               height: `${state.dragging.height}px`,
@@ -856,7 +858,7 @@ function ProjectItem(props: ProjectItemProps) {
             <span className="flex-1 truncate text-sidebar-foreground">
               {props.label}
             </span>
-          </Link>,
+          </div>,
           state.container,
         )}
     </>
