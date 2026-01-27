@@ -344,13 +344,22 @@ export function useCreateProject() {
       createProject({ data }),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.projects });
-      const previous = queryClient.getQueryData<ProjectRecord[]>(
+      await queryClient.cancelQueries({ queryKey: queryKeys.headings });
+
+      const previousProjects = queryClient.getQueryData<ProjectRecord[]>(
         queryKeys.projects,
       );
-      const id = data.id ?? generateId();
+      const previousHeadings = queryClient.getQueryData<HeadingRecord[]>(
+        queryKeys.headings,
+      );
+
+      const projectId = data.id ?? generateId();
+      const headingId = generateId();
       const now = new Date();
+
+      // Optimistic project
       const project: ProjectRecord = {
-        id,
+        id: projectId,
         userId: '',
         createdAt: now,
         updatedAt: now,
@@ -363,15 +372,55 @@ export function useCreateProject() {
         position: data.position ?? 0,
         areaId: data.areaId ?? null,
       };
+
+      // Optimistic backlog heading
+      const backlogHeading: HeadingRecord = {
+        id: headingId,
+        userId: '',
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        title: 'Backlog',
+        projectId: projectId,
+        position: 9999,
+        isBacklog: true,
+      };
+
       queryClient.setQueryData<ProjectRecord[]>(queryKeys.projects, (old) => [
         ...(old ?? []),
         project,
       ]);
-      return { previous, project };
+
+      queryClient.setQueryData<HeadingRecord[]>(queryKeys.headings, (old) => [
+        ...(old ?? []),
+        backlogHeading,
+      ]);
+
+      return { previousProjects, previousHeadings, project, backlogHeading };
     },
     onError: (_err, _data, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKeys.projects, context.previous);
+      if (context?.previousProjects) {
+        queryClient.setQueryData(queryKeys.projects, context.previousProjects);
+      }
+      if (context?.previousHeadings) {
+        queryClient.setQueryData(queryKeys.headings, context.previousHeadings);
+      }
+    },
+    onSuccess: (result, _data, context) => {
+      // Replace optimistic data with real server data
+      if (result.project && context?.project) {
+        queryClient.setQueryData<ProjectRecord[]>(queryKeys.projects, (old) =>
+          (old ?? []).map((p) =>
+            p.id === context.project.id ? result.project : p,
+          ),
+        );
+      }
+      if (result.backlogHeading && context?.backlogHeading) {
+        queryClient.setQueryData<HeadingRecord[]>(queryKeys.headings, (old) =>
+          (old ?? []).map((h) =>
+            h.id === context.backlogHeading.id ? result.backlogHeading : h,
+          ),
+        );
       }
     },
   });
@@ -764,6 +813,7 @@ export function useCreateHeading() {
         title: data.title,
         projectId: data.projectId,
         position: data.position ?? 0,
+        isBacklog: data.isBacklog ?? false,
       };
       queryClient.setQueryData<HeadingRecord[]>(queryKeys.headings, (old) => [
         ...(old ?? []),
