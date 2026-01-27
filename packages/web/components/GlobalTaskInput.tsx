@@ -13,6 +13,7 @@ import {
   DialogHeader,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { generateId } from '@/db/schema';
 import {
@@ -314,7 +315,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
 
           {/* Footer */}
           <DialogFooter className="px-6 py-4 border-t border-border flex-row items-center justify-between sm:justify-between">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <Label className="cursor-pointer">
               <button
                 type="button"
                 onClick={() => setCreateMore(!createMore)}
@@ -331,7 +332,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                 />
               </button>
               <span className="text-sm text-muted-foreground">Create more</span>
-            </label>
+            </Label>
 
             <Button onClick={handleSubmit} disabled={!title.trim()}>
               Create task

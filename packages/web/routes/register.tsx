@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { signUp } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/register')({
@@ -59,9 +60,7 @@ function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor={nameId} className="text-sm font-medium">
-              Name
-            </label>
+            <Label htmlFor={nameId}>Name</Label>
             <Input
               id={nameId}
               type="text"
@@ -73,9 +72,7 @@ function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={emailId} className="text-sm font-medium">
-              Email
-            </label>
+            <Label htmlFor={emailId}>Email</Label>
             <Input
               id={emailId}
               type="email"
@@ -87,9 +84,7 @@ function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={passwordId} className="text-sm font-medium">
-              Password
-            </label>
+            <Label htmlFor={passwordId}>Password</Label>
             <Input
               id={passwordId}
               type="password"

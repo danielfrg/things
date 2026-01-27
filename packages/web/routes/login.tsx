@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { signIn, useSession } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/login')({
@@ -63,9 +64,7 @@ function LoginPage() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor={emailId} className="text-sm font-medium">
-              Email
-            </label>
+            <Label htmlFor={emailId}>Email</Label>
             <Input
               id={emailId}
               type="email"
@@ -77,9 +76,7 @@ function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={passwordId} className="text-sm font-medium">
-              Password
-            </label>
+            <Label htmlFor={passwordId}>Password</Label>
             <Input
               id={passwordId}
               type="password"

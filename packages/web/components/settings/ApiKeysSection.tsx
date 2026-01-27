@@ -216,12 +216,9 @@ function CreateApiKeyModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Key name input */}
           <div>
-            <label
-              htmlFor={nameId}
-              className="block text-sm font-medium text-foreground mb-2"
-            >
+            <Label htmlFor={nameId} className="mb-2">
               Key name
-            </label>
+            </Label>
             <Input
               ref={inputRef}
               id={nameId}
@@ -234,9 +231,7 @@ function CreateApiKeyModal({
 
           {/* Permissions radio group */}
           <div>
-            <p className="text-sm font-medium text-foreground mb-3">
-              Permissions
-            </p>
+            <Label className="mb-3">Permissions</Label>
             <RadioGroup
               value={scope}
               onValueChange={(value) =>
