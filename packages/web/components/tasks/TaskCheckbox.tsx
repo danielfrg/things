@@ -16,7 +16,7 @@ export function TaskCheckbox({
   return (
     <button
       type="button"
-      className="shrink-0"
+      className="shrink-0 cursor-pointer"
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(e);

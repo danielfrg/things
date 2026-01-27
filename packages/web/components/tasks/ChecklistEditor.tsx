@@ -361,19 +361,16 @@ export function ChecklistEditor({
     });
   }, []);
 
-  // Ref to hold latest items for the monitor
-  const itemsRef = useRef(items);
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
   // Sort items by position
   const sortedItems = useMemo(() => {
-    const sorted = [...items].sort(
-      (a, b) => (a.position ?? 0) - (b.position ?? 0),
-    );
-    return sorted;
+    return [...items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   }, [items]);
+
+  // Ref to hold latest sortedItems for the DnD monitor
+  const sortedItemsRef = useRef(sortedItems);
+  useEffect(() => {
+    sortedItemsRef.current = sortedItems;
+  }, [sortedItems]);
 
   // Set up monitor for reordering
   useEffect(() => {
@@ -404,7 +401,7 @@ export function ChecklistEditor({
           const edge = dnd.extractClosestEdge(target.data);
           if (!edge) return;
 
-          const currentItems = itemsRef.current;
+          const currentItems = sortedItemsRef.current;
           const startIndex = currentItems.findIndex(
             (i) => i.id === dragging.item.id,
           );
@@ -455,7 +452,7 @@ export function ChecklistEditor({
   const handleToggleItem = useCallback(
     (item: ChecklistItem) => {
       if (isControlled && onChange) {
-        const updated = items.map((i) =>
+        const updated = sortedItems.map((i) =>
           i.id === item.id ? { ...i, completed: !i.completed } : i,
         );
         onChange(updated);
@@ -466,7 +463,7 @@ export function ChecklistEditor({
         });
       }
     },
-    [isControlled, items, onChange, updateItem],
+    [isControlled, sortedItems, onChange, updateItem],
   );
 
   const handleUpdateItemTitle = useCallback(
@@ -474,7 +471,7 @@ export function ChecklistEditor({
       if (title === item.title) return;
 
       if (isControlled && onChange) {
-        const updated = items.map((i) =>
+        const updated = sortedItems.map((i) =>
           i.id === item.id ? { ...i, title } : i,
         );
         onChange(updated);
@@ -482,39 +479,32 @@ export function ChecklistEditor({
         updateItem.mutate({ id: item.id, changes: { title } });
       }
     },
-    [isControlled, items, onChange, updateItem],
+    [isControlled, sortedItems, onChange, updateItem],
   );
 
   const handleEnter = useCallback(
     (index: number) => {
       const newId = generateId();
-      const newPosition = index + 2;
+
+      // Get current and next items from sorted array
+      const currentItem = sortedItems[index];
+      const nextItem = sortedItems[index + 1];
+
+      // Calculate position using fractional positioning
+      const currentPosition = currentItem?.position ?? index + 1;
+      const nextPosition = nextItem?.position ?? currentPosition + 2;
+      const newPosition = (currentPosition + nextPosition) / 2;
 
       if (isControlled && onChange) {
-        const updated = [...items];
-        // Update positions of items after insert point
-        const adjusted = updated.map((item, i) => {
-          if (i > index) {
-            return { ...item, position: (item.position ?? i + 1) + 1 };
-          }
-          return item;
-        });
-        // Insert new item
-        adjusted.splice(index + 1, 0, {
+        const updated = [...sortedItems];
+        updated.splice(index + 1, 0, {
           id: newId,
           title: '',
           completed: false,
           position: newPosition,
         });
-        onChange(adjusted);
+        onChange(updated);
       } else if (taskId) {
-        // Update positions of items after insert point
-        items.forEach((item, i) => {
-          if (i > index) {
-            updateItem.mutate({ id: item.id, changes: { position: i + 2 } });
-          }
-        });
-
         createItem.mutate({
           id: newId,
           taskId,
@@ -529,45 +519,38 @@ export function ChecklistEditor({
         if (newInput) newInput.focus();
       }, 50);
     },
-    [isControlled, items, onChange, taskId, updateItem, createItem],
+    [sortedItems, isControlled, onChange, taskId, createItem],
   );
 
   const handleBackspaceEmpty = useCallback(
     (index: number, itemId: string) => {
       if (isControlled && onChange) {
-        const updated = items.filter((_, i) => i !== index);
+        const updated = sortedItems.filter((item) => item.id !== itemId);
         onChange(updated);
       } else {
         deleteItem.mutate(itemId);
       }
 
-      // Focus previous or next item if there are remaining items
-      if (items.length > 1) {
-        if (index > 0) {
-          const prevItem = items[index - 1];
+      // Focus adjacent item
+      if (sortedItems.length > 1) {
+        const focusItem = index > 0 ? sortedItems[index - 1] : sortedItems[1];
+
+        if (focusItem) {
           setTimeout(() => {
-            const prevInput = inputRefs.current.get(prevItem.id);
-            if (prevInput) {
-              prevInput.focus();
-              prevInput.setSelectionRange(
-                prevInput.value.length,
-                prevInput.value.length,
-              );
-            }
-          }, 0);
-        } else {
-          const nextItem = items[1];
-          setTimeout(() => {
-            const nextInput = inputRefs.current.get(nextItem.id);
-            if (nextInput) {
-              nextInput.focus();
-              nextInput.setSelectionRange(0, 0);
+            const input = inputRefs.current.get(focusItem.id);
+            if (input) {
+              input.focus();
+              if (index > 0) {
+                input.setSelectionRange(input.value.length, input.value.length);
+              } else {
+                input.setSelectionRange(0, 0);
+              }
             }
           }, 0);
         }
       }
     },
-    [isControlled, items, onChange, deleteItem],
+    [sortedItems, isControlled, onChange, deleteItem],
   );
 
   const registerInput = useCallback((itemId: string, el: HTMLInputElement) => {
