@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSidebar } from '@/components/ui/sidebar';
 import { generateId } from '@/db/schema';
 import {
   useAreas,
@@ -33,7 +34,6 @@ import {
   useUpdateProject,
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
-import { useMobileNav } from '@/lib/contexts/MobileNavContext';
 import {
   type CleanupFn,
   type Edge,
@@ -74,7 +74,7 @@ function NavItem(props: NavItemProps) {
   const router = useRouterState();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
   const isActive = router.location.pathname === props.to;
   const [isTaskOver, setIsTaskOver] = useState(false);
 
@@ -119,15 +119,18 @@ function NavItem(props: NavItemProps) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (typeof document === 'undefined') return;
 
-    // On mobile, if already on this route, just show content
+    // On mobile, if already on this route, just close sidebar
     if (isMobile && isActive) {
       e.preventDefault();
-      showContent();
+      setOpenMobile(false);
       return;
     }
 
-    // On mobile, let the link navigate normally
-    if (isMobile) return;
+    // On mobile, close sidebar and let the link navigate
+    if (isMobile) {
+      setOpenMobile(false);
+      return;
+    }
 
     // Check if pending from pointerDown
     if (e.currentTarget.dataset.navPending === '1') {
@@ -244,15 +247,14 @@ function AreaHeader(props: AreaHeaderProps) {
   const navigate = useNavigate();
   const router = useRouterState();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
 
   const isActive = router.location.pathname === `/area/${props.areaId}`;
 
   const handleClick = () => {
     if (isMobile) {
-      if (isActive) {
-        showContent();
-      } else {
+      setOpenMobile(false);
+      if (!isActive) {
         navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
       }
       return;
@@ -637,7 +639,7 @@ function NoAreaDropZone() {
 function ProjectItem(props: ProjectItemProps) {
   const router = useRouterState();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
   const isActive = router.location.pathname === `/project/${props.projectId}`;
 
   const outerRef = useRef<HTMLDivElement>(null);
@@ -773,9 +775,10 @@ function ProjectItem(props: ProjectItemProps) {
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isMobile) return;
+    // On mobile, close sidebar
+    setOpenMobile(false);
     if (isActive) {
       e.preventDefault();
-      showContent();
     }
     // Otherwise let the link navigate normally
   };
@@ -859,7 +862,7 @@ function ProjectItem(props: ProjectItemProps) {
   );
 }
 
-export function Sidebar() {
+export function AppSidebar() {
   const navigate = useNavigate();
 
   const tasksResource = useTasks();

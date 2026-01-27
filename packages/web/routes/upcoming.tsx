@@ -7,6 +7,7 @@ import {
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { UpcomingDaySection } from '@/components/UpcomingDaySection';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -171,7 +172,7 @@ function UpcomingView() {
       }
     >
       {loading ? (
-        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+        <TaskListSkeleton />
       ) : dayGroups.length === 0 ? (
         <p className="text-muted-foreground">No upcoming tasks scheduled.</p>
       ) : (

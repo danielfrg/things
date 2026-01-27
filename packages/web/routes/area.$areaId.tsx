@@ -14,6 +14,7 @@ import {
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
 import { Button } from '@/components/ui/button';
 import {
@@ -428,7 +429,7 @@ function AreaView() {
   return (
     <ViewContainer header={areaHeader} toolbar={areaToolbar}>
       {!isReady ? (
-        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+        <TaskListSkeleton />
       ) : !area ? (
         <div className="py-8 text-center text-muted-foreground">
           Area not found

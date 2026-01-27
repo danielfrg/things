@@ -1,15 +1,15 @@
 import { ChevronLeftIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { useMobileNav } from '@/lib/contexts/MobileNavContext';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function MobileBackButton() {
-  const { showSidebar } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <Button
       variant="ghost"
       size="icon-sm"
-      onClick={showSidebar}
+      onClick={() => setOpenMobile(true)}
       className="md:hidden -ml-1 mr-2 text-muted-foreground hover:text-foreground"
       aria-label="Back to sidebar"
     >

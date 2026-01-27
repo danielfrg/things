@@ -4,6 +4,7 @@ import {
   type TaskGroupsData,
   type TaskMoveInfo,
 } from '@/components/board';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import type { ProjectRecord, TaskRecord } from '@/db/validation';
 import {
   useAreas,
@@ -158,9 +159,7 @@ export function StandardListView({
   );
 
   if (loading) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">Loading...</div>
-    );
+    return <TaskListSkeleton />;
   }
 
   if (boardData.sections.length === 0) {

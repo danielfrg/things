@@ -8,6 +8,7 @@ import {
   ViewToolbar,
 } from '@/components/ToolbarButtons';
 import { TaskList } from '@/components/tasks/TaskList';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import type { TaskRecord } from '@/db/validation';
 import {
   useAddTagToTask,
@@ -185,7 +186,7 @@ function InboxView() {
       }
     >
       {!isReady ? (
-        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+        <TaskListSkeleton />
       ) : (
         <TaskList
           tasks={inboxTasks}
