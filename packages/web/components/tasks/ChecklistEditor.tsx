@@ -63,50 +63,6 @@ export interface ChecklistEditorProps {
   disabled?: boolean;
 }
 
-// Hollow circle checkbox for inline variant (Things 3 style)
-function ChecklistCircle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={checked ? 'Mark incomplete' : 'Mark complete'}
-      onClick={onChange}
-      disabled={disabled}
-      className={cn(
-        'w-[13px] h-[13px] rounded-full border-[1.5px] flex-shrink-0 transition-colors',
-        checked
-          ? 'bg-things-blue border-things-blue'
-          : 'border-things-blue bg-transparent hover:bg-things-blue/10',
-        disabled && 'opacity-50 cursor-not-allowed',
-      )}
-    >
-      {checked && (
-        <svg
-          className="w-full h-full text-white"
-          viewBox="0 0 12 12"
-          aria-hidden="true"
-        >
-          <path
-            d="M3 6l2 2L9 4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </button>
-  );
-}
-
 // Individual checklist item row
 function ChecklistItemRow({
   item,
@@ -270,7 +226,8 @@ function ChecklistItemRow({
       )}
 
       {isInline ? (
-        <ChecklistCircle
+        <Checkbox
+          variant="circle"
           checked={isCompleted}
           onChange={onToggle}
           disabled={disabled}

@@ -11,6 +11,7 @@ import {
 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { MovePicker } from '@/components/ui/move-picker';
@@ -47,7 +48,6 @@ import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 import { ChecklistEditor } from './ChecklistEditor';
 import { ItemDetailLayout } from './ItemDetailLayout';
-import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
 import { TaskShadow } from './TaskRow';
 import { toolbarBtnClass } from './taskUtils';
@@ -422,10 +422,11 @@ export function TaskCard({
           }
         }}
       >
-        <TaskCheckbox
+        <Checkbox
+          variant="task"
           checked={isCompleted}
           onChange={(checked) => onComplete(task.id, checked)}
-          variant={isSomeday ? 'someday' : 'default'}
+          dashed={isSomeday}
         />
       </span>
 
@@ -832,10 +833,11 @@ export function TaskCard({
               height: `${dragState.dragging.height}px`,
             }}
           >
-            <TaskCheckbox
+            <Checkbox
+              variant="task"
               checked={isCompleted}
               onChange={() => {}}
-              variant={isSomeday ? 'someday' : 'default'}
+              dashed={isSomeday}
             />
             <span className="text-[15px] leading-tight text-foreground">
               {form.title}

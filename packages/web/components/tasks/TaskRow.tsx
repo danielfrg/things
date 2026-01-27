@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/lib/dnd';
 import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
-import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
 import { formatTaskDate, getDayOfWeekBadge } from './taskUtils';
 
@@ -163,10 +163,11 @@ function TaskDisplay({
             if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
           }}
         >
-          <TaskCheckbox
+          <Checkbox
+            variant="task"
             checked={isCompleted}
             onChange={(checked) => onComplete?.(task.id, checked)}
-            variant={isSomeday ? 'someday' : 'default'}
+            dashed={isSomeday}
           />
         </span>
 
