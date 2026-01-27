@@ -155,6 +155,7 @@ export function TaskCard({
   const isSomeday = task.status === 'someday';
 
   // Pending changes - accumulated and committed on close
+  // commitOnUnmount ensures changes are saved if window closes while task is expanded
   const { pending, addChange, commit, reset } = usePendingTaskChanges(
     task.id,
     (taskId, changes) => {
@@ -175,6 +176,7 @@ export function TaskCard({
         onUpdate(taskId, changes);
       }
     },
+    true, // commitOnUnmount - save changes if window closes while expanded
   );
 
   // Create a merged view of task with pending changes for display

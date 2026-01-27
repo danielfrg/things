@@ -6,6 +6,8 @@ type TaskChanges = Partial<TaskRecord>;
 export function usePendingTaskChanges(
   taskId: string,
   onCommit: (taskId: string, changes: TaskChanges) => void,
+  /** If true, commits pending changes on unmount and beforeunload */
+  commitOnUnmount = false,
 ) {
   const [pending, setPending] = useState<TaskChanges>({});
   const pendingRef = useRef<TaskChanges>({});
@@ -30,7 +32,7 @@ export function usePendingTaskChanges(
     });
   }, []);
 
-  const commit = useCallback(() => {
+  const commitNow = useCallback(() => {
     const current = pendingRef.current;
     if (Object.keys(current).length > 0) {
       onCommitRef.current(taskIdRef.current, current);
@@ -44,12 +46,35 @@ export function usePendingTaskChanges(
     pendingRef.current = {};
   }, []);
 
+  // Commit on unmount and beforeunload if enabled
+  useEffect(() => {
+    if (!commitOnUnmount) return;
+
+    const handleBeforeUnload = () => {
+      const current = pendingRef.current;
+      if (Object.keys(current).length > 0) {
+        onCommitRef.current(taskIdRef.current, current);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Commit on unmount
+      const current = pendingRef.current;
+      if (Object.keys(current).length > 0) {
+        onCommitRef.current(taskIdRef.current, current);
+      }
+    };
+  }, [commitOnUnmount]);
+
   const hasPendingChanges = Object.keys(pending).length > 0;
 
   return {
     pending,
     addChange,
-    commit,
+    commit: commitNow,
     reset,
     hasPendingChanges,
   };
