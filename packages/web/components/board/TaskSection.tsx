@@ -22,11 +22,11 @@ import {
 } from '@/components/icons';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskShadow } from '@/components/tasks/TaskRow';
-import { Button } from '@/components/ui/button';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
@@ -212,7 +212,6 @@ export function TaskSection({
   const [state, setState] = useState<TSectionState>(idle);
   const [editValue, setEditValue] = useState(section.title);
   const inputRef = useRef<HTMLInputElement>(null);
-  const menu = createDropdownController();
 
   // Sync edit value when section title changes
   useEffect(() => {
@@ -401,27 +400,16 @@ export function TaskSection({
               />
             </div>
             {canDeleteHeading && (
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100"
-                  onClick={(e) => menu.toggleFromEvent(e)}
-                >
+              <DropdownMenu>
+                <DropdownMenuTrigger className="p-1 rounded-md text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 hover:bg-accent transition-colors">
                   <MoreHorizontalIcon className="w-4 h-4" />
-                </Button>
-                <DropdownMenuContent
-                  open={menu.open}
-                  onClose={menu.close}
-                  anchorRect={menu.anchorRect}
-                  align="end"
-                >
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => {
                       if (section.headingId && onHeadingDelete) {
                         onHeadingDelete(section.headingId);
                       }
-                      menu.close();
                     }}
                     className="text-destructive"
                   >
@@ -429,7 +417,7 @@ export function TaskSection({
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </div>
+              </DropdownMenu>
             )}
           </div>
           <div className="border-b border-border" />

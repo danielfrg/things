@@ -1,43 +1,8 @@
 import * as React from "react"
-import { useEffect, useState } from "react"
-import { createPortal } from "react-dom"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
-
-// Controller for imperative dropdown control
-function createDropdownController() {
-  const [open, setOpen] = useState(false)
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-
-  const close = () => setOpen(false)
-
-  const toggleFromEvent = (e: React.MouseEvent) => {
-    const el = e.currentTarget as HTMLElement | null
-    setAnchorRect(el?.getBoundingClientRect?.() ?? null)
-    setOpen((v) => !v)
-  }
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    if (!open) return
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false)
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [open])
-
-  return {
-    open,
-    anchorRect,
-    close,
-    toggleFromEvent,
-  }
-}
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -51,23 +16,7 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
-// Standard content for use within DropdownMenu wrapper (declarative pattern)
-// OR standalone with open/onClose/anchorRect (imperative pattern)
-
-type DropdownMenuContentProps = (
-  | {
-      // Imperative pattern props
-      open: boolean
-      onClose: () => void
-      anchorRect: DOMRect | null
-    }
-  | {
-      // Declarative pattern (no open/onClose/anchorRect)
-      open?: never
-      onClose?: never
-      anchorRect?: never
-    }
-) & {
+interface DropdownMenuContentProps {
   align?: "start" | "end" | "center"
   side?: "top" | "bottom" | "left" | "right"
   sideOffset?: number
@@ -83,75 +32,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   className,
   children,
-  ...props
 }: DropdownMenuContentProps) {
-  // Check if using imperative pattern
-  if ("open" in props && props.open !== undefined) {
-    const { open, onClose, anchorRect } = props as {
-      open: boolean
-      onClose: () => void
-      anchorRect: DOMRect | null
-    }
-
-    const getStyle = (): React.CSSProperties | undefined => {
-      if (!anchorRect) return undefined
-
-      const base: React.CSSProperties = {
-        position: "fixed",
-        zIndex: 50,
-      }
-
-      if (side === "top") {
-        base.top = anchorRect.top - sideOffset
-        base.left = anchorRect.left
-        base.transform = "translateY(-100%)"
-      } else if (side === "bottom") {
-        base.top = anchorRect.bottom + sideOffset
-        base.left = anchorRect.left
-      } else if (side === "left") {
-        base.top = anchorRect.top
-        base.left = anchorRect.left - sideOffset
-        base.transform = "translateX(-100%)"
-      } else {
-        base.top = anchorRect.top
-        base.left = anchorRect.right + sideOffset
-      }
-
-      if (align === "end") {
-        base.transform = `${base.transform ?? ""} translateX(calc(-100% + ${anchorRect.width}px))`.trim()
-      }
-
-      return base
-    }
-
-    if (!open) return null
-
-    return createPortal(
-      <>
-        <div
-          className="fixed inset-0 z-40"
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onClose()
-          }}
-        />
-        <div
-          data-slot="dropdown-menu-content"
-          className={cn(
-            "bg-popover text-popover-foreground z-50 max-h-[var(--dropdown-available-height,400px)] min-w-32 overflow-auto rounded-md p-1 shadow-md ring-1 ring-foreground/10 animate-in fade-in-0 zoom-in-95",
-            className
-          )}
-          style={getStyle()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {children}
-        </div>
-      </>,
-      document.body
-    )
-  }
-
-  // Declarative pattern - use base-ui Menu primitives
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -263,7 +144,7 @@ function DropdownMenuSubContent({
   sideOffset = 0,
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuContent>) {
+}: DropdownMenuContentProps) {
   return (
     <DropdownMenuContent
       data-slot="dropdown-menu-sub-content"
@@ -371,7 +252,6 @@ function DropdownMenuShortcut({
 }
 
 export {
-  createDropdownController,
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,

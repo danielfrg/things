@@ -16,11 +16,11 @@ import {
 } from '@/components/ToolbarButtons';
 import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
-import { Button } from '@/components/ui/button';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
@@ -92,7 +92,6 @@ function AreaView() {
   const { areaId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const areaMenu = createDropdownController();
 
   const { data: tasks, loading: tasksLoading } = useTasks();
   const { data: projects } = useProjects();
@@ -345,7 +344,6 @@ function AreaView() {
       deleteArea.mutate(area.id);
       navigate({ to: '/today' as '/inbox' });
     }
-    areaMenu.close();
   }, [
     area,
     areaProjects,
@@ -354,7 +352,6 @@ function AreaView() {
     updateTask,
     deleteArea,
     navigate,
-    areaMenu,
   ]);
 
   const isReady = !tasksLoading && !areasLoading;
@@ -378,21 +375,11 @@ function AreaView() {
               className="text-[28px] font-bold text-foreground"
             />
           </div>
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-foreground/70"
-              onClick={(e) => areaMenu.toggleFromEvent(e)}
-            >
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-2 rounded-md text-muted-foreground hover:text-foreground/70 hover:bg-accent transition-colors">
               <MoreHorizontalIcon className="w-5 h-5" />
-            </Button>
-            <DropdownMenuContent
-              open={areaMenu.open}
-              onClose={areaMenu.close}
-              anchorRect={areaMenu.anchorRect}
-              align="end"
-            >
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
                   if (
@@ -403,7 +390,6 @@ function AreaView() {
                   ) {
                     handleDeleteArea();
                   }
-                  areaMenu.close();
                 }}
                 className="text-destructive"
               >
@@ -411,7 +397,7 @@ function AreaView() {
                 Delete Area
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </div>
+          </DropdownMenu>
         </div>
       ) : (
         <div className="h-[60px]" />

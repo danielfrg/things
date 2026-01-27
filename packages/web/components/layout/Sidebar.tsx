@@ -16,9 +16,10 @@ import {
   Trash2Icon,
 } from '@/components/icons';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 
@@ -1348,8 +1349,6 @@ export function AppSidebar() {
     // Set up monitors once - use refs to access latest data
   }, []);
 
-  const createMenu = createDropdownController();
-
   return (
     <aside className="w-full md:w-64 bg-white md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
       <div className="h-8 flex-shrink-0" />
@@ -1428,38 +1427,22 @@ export function AppSidebar() {
 
       <div className="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-8 md:px-2 h-[52px] flex items-center">
         <div className="flex items-center justify-between w-full">
-          <button
-            type="button"
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Create"
-            onClick={(e) => createMenu.toggleFromEvent(e)}
-          >
-            <PlusIcon className="w-5 h-5" />
-          </button>
-          <DropdownMenuContent
-            align="start"
-            side="top"
-            open={createMenu.open}
-            anchorRect={createMenu.anchorRect}
-            onClose={createMenu.close}
-          >
-            <DropdownMenuItem
-              onClick={() => {
-                createMenu.close();
-                handleNewProject();
-              }}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+              aria-label="Create"
             >
-              New Project
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                createMenu.close();
-                handleNewArea();
-              }}
-            >
-              New Area
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+              <PlusIcon className="w-5 h-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top">
+              <DropdownMenuItem onClick={handleNewProject}>
+                New Project
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNewArea}>
+                New Area
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Link
             to={'/logbook' as any}

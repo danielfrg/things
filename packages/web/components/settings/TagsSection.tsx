@@ -104,8 +104,8 @@ export function TagsSection() {
         <SectionHeader title="Tags" />
         <Card className="py-0 gap-0">
           {/* Create tag input */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <PlusIcon className="w-4 h-4 text-gray-400" />
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+            <PlusIcon className="w-4 h-4 text-muted-foreground" />
             <Input
               variant="ghost"
               type="text"
@@ -115,7 +115,7 @@ export function TagsSection() {
                 if (e.key === 'Enter') handleCreateTag();
               }}
               placeholder="New tag..."
-              className="flex-1 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400"
+              className="flex-1 text-sm text-foreground placeholder-muted-foreground"
             />
             {newTagTitle.trim() && (
               <Button variant="ghost" size="sm" onClick={handleCreateTag}>
@@ -132,8 +132,7 @@ export function TagsSection() {
                   key={tag.id}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 group',
-                    index < tags.length - 1 &&
-                      'border-b border-gray-200 dark:border-gray-700',
+                    index < tags.length - 1 && 'border-b border-border',
                   )}
                 >
                   {/* Color picker */}
@@ -156,7 +155,7 @@ export function TagsSection() {
                       }}
                     />
                     {colorPickerOpen === tag.id && (
-                      <div className="absolute top-6 left-0 z-10 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                      <div className="absolute top-6 left-0 z-10 p-2 bg-popover border border-border rounded-lg shadow-lg">
                         <div className="flex gap-1">
                           {TAG_COLORS.map((color) => (
                             <button
@@ -168,7 +167,7 @@ export function TagsSection() {
                               className={cn(
                                 'w-6 h-6 rounded-full border-2 transition-all hover:scale-110',
                                 tag.color === color.value
-                                  ? 'border-gray-800 dark:border-white'
+                                  ? 'border-foreground'
                                   : 'border-transparent',
                               )}
                               style={{
@@ -193,7 +192,7 @@ export function TagsSection() {
                         e.currentTarget.blur();
                       }
                     }}
-                    className="flex-1 text-sm text-gray-800 dark:text-gray-200"
+                    className="flex-1 text-sm text-foreground"
                   />
 
                   {/* Delete button */}
@@ -211,7 +210,7 @@ export function TagsSection() {
             </div>
           ) : (
             <div className="px-5 py-5">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No tags yet. Create your first tag above.
               </p>
             </div>

@@ -19,10 +19,8 @@ function SettingsView() {
           {/* Page Title */}
           <div className="flex items-center gap-3 mb-8">
             <MobileBackButton />
-            <Settings2Icon className="w-6 h-6 text-gray-500" />
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-              Settings
-            </h1>
+            <Settings2Icon className="w-6 h-6 text-muted-foreground" />
+            <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
           </div>
 
           <AccountSection />
@@ -30,7 +28,7 @@ function SettingsView() {
           <TagsSection />
 
           {/* Version */}
-          <p className="text-xs text-gray-400 dark:text-gray-600 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Version: {__APP_VERSION__}
           </p>
         </div>

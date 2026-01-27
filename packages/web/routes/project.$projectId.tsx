@@ -32,11 +32,11 @@ import {
 } from '@/components/ToolbarButtons';
 import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
-import { Button } from '@/components/ui/button';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
@@ -176,8 +176,6 @@ function ProjectView() {
         scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
   }, []);
-
-  const projectMenu = createDropdownController();
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -536,8 +534,7 @@ function ProjectView() {
       });
       navigate({ to: '/today' as '/inbox' });
     }
-    projectMenu.close();
-  }, [project, updateProject, navigate, projectMenu]);
+  }, [project, updateProject, navigate]);
 
   const handleDeleteProject = useCallback(() => {
     if (project) {
@@ -547,8 +544,7 @@ function ProjectView() {
       });
       navigate({ to: '/today' as '/inbox' });
     }
-    projectMenu.close();
-  }, [project, updateProject, navigate, projectMenu]);
+  }, [project, updateProject, navigate]);
 
   const isReady = !tasksLoading && !projectsLoading;
   const hasTasks = boardData.sections.length > 0;
@@ -574,21 +570,11 @@ function ProjectView() {
                   className="text-[28px] font-bold text-foreground"
                 />
               </div>
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="ml-auto text-muted-foreground hover:text-foreground/70"
-                  onClick={(e) => projectMenu.toggleFromEvent(e)}
-                >
+              <DropdownMenu>
+                <DropdownMenuTrigger className="p-2 rounded-md text-muted-foreground hover:text-foreground/70 hover:bg-accent transition-colors">
                   <MoreHorizontalIcon className="w-5 h-5" />
-                </Button>
-                <DropdownMenuContent
-                  open={projectMenu.open}
-                  onClose={projectMenu.close}
-                  anchorRect={projectMenu.anchorRect}
-                  align="end"
-                >
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleCompleteProject}>
                     <CheckCircleIcon className="w-4 h-4 mr-2" />
                     Complete Project
@@ -601,7 +587,7 @@ function ProjectView() {
                     Delete Project
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </div>
+              </DropdownMenu>
             </div>
 
             <div className="mt-1 px-2">

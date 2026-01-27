@@ -93,7 +93,7 @@ export function ApiKeysSection() {
             <p className="text-xs text-emerald-700 dark:text-emerald-300 mb-2">
               Copy this key now. You won't see it again.
             </p>
-            <code className="block p-3 bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded text-sm font-mono break-all text-gray-800 dark:text-gray-200">
+            <code className="block p-3 bg-card border border-emerald-300 dark:border-emerald-700 rounded text-sm font-mono break-all text-foreground">
               {createdKey}
             </code>
           </div>
@@ -103,8 +103,8 @@ export function ApiKeysSection() {
         {keys.length > 0 ? (
           <Card className="py-0 gap-0">
             {/* Header with count and action */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-sm font-medium text-foreground">
                 {keys.length} API key{keys.length !== 1 && 's'}
               </span>
               <Button
@@ -121,17 +121,16 @@ export function ApiKeysSection() {
                 key={key.id}
                 className={cn(
                   'flex items-center justify-between px-4 py-4',
-                  index < keys.length - 1 &&
-                    'border-b border-gray-200 dark:border-gray-700',
+                  index < keys.length - 1 && 'border-b border-border',
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <KeyIcon className="w-5 h-5 text-gray-500" />
+                  <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                    <KeyIcon className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                      <p className="text-sm font-medium text-foreground">
                         {key.name}
                       </p>
                       <span
@@ -139,13 +138,13 @@ export function ApiKeysSection() {
                           'px-1.5 py-0.5 text-xs font-medium rounded',
                           key.scope === 'read-write'
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+                            : 'bg-muted text-muted-foreground',
                         )}
                       >
                         {key.scope === 'read-write' ? 'Read & Write' : 'Read'}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {key.keyPrefix}... · Created{' '}
                       {format(new Date(key.createdAt), 'MMM d, yyyy')}
                       {key.lastUsedAt &&
@@ -167,7 +166,9 @@ export function ApiKeysSection() {
         ) : (
           <Card className="py-0 gap-0">
             <div className="flex items-center justify-between px-5 py-5">
-              <p className="text-sm text-gray-500">No API keys created</p>
+              <p className="text-sm text-muted-foreground">
+                No API keys created
+              </p>
               <Button
                 variant="ghost"
                 size="sm"
