@@ -118,7 +118,7 @@ export function MovePicker({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[260px] max-md:w-[calc(100vw-32px)] p-0 bg-popover-dark border-0 shadow-xl ring-0"
+        className="w-[260px] max-md:w-[calc(100vw-32px)] p-0 bg-popover-dark border-0 shadow-xl ring-0 gap-0"
         align="start"
         sideOffset={4}
       >

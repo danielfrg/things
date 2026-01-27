@@ -276,7 +276,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="w-auto p-0 bg-transparent border-0 shadow-none ring-0"
+              className="w-auto p-0 bg-transparent border-0 shadow-none ring-0 gap-0"
             >
               <CalendarPopover
                 value={scheduledDate}
@@ -317,7 +317,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="w-[240px] p-0 rounded-xl bg-popover-dark overflow-hidden border-0 ring-0"
+              className="w-[240px] p-0 rounded-xl bg-popover-dark overflow-hidden border-0 ring-0 gap-0"
             >
               <div className="max-h-64 overflow-y-auto overscroll-contain py-2">
                 <Button

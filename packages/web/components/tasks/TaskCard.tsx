@@ -785,7 +785,7 @@ export function TaskCard({
           anchor={cardRef}
           align="start"
           sideOffset={8}
-          className="w-auto p-0 bg-transparent border-0 shadow-none ring-0"
+          className="w-auto p-0 bg-transparent border-0 shadow-none ring-0 gap-0"
         >
           <CalendarPopover
             value={task.scheduledDate ?? undefined}

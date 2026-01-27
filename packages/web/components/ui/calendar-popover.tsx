@@ -90,7 +90,7 @@ export function CalendarPopover({
   return (
     <div className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden">
       {/* Header with title */}
-      <div className="flex items-center justify-center relative max-md:mb-4">
+      <div className="flex items-center justify-center relative mb-2 max-md:mb-4">
         <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">
           {title}
         </h3>
@@ -152,40 +152,50 @@ export function CalendarPopover({
         selected={selectedDate ?? undefined}
         onSelect={(date) => date && handleSelect(date, false)}
         disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
-        className="mt-3 max-md:mt-4 p-0 bg-transparent"
+        showOutsideDays={false}
+        fixedWeeks={false}
+        className="mt-3 max-md:mt-4 p-0 bg-transparent w-full gap-0"
         classNames={{
-          months: 'flex flex-col',
-          month: 'space-y-2',
-          nav: 'flex items-center justify-between absolute top-0 inset-x-0',
+          months: 'flex flex-col w-full relative',
+          month: 'w-full',
+          nav: 'absolute inset-x-0 top-0 z-10 flex items-center justify-between pointer-events-none [&>button]:pointer-events-auto',
           button_previous: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
           button_next: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
-          month_caption: 'flex items-center justify-center h-8 relative',
+          month_caption: 'flex items-center justify-center mb-2 max-md:mb-3',
           caption_label: 'text-sm max-md:text-base font-semibold text-popover-dark-foreground',
-          weekdays: 'flex',
-          weekday: 'text-[11px] max-md:text-sm font-bold text-popover-dark-muted text-center py-1 max-md:py-2 w-8 max-md:w-full',
-          week: 'flex mt-0.5',
+          weekdays: 'grid grid-cols-7 mb-1 max-md:mb-2',
+          weekday: 'text-[11px] max-md:text-sm font-bold text-popover-dark-muted text-center py-1 max-md:py-2',
+          week: 'grid grid-cols-7',
           day: 'h-8 w-8 max-md:h-11 max-md:w-full p-0 flex items-center justify-center',
           today: 'bg-transparent',
           outside: 'opacity-30',
-          disabled: 'opacity-0 pointer-events-none',
+          disabled: '',
+          hidden: 'invisible',
+        }}
+        formatters={{
+          formatWeekdayName: (date) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
         }}
         components={{
           DayButton: ({ day, modifiers, ...props }) => {
             const dayIsToday = isToday(day.date);
             const dayIsSelected = modifiers.selected;
+            const dayIsDisabled = modifiers.disabled;
 
             return (
               <button
                 type="button"
                 {...props}
+                disabled={dayIsDisabled}
                 className={cn(
                   'h-8 w-8 max-md:h-11 max-md:w-full rounded-md text-sm max-md:text-base font-bold transition-colors flex items-center justify-center',
                   modifiers.outside && 'opacity-30',
-                  dayIsSelected
-                    ? 'bg-popover-dark-selected text-popover-dark-foreground'
-                    : dayIsToday
-                      ? 'text-popover-dark-selected'
-                      : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
+                  dayIsDisabled
+                    ? 'text-popover-dark-muted/30 cursor-default'
+                    : dayIsSelected
+                      ? 'bg-popover-dark-selected text-popover-dark-foreground'
+                      : dayIsToday
+                        ? 'text-popover-dark-selected'
+                        : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
                 )}
               >
                 {dayIsToday && !dayIsSelected ? (
