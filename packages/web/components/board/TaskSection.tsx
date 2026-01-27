@@ -1,9 +1,3 @@
-type DragLocationHistory = {
-  current: {
-    dropTargets: Array<{ data: Record<string | symbol, unknown> }>;
-  };
-};
-
 import {
   type KeyboardEvent,
   memo,
@@ -12,7 +6,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import invariant from 'tiny-invariant';
 import {
   BoxIcon,
   EveningIcon,
@@ -39,25 +32,19 @@ import type {
 } from '@/db/validation';
 import {
   isDraggingATask,
-  isShallowEqual,
   isTaskDragData,
   isTaskDropTargetData,
-  loadDnd,
-  type TaskDragData,
 } from '@/lib/dnd';
+import {
+  type SectionDropTargetState,
+  sectionDropTargetIdle,
+  useSectionDropTarget,
+} from '@/lib/hooks/useDnd';
 import { getSectionData, type TSection } from './data';
 
-type TSectionState =
-  | {
-      type: 'is-task-over';
-      isOverChildTask: boolean;
-      dragging: DOMRect;
-    }
-  | {
-      type: 'idle';
-    };
+type TSectionState = SectionDropTargetState;
 
-const idle = { type: 'idle' } satisfies TSectionState;
+const idle = sectionDropTargetIdle;
 
 interface TaskListProps {
   section: TSection;
@@ -218,102 +205,18 @@ export function TaskSection({
     setEditValue(section.title);
   }, [section.title]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    invariant(container);
-
-    const data = getSectionData({ section });
-
-    function setIsTaskOver({
-      data,
-      location,
-    }: {
-      data: TaskDragData;
-      location: DragLocationHistory;
-    }) {
-      const innerMost = location.current.dropTargets[0];
-      const isOverChildTask = Boolean(
-        innerMost && isTaskDropTargetData(innerMost.data),
-      );
-
-      const proposed: TSectionState = {
-        type: 'is-task-over',
-        dragging: data.rect,
-        isOverChildTask,
-      };
-      setState((current) => {
-        if (
-          isShallowEqual(
-            proposed as unknown as Record<string, unknown>,
-            current as unknown as Record<string, unknown>,
-          )
-        ) {
-          return current;
-        }
-        return proposed;
-      });
-    }
-
-    let cleanup: (() => void) | undefined;
-
-    void loadDnd().then((dnd) => {
-      cleanup = dnd.combine(
-        dnd.dropTargetForElements({
-          element: container,
-          getData: () => data,
-          canDrop({
-            source,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-          }) {
-            return isDraggingATask({ source });
-          },
-          getIsSticky: () => true,
-          onDragStart({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDragEnter({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDropTargetChange({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDragLeave() {
-            setState(idle);
-          },
-          onDrop() {
-            setState(idle);
-          },
-        }),
-      );
-    });
-
-    return () => cleanup?.();
-  }, [section.id, section.projectId, section.headingId, section.isEvening]);
+  useSectionDropTarget(
+    {
+      ref: containerRef,
+      getData: () => getSectionData({ section }),
+      canDrop: isDraggingATask,
+      isTaskDragData: (data): data is typeof data & { rect: DOMRect } =>
+        isTaskDragData(data),
+      isTaskDropTargetData,
+      setState,
+    },
+    [section.id, section.projectId, section.headingId, section.isEvening],
+  );
 
   // Calculate project progress for project sections
   const getProjectProgress = useCallback(() => {

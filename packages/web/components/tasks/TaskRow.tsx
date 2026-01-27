@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
@@ -7,15 +7,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
-  type CleanupFn,
-  type Edge,
   getTaskDragData,
   getTaskDropTargetData,
   isDraggingATask,
-  isShallowEqual,
   isTaskDragData,
-  loadDnd,
 } from '@/lib/dnd';
+import {
+  type DraggableDropTargetState,
+  draggableDropTargetIdle,
+  useDraggableDropTarget,
+} from '@/lib/hooks/useDnd';
 import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 import { TaskMetadata } from './TaskMetadata';
@@ -41,14 +42,9 @@ interface TaskRowProps {
   areas?: AreaRecord[];
 }
 
-type TaskRowState =
-  | { type: 'idle' }
-  | { type: 'is-dragging' }
-  | { type: 'is-dragging-and-left-self' }
-  | { type: 'is-over'; dragging: DOMRect; closestEdge: Edge }
-  | { type: 'preview'; container: HTMLElement; dragging: DOMRect };
+type TaskRowState = DraggableDropTargetState;
 
-const idle: TaskRowState = { type: 'idle' };
+const idle: TaskRowState = draggableDropTargetIdle;
 
 export function TaskShadow({ dragging }: { dragging: DOMRect }) {
   return (
@@ -158,7 +154,7 @@ function TaskDisplay({
         style={{ ...previewStyle, ...selectedStyle }}
       >
         <span
-          className="shrink-0"
+          className="shrink-0 cursor-pointer"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
@@ -268,133 +264,33 @@ export function TaskRow({
   const innerRef = useRef<HTMLButtonElement>(null);
   const [state, setState] = useState<TaskRowState>(idle);
 
-  // Set up DnD on mount (client-side only)
-  useEffect(() => {
-    const outer = outerRef.current;
-    const inner = innerRef.current;
-    if (!outer || !inner) return;
-
-    let disposed = false;
-    let cleanup: CleanupFn | undefined;
-
-    void loadDnd().then((dnd) => {
-      if (disposed) return;
-
-      cleanup = dnd.combine(
-        dnd.draggable({
-          element: inner,
-          getInitialData: () =>
-            getTaskDragData({
-              task,
-              rect: inner.getBoundingClientRect(),
-              groupDate,
-              headingId,
-              projectId,
-              isEvening,
-            }),
-          onGenerateDragPreview({ nativeSetDragImage, location, source }: any) {
-            if (!isTaskDragData(source.data)) return;
-
-            dnd.setCustomNativeDragPreview({
-              nativeSetDragImage,
-              getOffset: dnd.preserveOffsetOnSource({
-                element: inner,
-                input: location.current.input,
-              }),
-              render({ container }: any) {
-                setState({
-                  type: 'preview',
-                  container,
-                  dragging: inner.getBoundingClientRect(),
-                });
-              },
-            });
-          },
-          onDragStart() {
-            setState({ type: 'is-dragging' });
-            // Haptic feedback on mobile
-            if (navigator.vibrate) navigator.vibrate(10);
-          },
-          onDrop() {
-            setState(idle);
-          },
+  useDraggableDropTarget(
+    {
+      outerRef,
+      innerRef,
+      getDragData: () =>
+        getTaskDragData({
+          task,
+          rect: innerRef.current?.getBoundingClientRect() ?? new DOMRect(),
+          groupDate,
+          headingId,
+          projectId,
+          isEvening,
         }),
-        dnd.dropTargetForElements({
-          element: outer,
-          getIsSticky: () => true,
-          canDrop: isDraggingATask,
-          getData: ({ input }: any) => {
-            const data = getTaskDropTargetData({
-              task,
-              groupDate,
-              headingId,
-              projectId,
-              isEvening,
-            });
-            return dnd.attachClosestEdge(data, {
-              element: outer,
-              input,
-              allowedEdges: ['top', 'bottom'],
-            });
-          },
-          onDragEnter({ source, self }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) return;
-
-            const closestEdge = dnd.extractClosestEdge(self.data);
-            if (!closestEdge) return;
-
-            setState({
-              type: 'is-over',
-              dragging: source.data.rect,
-              closestEdge,
-            });
-          },
-          onDrag({ source, self }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) return;
-
-            const closestEdge = dnd.extractClosestEdge(self.data);
-            if (!closestEdge) return;
-
-            const proposed: TaskRowState = {
-              type: 'is-over',
-              dragging: source.data.rect,
-              closestEdge,
-            };
-            setState((current) => {
-              if (
-                current.type === 'is-over' &&
-                isShallowEqual(
-                  proposed as unknown as Record<string, unknown>,
-                  current as unknown as Record<string, unknown>,
-                )
-              ) {
-                return current;
-              }
-              return proposed;
-            });
-          },
-          onDragLeave({ source }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) {
-              setState({ type: 'is-dragging-and-left-self' });
-              return;
-            }
-            setState(idle);
-          },
-          onDrop() {
-            setState(idle);
-          },
+      getDropData: () =>
+        getTaskDropTargetData({
+          task,
+          groupDate,
+          headingId,
+          projectId,
+          isEvening,
         }),
-      );
-    });
-
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
-  }, [task.id, groupDate, headingId, projectId, isEvening]);
+      canDrop: isDraggingATask,
+      isSelf: (data) => isTaskDragData(data) && data.task.id === task.id,
+      setState,
+    },
+    [task.id, groupDate, headingId, projectId, isEvening],
+  );
 
   return (
     <>
