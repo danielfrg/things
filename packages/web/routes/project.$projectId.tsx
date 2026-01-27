@@ -1,12 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { isToday } from 'date-fns';
-import {
-  type KeyboardEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GroupedTaskList,
   type TaskGroupsData,
@@ -35,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { EditableText } from '@/components/ui/editable-text';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { TagFilterTabs } from '@/components/ui/tag-filter-tabs';
@@ -72,42 +66,6 @@ export const Route = createFileRoute('/project/$projectId')({
     };
   },
 });
-
-function EditableText(props: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-}) {
-  const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
-    const trimmed = e.target.value.trim();
-    if (trimmed !== props.value) {
-      props.onChange(trimmed);
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    if (e.key === 'Enter') {
-      target.blur();
-    } else if (e.key === 'Escape') {
-      target.value = props.value;
-      target.blur();
-    }
-  };
-
-  return (
-    <Input
-      variant="ghost"
-      type="text"
-      defaultValue={props.value}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      placeholder={props.placeholder}
-      className={cn('block w-full', 'placeholder:text-hint', props.className)}
-    />
-  );
-}
 
 function ProjectView() {
   const { projectId } = Route.useParams();

@@ -1,30 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { InboxIcon } from '@/components/icons';
 import { ViewContainer } from '@/components/layout/ViewContainer';
+import { StandardListView } from '@/components/StandardListView';
 import {
   NewTaskButton,
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
-import { TaskList } from '@/components/tasks/TaskList';
-import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
-import type { TaskRecord } from '@/db/validation';
-import {
-  useAddTagToTask,
-  useAreas,
-  useChecklistItems,
-  useCompleteTask,
-  useProjects,
-  useRemoveTagFromTask,
-  useReorderTasks,
-  useTags,
-  useTasks,
-  useTaskTags,
-  useUpdateTask,
-} from '@/lib/contexts/DataContext';
-import { useHotkey } from '@/lib/hooks/useHotkey';
-import { useTaskKeyboardNav } from '@/lib/hooks/useTaskKeyboardNav';
+import { useTasks } from '@/lib/contexts/DataContext';
 
 export const Route = createFileRoute('/inbox')({
   component: InboxView,
@@ -37,37 +21,10 @@ export const Route = createFileRoute('/inbox')({
 
 function InboxView() {
   const search = Route.useSearch();
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
-    string | null
-  >(null);
+  const { data: tasks, loading } = useTasks();
 
-  // Select task from URL if present
-  useEffect(() => {
-    if (search.task) {
-      setSelectedTaskId(search.task);
-      setExpandedTaskId(search.task);
-    }
-  }, [search.task]);
-
-  // Get resources from context
-  const { data: tasks, loading: tasksLoading } = useTasks();
-  const { data: projects } = useProjects();
-  const { data: areas } = useAreas();
-  const { data: checklistItems } = useChecklistItems();
-  const { data: tags } = useTags();
-  const { data: taskTags } = useTaskTags();
-
-  // Mutations
-  const updateTask = useUpdateTask();
-  const reorderTasks = useReorderTasks();
-  const completeTask = useCompleteTask();
-  const addTagToTask = useAddTagToTask();
-  const removeTagFromTask = useRemoveTagFromTask();
-
-  const inboxTasks = useMemo(() => {
-    return tasks
+  const boardData = useMemo(() => {
+    const inboxTasks = tasks
       .filter((task) => {
         if (task.trashedAt) return false;
         if (task.scheduledDate) return false;
@@ -76,102 +33,11 @@ function InboxView() {
         return task.status === 'inbox';
       })
       .sort((a, b) => a.position - b.position);
+
+    return {
+      sections: [{ id: 'inbox', title: '', tasks: inboxTasks }],
+    };
   }, [tasks]);
-
-  const activeProjects = useMemo(
-    () => projects.filter((p) => p.status === 'active'),
-    [projects],
-  );
-
-  const handleTaskSelect = useCallback((taskId: string | null) => {
-    setSelectedTaskId(taskId);
-    setScheduleDatePickerTaskId(null);
-  }, []);
-
-  const handleTaskExpand = useCallback((taskId: string) => {
-    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
-    setSelectedTaskId(taskId);
-    setScheduleDatePickerTaskId(null);
-  }, []);
-
-  // Keyboard navigation
-  useTaskKeyboardNav({
-    tasks: inboxTasks,
-    selectedTaskId,
-    expandedTaskId,
-    onSelect: handleTaskSelect,
-    onExpand: handleTaskExpand,
-  });
-
-  useHotkey(
-    's',
-    () => {
-      if (selectedTaskId && !expandedTaskId) {
-        setScheduleDatePickerTaskId(selectedTaskId);
-      }
-    },
-    { ctrl: true },
-  );
-
-  const handleTaskComplete = useCallback(
-    (taskId: string, completed: boolean) => {
-      completeTask.mutate(taskId, completed);
-    },
-    [completeTask],
-  );
-
-  const handleTaskReorder = useCallback(
-    (taskIds: string[]) => {
-      reorderTasks.mutate(taskIds);
-    },
-    [reorderTasks],
-  );
-
-  const handleTaskUpdate = useCallback(
-    (taskId: string, updates: Partial<TaskRecord>) => {
-      updateTask.mutate({ id: taskId, changes: updates });
-    },
-    [updateTask],
-  );
-
-  const handleTaskDelete = useCallback(
-    (taskId: string) => {
-      updateTask.mutate({ id: taskId, changes: { trashedAt: new Date() } });
-      setExpandedTaskId(null);
-      setSelectedTaskId(null);
-    },
-    [updateTask],
-  );
-
-  const handleProjectChange = useCallback(
-    (taskId: string, projectId: string | null, areaId?: string | null) => {
-      updateTask.mutate({
-        id: taskId,
-        changes: {
-          projectId,
-          areaId: areaId ?? null,
-          headingId: null,
-        },
-      });
-    },
-    [updateTask],
-  );
-
-  const handleTagAdd = useCallback(
-    (taskId: string, tagId: string) => {
-      addTagToTask.mutate({ taskId, tagId });
-    },
-    [addTagToTask],
-  );
-
-  const handleTagRemove = useCallback(
-    (taskId: string, tagId: string) => {
-      removeTagFromTask.mutate({ taskId, tagId });
-    },
-    [removeTagFromTask],
-  );
-
-  const isReady = !tasksLoading;
 
   return (
     <ViewContainer
@@ -185,32 +51,13 @@ function InboxView() {
         </ViewToolbar>
       }
     >
-      {!isReady ? (
-        <TaskListSkeleton />
-      ) : (
-        <TaskList
-          tasks={inboxTasks}
-          emptyMessage="Inbox is empty. Add a task to get started."
-          selectedTaskId={selectedTaskId}
-          expandedTaskId={expandedTaskId}
-          scheduleDatePickerTaskId={scheduleDatePickerTaskId}
-          onScheduleDatePickerClose={() => setScheduleDatePickerTaskId(null)}
-          onTaskSelect={handleTaskSelect}
-          onTaskExpand={handleTaskExpand}
-          onTaskComplete={handleTaskComplete}
-          onTaskReorder={handleTaskReorder}
-          onTaskUpdate={handleTaskUpdate}
-          onTaskDelete={handleTaskDelete}
-          onProjectChange={handleProjectChange}
-          onTagAdd={handleTagAdd}
-          onTagRemove={handleTagRemove}
-          checklistItems={checklistItems}
-          taskTags={taskTags}
-          allTags={tags}
-          projects={activeProjects}
-          areas={areas}
-        />
-      )}
+      <StandardListView
+        boardData={boardData}
+        loading={loading}
+        emptyMessage="Inbox is empty. Add a task to get started."
+        uncompleteStatus="inbox"
+        initialSelectedTaskId={search.task}
+      />
     </ViewContainer>
   );
 }

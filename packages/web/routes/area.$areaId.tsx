@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { EditableText } from '@/components/ui/editable-text';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -42,8 +42,6 @@ import {
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
 import { useTaskKeyboardNav } from '@/lib/hooks/useTaskKeyboardNav';
-import { cn } from '@/lib/utils';
-
 export const Route = createFileRoute('/area/$areaId')({
   component: AreaView,
   validateSearch: (search: Record<string, unknown>) => {
@@ -52,42 +50,6 @@ export const Route = createFileRoute('/area/$areaId')({
     };
   },
 });
-
-function EditableText(props: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-}) {
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const trimmed = e.target.value.trim();
-    if (trimmed !== props.value) {
-      props.onChange(trimmed);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    if (e.key === 'Enter') {
-      target.blur();
-    } else if (e.key === 'Escape') {
-      target.value = props.value;
-      target.blur();
-    }
-  };
-
-  return (
-    <Input
-      variant="ghost"
-      type="text"
-      defaultValue={props.value}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      placeholder={props.placeholder}
-      className={cn('block w-full', 'placeholder:text-hint', props.className)}
-    />
-  );
-}
 
 function AreaView() {
   const { areaId } = Route.useParams();
