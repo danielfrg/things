@@ -64,13 +64,13 @@ bun run cli complete <task-id>
 
 ```bash
 docker build -t things .
-docker run -p 3000:3000 -v things-data:/data things
+docker run -p 3000:3000 -v things-data:/data ghcr.io/danielfrg/things:main
 ```
 
 ## Contributions
 
 Welcome but since its a personal project I might not accept all PRs.
-AI contrinutions are welcome since i dont even know about this code. Whatever forever.
+AI contributions are welcome since i dont even know about this code. Whatever forever.
 
 ## Disclaimer
 
