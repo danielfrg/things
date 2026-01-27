@@ -8,6 +8,7 @@ import {
   RepeatIcon,
   RestoreIcon,
   Trash2Icon,
+  XIcon,
 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
@@ -16,7 +17,7 @@ import { MovePicker } from '@/components/ui/move-picker';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
-import { TagPicker } from '@/components/ui/tag-picker';
+import { TAG_COLORS, TagPicker } from '@/components/ui/tag-picker';
 import {
   ToolbarButton,
   toolbarButtonVariants,
@@ -160,11 +161,9 @@ export function TaskCard({
     task.id,
     (taskId, changes) => {
       // Handle project change separately if needed
-      if (
-        onProjectChange &&
-        ('projectId' in changes || 'areaId' in changes)
-      ) {
-        const projId = 'projectId' in changes ? changes.projectId : task.projectId;
+      if (onProjectChange && ('projectId' in changes || 'areaId' in changes)) {
+        const projId =
+          'projectId' in changes ? changes.projectId : task.projectId;
         const areaVal = 'areaId' in changes ? changes.areaId : task.areaId;
         // Remove project/area from changes since we handle them separately
         const { projectId: _p, areaId: _a, headingId: _h, ...rest } = changes;
@@ -180,10 +179,13 @@ export function TaskCard({
   );
 
   // Create a merged view of task with pending changes for display
-  const pendingTask = useMemo(() => ({
-    ...task,
-    ...pending,
-  }), [task, pending]);
+  const pendingTask = useMemo(
+    () => ({
+      ...task,
+      ...pending,
+    }),
+    [task, pending],
+  );
 
   const { showInfo, setShowInfo, handleClose } = useDetailCard({
     id: task.id,
@@ -600,7 +602,9 @@ export function TaskCard({
       {!ruleId && !isCompleted && (
         <RepeatPicker
           value={rule?.rrule}
-          startDate={rule?.nextOccurrence ?? pendingTask.scheduledDate ?? undefined}
+          startDate={
+            rule?.nextOccurrence ?? pendingTask.scheduledDate ?? undefined
+          }
           onChange={(rrule, startDate) => {
             if (onRepeatChange) {
               onRepeatChange(task.id, rrule, startDate);
@@ -797,13 +801,26 @@ export function TaskCard({
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mx-1 m-0 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <span
                 key={tag.id}
-                className="px-2 py-0.5 rounded-full text-[12px] bg-things-green/20 text-things-green"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] bg-[#c8e2d6] text-[#1e7d58]"
               >
                 {tag.title}
+                {!isCompleted && (
+                  <button
+                    type="button"
+                    className="hover:bg-[#1e7d58]/10 rounded-full p-0.5"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTagRemove(tag.id);
+                    }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
               </span>
             ))}
           </div>

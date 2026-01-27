@@ -81,7 +81,7 @@ export function StandardListView({
   const { data: areas } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
-  useTaskTags();
+  const { data: taskTags } = useTaskTags();
 
   const ops = useTaskOperations({ uncompleteStatus });
 
@@ -190,6 +190,7 @@ export function StandardListView({
       areas={areas}
       checklistItems={checklistItems}
       tags={tags}
+      taskTags={taskTags}
       hideToday={hideToday}
       showTodayStar={showTodayStar}
       isTrash={isTrash}

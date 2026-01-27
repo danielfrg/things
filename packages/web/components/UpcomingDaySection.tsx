@@ -9,6 +9,7 @@ import type {
   ProjectRecord,
   TagRecord,
   TaskRecord,
+  TaskTagRecord,
 } from '@/db/validation';
 import { useBatchUpdateTasks } from '@/lib/contexts/DataContext';
 import {
@@ -34,6 +35,7 @@ interface UpcomingDaySectionProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   onTaskSelect: (taskId: string | null) => void;
   onTaskExpand: (taskId: string) => void;
   onTaskComplete: (taskId: string, completed: boolean) => void;
@@ -128,6 +130,7 @@ export function UpcomingDaySection({
   areas,
   checklistItems,
   tags,
+  taskTags,
   onTaskSelect,
   onTaskExpand,
   onTaskComplete,
@@ -328,6 +331,7 @@ export function UpcomingDaySection({
               scheduleDatePickerTaskId={scheduleDatePickerTaskId}
               onScheduleDatePickerClose={onScheduleDatePickerClose}
               checklistItems={checklistItems}
+              taskTags={taskTags}
               allTags={tags}
               projects={projects}
               areas={areas}

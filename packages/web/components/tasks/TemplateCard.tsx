@@ -11,6 +11,7 @@ import {
   PlayIcon,
   RepeatIcon,
   Trash2Icon,
+  XIcon,
 } from '@/components/icons';
 import {
   AlertDialog,
@@ -530,6 +531,35 @@ export function TemplateCard({
           mode="controlled"
           onChange={handleChecklistChange}
         />
+
+        {/* Tags */}
+        {selectedTagIds.length > 0 && (
+          <div className="mx-1 m-0 flex flex-wrap gap-1.5">
+            {selectedTagIds.map((tagId) => {
+              const tag = allTags.find((t) => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] bg-[#c8e2d6] text-[#1e7d58]"
+                >
+                  {tag.title}
+                  <button
+                    type="button"
+                    className="hover:bg-[#1e7d58]/10 rounded-full p-0.5"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTagRemove(tag.id);
+                    }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
       </ItemDetailLayout>
 
       {/* Delete Confirmation Dialog */}

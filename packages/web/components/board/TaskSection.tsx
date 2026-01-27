@@ -29,6 +29,7 @@ import type {
   ProjectRecord,
   TagRecord,
   TaskRecord,
+  TaskTagRecord,
 } from '@/db/validation';
 import {
   isDraggingATask,
@@ -69,6 +70,7 @@ interface TaskListProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   hideToday?: boolean;
   showTodayStar?: boolean;
   isTrash?: boolean;
@@ -93,6 +95,7 @@ const TaskList = memo(function TaskList({
   areas,
   checklistItems,
   tags,
+  taskTags: taskTagsData,
   hideToday,
   showTodayStar,
   isTrash,
@@ -101,7 +104,11 @@ const TaskList = memo(function TaskList({
     const taskChecklistItems = checklistItems.filter(
       (item) => item.taskId === task.id,
     );
-    const taskTagIds = task.tags?.map((t: TagRecord) => t.id) ?? [];
+    // Use taskTagsData (from useTaskTags hook) if available for reactivity,
+    // otherwise fall back to embedded task.tags
+    const taskTagIds = taskTagsData
+      ? taskTagsData.filter((tt) => tt.taskId === task.id).map((tt) => tt.tagId)
+      : (task.tags?.map((t: TagRecord) => t.id) ?? []);
     const taskTags = tags.filter((tag) => taskTagIds.includes(tag.id));
 
     return (
@@ -161,6 +168,7 @@ interface TaskSectionProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   hideToday?: boolean;
   showTodayStar?: boolean;
   isTrash?: boolean;
@@ -189,6 +197,7 @@ export function TaskSection({
   areas,
   checklistItems,
   tags,
+  taskTags,
   hideToday,
   showTodayStar,
   isTrash,
@@ -370,6 +379,7 @@ export function TaskSection({
           areas={areas}
           checklistItems={checklistItems}
           tags={tags}
+          taskTags={taskTags}
           hideToday={hideToday}
           showTodayStar={showTodayStar}
           isTrash={isTrash}

@@ -57,7 +57,7 @@ function InboxView() {
   const { data: areas } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
-  useTaskTags();
+  const { data: taskTags } = useTaskTags();
 
   // Mutations
   const updateTask = useUpdateTask();
@@ -205,6 +205,7 @@ function InboxView() {
           onTagAdd={handleTagAdd}
           onTagRemove={handleTagRemove}
           checklistItems={checklistItems}
+          taskTags={taskTags}
           allTags={tags}
           projects={activeProjects}
           areas={areas}

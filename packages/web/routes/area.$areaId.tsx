@@ -36,6 +36,7 @@ import {
   useRepeatingRules,
   useTags,
   useTasks,
+  useTaskTags,
   useUpdateArea,
   useUpdateProject,
   useUpdateTask,
@@ -98,6 +99,7 @@ function AreaView() {
   const { data: areas, loading: areasLoading } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
+  const { data: taskTags } = useTaskTags();
   const { data: repeatingRules } = useRepeatingRules();
 
   const updateTask = useUpdateTask();
@@ -442,6 +444,7 @@ function AreaView() {
               areas={areas}
               checklistItems={checklistItems}
               tags={tags}
+              taskTags={taskTags}
             />
           )}
 

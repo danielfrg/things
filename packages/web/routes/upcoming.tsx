@@ -15,6 +15,7 @@ import {
   useChecklistItems,
   useProjects,
   useTags,
+  useTaskTags,
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
 import { useHotkey } from '@/lib/hooks/useHotkey';
@@ -61,6 +62,7 @@ function UpcomingView() {
   const { data: areas } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
+  const { data: taskTags } = useTaskTags();
 
   const updateTask = useUpdateTask();
   const ops = useTaskOperations({ uncompleteStatus: 'scheduled' });
@@ -190,6 +192,7 @@ function UpcomingView() {
               areas={areas}
               checklistItems={checklistItems}
               tags={tags}
+              taskTags={taskTags}
               onTaskSelect={handleTaskSelect}
               onTaskExpand={handleTaskExpand}
               onTaskComplete={ops.complete}

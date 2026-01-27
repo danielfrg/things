@@ -653,6 +653,7 @@ function ProjectView() {
               areas={areas}
               checklistItems={checklistItems}
               tags={tags}
+              taskTags={taskTags}
               showTodayStar
               onHeadingEdit={handleHeadingEdit}
               onHeadingDelete={handleHeadingDelete}
