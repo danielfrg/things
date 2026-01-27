@@ -127,7 +127,7 @@ export function MovePicker({
           <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Move</h3>
         </div>
 
-        <div className="max-h-80 max-md:max-h-[70vh] overflow-y-auto overscroll-contain py-2 max-md:py-3">
+        <div className="max-h-80 max-md:max-h-[70vh] overflow-y-auto overscroll-contain pb-2 max-md:py-3">
           <button
             type="button"
             onClick={handleSelectInbox}

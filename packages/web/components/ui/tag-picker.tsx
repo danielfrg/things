@@ -106,7 +106,7 @@ export function TagPicker({
                 <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Tags</h3>
               </div>
 
-              <div className="p-2 max-h-[280px] max-md:max-h-[60vh] overflow-y-auto">
+              <div className="max-h-[280px] max-md:max-h-[60vh] overflow-y-auto overscroll-contain pb-2 max-md:pb-3">
                 {tags.length > 0 ? (
                   tags.map((tag) => {
                     const selected = selectedTagIds.includes(tag.id);
@@ -115,9 +115,8 @@ export function TagPicker({
                         key={tag.id}
                         type="button"
                         className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2 max-md:py-3 rounded-lg text-sm max-md:text-base text-left transition-colors',
-                          'hover:bg-popover-dark-accent',
-                          selected && 'bg-popover-dark-accent',
+                          'flex items-center gap-2 w-full h-[30px] max-md:h-[44px] px-3 text-[14px] max-md:text-base font-semibold text-white',
+                          'hover:bg-popover-dark-accent transition-colors',
                         )}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -130,7 +129,7 @@ export function TagPicker({
                             TAG_COLORS[tag.color ?? 'gray'] ?? 'bg-gray-500',
                           )}
                         />
-                        <span className="flex-1 text-popover-dark-foreground truncate">{tag.title}</span>
+                        <span className="flex-1 text-left text-popover-dark-foreground truncate">{tag.title}</span>
                         {selected && <CheckIcon className="w-4 h-4 max-md:w-5 max-md:h-5 text-popover-dark-selected" />}
                       </button>
                     );

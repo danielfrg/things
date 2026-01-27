@@ -297,11 +297,11 @@ export function RepeatPicker({
         sideOffset={4}
       >
         {/* Header with title */}
-        <div className="flex items-center justify-center relative max-md:mb-4">
+        <div className="flex mb-2 items-center justify-center relative max-md:mb-4">
           <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Repeat</h3>
         </div>
 
-        <div className="space-y-3 max-md:space-y-4">
+        <div className="space-y-2 max-md:space-y-4">
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
