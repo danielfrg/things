@@ -8,13 +8,20 @@ import {
   RepeatIcon,
   RestoreIcon,
   Trash2Icon,
+  XIcon,
 } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { DatePicker } from '@/components/ui/date-picker';
 import { MovePicker } from '@/components/ui/move-picker';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
 import { TagPicker } from '@/components/ui/tag-picker';
+import {
+  ToolbarButton,
+  toolbarButtonVariants,
+} from '@/components/ui/toolbar-button';
 import { generateId } from '@/db/schema';
 import type {
   AreaRecord,
@@ -35,9 +42,14 @@ import {
   getTaskDragData,
   getTaskDropTargetData,
   isDraggingATask,
+  isSidebarAreaDropTargetData,
+  isSidebarNavDropTargetData,
+  isSidebarProjectDropTargetData,
   isTaskDragData,
   loadDnd,
 } from '@/lib/dnd';
+import { useDetailCard } from '@/lib/hooks/useDetailCard';
+import { usePendingTaskChanges } from '@/lib/hooks/usePendingTaskChanges';
 import { useTaskEditorForm } from '@/lib/hooks/useTaskEditorForm';
 import { createRepeatingRuleFromTaskFn } from '@/lib/server/repeatingRules';
 import { cn } from '@/lib/utils';
@@ -46,8 +58,9 @@ import { ChecklistEditor } from './ChecklistEditor';
 import { ItemDetailLayout } from './ItemDetailLayout';
 import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
+import { TaskProjectBadge } from './TaskProjectBadge';
 import { TaskShadow } from './TaskRow';
-import { toolbarBtnClass } from './taskUtils';
+import { TaskTitle } from './TaskTitle';
 
 type DragState =
   | { type: 'idle' }
@@ -134,7 +147,6 @@ export function TaskCard({
   projectId,
   isEvening,
 }: TaskCardProps) {
-  const [showInfo, setShowInfo] = useState(false);
   const [dragState, setDragState] = useState<DragState>(idle);
   const cardRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -143,9 +155,66 @@ export function TaskCard({
   const isCompleted = task.status === 'completed';
   const isSomeday = task.status === 'someday';
 
-  const handleClose = useCallback(() => {
-    onExpand(task.id);
-  }, [onExpand, task.id]);
+  // Pending changes - accumulated and committed on close
+  // commitOnUnmount ensures changes are saved if window closes while task is expanded
+  const { pending, addChange, commit, reset } = usePendingTaskChanges(
+    task.id,
+    (taskId, changes) => {
+      // Handle project change separately if needed
+      if (onProjectChange && ('projectId' in changes || 'areaId' in changes)) {
+        const projId =
+          'projectId' in changes ? changes.projectId : task.projectId;
+        const areaVal = 'areaId' in changes ? changes.areaId : task.areaId;
+        // Remove project/area from changes since we handle them separately
+        const { projectId: _p, areaId: _a, headingId: _h, ...rest } = changes;
+        if (Object.keys(rest).length > 0) {
+          onUpdate(taskId, rest);
+        }
+        onProjectChange(taskId, projId ?? null, areaVal);
+      } else {
+        onUpdate(taskId, changes);
+      }
+    },
+    true, // commitOnUnmount - save changes if window closes while expanded
+  );
+
+  // Create a merged view of task with pending changes for display
+  const pendingTask = useMemo(
+    () => ({
+      ...task,
+      ...pending,
+    }),
+    [task, pending],
+  );
+
+  const { showInfo, setShowInfo, handleClose } = useDetailCard({
+    id: task.id,
+    expanded,
+    onExpand,
+    cardRef,
+    dataAttribute: 'data-task-detail-card',
+  });
+
+  // Commit pending changes when task collapses (expanded changes from true to false)
+  const wasExpandedForCommitRef = useRef(expanded);
+  useEffect(() => {
+    const wasExpanded = wasExpandedForCommitRef.current;
+    wasExpandedForCommitRef.current = expanded;
+
+    // Commit when transitioning from expanded to collapsed
+    if (wasExpanded && !expanded) {
+      commit();
+    }
+  }, [expanded, commit]);
+
+  // Reset pending changes when switching to a different task
+  const prevTaskIdRef = useRef(task.id);
+  useEffect(() => {
+    if (prevTaskIdRef.current !== task.id) {
+      prevTaskIdRef.current = task.id;
+      reset();
+    }
+  }, [task.id, reset]);
 
   const form = useTaskEditorForm({
     initialTitle: task.title,
@@ -217,7 +286,30 @@ export function TaskCard({
             // Haptic feedback on mobile
             if (navigator.vibrate) navigator.vibrate(10);
           },
-          onDrop() {
+          onDrop({
+            location,
+          }: {
+            location: {
+              current: {
+                dropTargets: Array<{ data: Record<string | symbol, unknown> }>;
+              };
+            };
+          }) {
+            // Check if dropped on sidebar (cross-list move)
+            const target = location.current.dropTargets[0];
+            if (target) {
+              const data = target.data;
+              if (
+                isSidebarProjectDropTargetData(data) ||
+                isSidebarNavDropTargetData(data) ||
+                isSidebarAreaDropTargetData(data)
+              ) {
+                // Keep task hidden - will be removed by optimistic update
+                // Fallback timeout in case update is slow
+                setTimeout(() => setDragState(idle), 300);
+                return;
+              }
+            }
             setDragState(idle);
           },
         }),
@@ -286,44 +378,6 @@ export function TaskCard({
     };
   }, [task.id, groupDate, headingId, projectId, isEvening, expanded]);
 
-  // Click outside handler
-  useEffect(() => {
-    if (!expanded) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!cardRef.current) return;
-
-      const target = e.target as HTMLElement;
-
-      if (cardRef.current.contains(target)) return;
-
-      const isInPopover =
-        target.closest('[data-popover]') ||
-        target.closest('[role="listbox"]') ||
-        target.closest('[role="dialog"]') ||
-        target.closest('[role="menu"]');
-      if (isInPopover) return;
-
-      const closestWithBg = target.closest('div');
-      if (closestWithBg) {
-        const bg = getComputedStyle(closestWithBg).backgroundColor;
-        if (bg === 'rgb(44, 44, 46)') return;
-      }
-
-      const anyExpandedCard = target.closest('[data-task-detail-card]');
-      if (anyExpandedCard) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
-    };
-
-    document.addEventListener('mousedown', handleClickOutside, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [expanded, handleClose]);
-
   const repeatingRulesResource = useRepeatingRules();
   const deleteRepeatingRule = useDeleteRepeatingRule();
   const deleteChecklistItem = useDeleteChecklistItem();
@@ -358,33 +412,30 @@ export function TaskCard({
 
   const handleScheduledDateChange = useCallback(
     (date: string | undefined, isEveningValue?: boolean) => {
-      const updates: Partial<TaskRecord> = {
+      addChange({
         scheduledDate: date ?? null,
         status: date ? 'scheduled' : 'anytime',
         isEvening: isEveningValue ?? false,
-      };
-      onUpdate(task.id, updates);
+      });
     },
-    [task.id, onUpdate],
+    [addChange],
   );
 
   const handleSomedaySelect = useCallback(() => {
-    const updates: Partial<TaskRecord> = {
+    addChange({
       scheduledDate: null,
       status: 'someday',
       isEvening: false,
-    };
-    onUpdate(task.id, updates);
-  }, [task.id, onUpdate]);
+    });
+  }, [addChange]);
 
   const handleDeadlineChange = useCallback(
     (date: string | undefined) => {
-      const updates: Partial<TaskRecord> = {
+      addChange({
         deadline: date ?? null,
-      };
-      onUpdate(task.id, updates);
+      });
     },
-    [task.id, onUpdate],
+    [addChange],
   );
 
   const handleAddChecklist = useCallback(() => {
@@ -396,6 +447,20 @@ export function TaskCard({
       position: 1,
     });
   }, [task.id, createChecklistItem]);
+
+  const handleTagAdd = useCallback(
+    (tagId: string) => {
+      if (onTagAdd) onTagAdd(task.id, tagId);
+    },
+    [task.id, onTagAdd],
+  );
+
+  const handleTagRemove = useCallback(
+    (tagId: string) => {
+      if (onTagRemove) onTagRemove(task.id, tagId);
+    },
+    [task.id, onTagRemove],
+  );
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -424,45 +489,24 @@ export function TaskCard({
         }
       }}
     >
-      <span
-        role="button"
-        tabIndex={0}
-        className="shrink-0"
-        onClick={(e) => {
-          e.stopPropagation();
-          onComplete(task.id, !isCompleted);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            onComplete(task.id, !isCompleted);
-          }
-        }}
-      >
-        <TaskCheckbox
-          checked={isCompleted}
-          onChange={(checked) => onComplete(task.id, checked)}
-          variant={isSomeday ? 'someday' : 'default'}
-        />
-      </span>
+      <TaskCheckbox
+        checked={isCompleted}
+        onChange={(checked) => onComplete(task.id, checked)}
+        dashed={isSomeday}
+      />
 
       {expanded ? (
-        <input
-          ref={form.titleRef}
-          type="text"
+        <TaskTitle
+          inputRef={form.titleRef}
           value={form.title}
-          onChange={(e) => form.setTitle(e.target.value)}
+          onChange={form.setTitle}
           onBlur={form.handleTitleBlur}
           onKeyDown={form.handleTitleKeyDown}
           onClick={(e) => e.stopPropagation()}
-          disabled={isCompleted}
-          className={cn(
-            'flex-1 bg-transparent text-lg md:text-[15px] leading-tight outline-none border-0 p-0',
-            'text-foreground caret-things-blue',
-            isCompleted && 'line-through text-muted-foreground',
-          )}
+          status={isCompleted ? 'completed' : 'default'}
+          editable
           placeholder="Task title"
+          className="flex-1"
         />
       ) : (
         <div
@@ -470,37 +514,24 @@ export function TaskCard({
           tabIndex={0}
           className="flex-1 min-w-0"
           onClick={() => onSelect(task.id)}
-          onKeyDown={(e) => {
+          onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               onSelect(task.id);
             }
           }}
         >
-          <span
-            className={cn(
-              'block text-lg md:text-[15px] leading-tight truncate',
-              'text-foreground',
-              isCompleted && 'line-through text-muted-foreground',
-            )}
-          >
-            {form.title}
-          </span>
-          {showProjectInfo && (task.projectId || task.areaId) && (
-            <div className="text-[12px] text-muted-foreground truncate mt-0.5">
-              {(() => {
-                const project = task.projectId
-                  ? projects?.find((p) => p.id === task.projectId)
-                  : null;
-                const area = task.areaId
-                  ? areas?.find((a) => a.id === task.areaId)
-                  : null;
-                if (project && area) return `${area.title} › ${project.title}`;
-                if (project) return project.title;
-                if (area) return area.title;
-                return null;
-              })()}
-            </div>
+          <TaskTitle
+            value={form.title}
+            status={isCompleted ? 'completed' : 'default'}
+          />
+          {showProjectInfo && (
+            <TaskProjectBadge
+              projectId={task.projectId}
+              areaId={task.areaId}
+              projects={projects}
+              areas={areas}
+            />
           )}
         </div>
       )}
@@ -526,46 +557,42 @@ export function TaskCard({
     <>
       {/* Restore (trash only) */}
       {isTrash && onRestore && (
-        <button
-          type="button"
+        <ToolbarButton
           onClick={() => {
             onRestore(task.id);
             handleClose();
           }}
-          className={cn(
-            toolbarBtnClass,
-            'text-things-blue hover:text-things-blue',
-          )}
+          icon={<RestoreIcon className="w-3.5 h-3.5" />}
+          className="text-things-blue hover:text-things-blue"
         >
-          <RestoreIcon className="w-3.5 h-3.5" />
-          <span>Restore</span>
-        </button>
+          Restore
+        </ToolbarButton>
       )}
 
       {/* Schedule picker */}
       {!isCompleted && (
         <DatePicker
-          value={task.scheduledDate ?? undefined}
+          value={pendingTask.scheduledDate ?? undefined}
           onChange={handleScheduledDateChange}
           placeholder="When"
           disabled={isCompleted}
           showSomeday
           onSomedaySelect={handleSomedaySelect}
-          isSomeday={isSomeday}
+          isSomeday={pendingTask.status === 'someday'}
           showEvening
-          isEvening={task.isEvening}
-          className={toolbarBtnClass}
+          isEvening={pendingTask.isEvening}
+          className={toolbarButtonVariants()}
         />
       )}
 
       {/* Deadline picker */}
       {!isCompleted && (
         <DatePicker
-          value={task.deadline ?? undefined}
+          value={pendingTask.deadline ?? undefined}
           onChange={handleDeadlineChange}
           placeholder="Deadline"
           disabled={isCompleted}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
           icon={<FlagIcon className="h-3.5 w-3.5 opacity-70" />}
           title="Deadline"
         />
@@ -575,7 +602,9 @@ export function TaskCard({
       {!ruleId && !isCompleted && (
         <RepeatPicker
           value={rule?.rrule}
-          startDate={rule?.nextOccurrence ?? task.scheduledDate ?? undefined}
+          startDate={
+            rule?.nextOccurrence ?? pendingTask.scheduledDate ?? undefined
+          }
           onChange={(rrule, startDate) => {
             if (onRepeatChange) {
               onRepeatChange(task.id, rrule, startDate);
@@ -601,45 +630,39 @@ export function TaskCard({
           }}
           placeholder="Repeat"
           disabled={isCompleted}
-          className={toolbarBtnClass}
+          className={toolbarButtonVariants()}
         />
       )}
 
       {/* Move picker */}
       {(projects?.length ?? 0) > 0 && !isCompleted && (
         <MovePicker
-          value={task.projectId}
-          areaValue={task.areaId}
+          value={pendingTask.projectId}
+          areaValue={pendingTask.areaId}
           onChange={(projId: string | null, areaVal?: string | null) => {
-            if (onProjectChange) {
-              onProjectChange(task.id, projId, areaVal);
-            } else {
-              onUpdate(task.id, {
-                projectId: projId,
-                areaId: areaVal ?? null,
-                headingId: null,
-              });
-            }
+            addChange({
+              projectId: projId,
+              areaId: areaVal ?? null,
+              headingId: null,
+            });
           }}
           projects={projects ?? []}
           areas={areas}
           placeholder="Move"
           disabled={isCompleted}
-          className={toolbarBtnClass}
-          isInbox={task.status === 'inbox'}
+          className={toolbarButtonVariants()}
+          isInbox={pendingTask.status === 'inbox'}
         />
       )}
 
       {/* Add checklist button - only show if no checklist items exist */}
       {!isCompleted && checklistItems.length === 0 && (
-        <button
-          type="button"
+        <ToolbarButton
           onClick={handleAddChecklist}
-          className={toolbarBtnClass}
+          icon={<ListChecksIcon className="h-3.5 w-3.5 opacity-70" />}
         >
-          <ListChecksIcon className="h-3.5 w-3.5 opacity-70" />
-          <span>Checklist</span>
-        </button>
+          Checklist
+        </ToolbarButton>
       )}
 
       {/* Tags picker */}
@@ -647,8 +670,8 @@ export function TaskCard({
         <TagPicker
           selectedTagIds={tags.map((t) => t.id)}
           tags={allTags}
-          onAdd={(tagId) => onTagAdd(task.id, tagId)}
-          onRemove={(tagId) => onTagRemove(task.id, tagId)}
+          onAdd={handleTagAdd}
+          onRemove={handleTagRemove}
           disabled={isCompleted}
         />
       )}
@@ -669,16 +692,17 @@ export function TaskCard({
 
       {/* Info button */}
       <div className="relative flex items-center">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={(e) => {
             e.stopPropagation();
             setShowInfo(!showInfo);
           }}
-          className="flex items-center justify-center h-6 w-6 rounded text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+          className="text-border hover:text-muted-foreground hover:bg-secondary"
         >
           <InfoIcon className="w-3.5 h-3.5" />
-        </button>
+        </Button>
 
         {/* Info popover */}
         {showInfo && (
@@ -709,16 +733,17 @@ export function TaskCard({
       </div>
 
       {/* Delete button */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => {
           onDelete(task.id);
           handleClose();
         }}
-        className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="text-hint hover:text-destructive hover:bg-destructive/10"
       >
         <Trash2Icon className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     </>
   );
 
@@ -750,54 +775,6 @@ export function TaskCard({
           )
         }
       >
-        {/* Floating date picker - shown below task when CTRL+S is pressed */}
-        {!expanded &&
-          scheduleDatePickerOpen &&
-          cardRef.current &&
-          createPortal(
-            <>
-              {/* Mobile backdrop */}
-              <div
-                data-popover
-                className="fixed inset-0 z-40 md:hidden"
-                onClick={onScheduleDatePickerClose}
-                onKeyDown={(e) =>
-                  e.key === 'Escape' && onScheduleDatePickerClose?.()
-                }
-              />
-              <div
-                data-popover
-                className="fixed z-50 shadow-lg inset-0 flex items-center justify-center md:inset-auto"
-                style={(() => {
-                  if (window.innerWidth < 768) return {};
-                  const rect = cardRef.current!.getBoundingClientRect();
-                  const popoverHeight = 400;
-                  const spaceBelow = window.innerHeight - rect.bottom;
-                  const showAbove =
-                    spaceBelow < popoverHeight && rect.top > spaceBelow;
-                  return {
-                    left: `${rect.left}px`,
-                    ...(showAbove
-                      ? { bottom: `${window.innerHeight - rect.top + 8}px` }
-                      : { top: `${rect.bottom + 8}px` }),
-                  };
-                })()}
-              >
-                <CalendarPopover
-                  value={task.scheduledDate ?? undefined}
-                  onChange={handleScheduledDateChange}
-                  onSomedaySelect={handleSomedaySelect}
-                  isSomeday={isSomeday}
-                  showSomeday
-                  showEvening
-                  isEvening={task.isEvening}
-                  onClose={onScheduleDatePickerClose}
-                />
-              </div>
-            </>,
-            document.body,
-          )}
-
         {/* Notes */}
         <div className="relative min-h-[26px]">
           <ProseEditor
@@ -824,18 +801,55 @@ export function TaskCard({
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mx-1 m-0 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <span
                 key={tag.id}
-                className="px-2 py-0.5 rounded-full text-[12px] bg-things-green/20 text-things-green"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] bg-[#c8e2d6] text-[#1e7d58]"
               >
                 {tag.title}
+                {!isCompleted && (
+                  <button
+                    type="button"
+                    className="hover:bg-[#1e7d58]/10 rounded-full p-0.5"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTagRemove(tag.id);
+                    }}
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
               </span>
             ))}
           </div>
         )}
       </ItemDetailLayout>
+
+      {/* Floating date picker - shown below task when CTRL+S is pressed */}
+      <Popover
+        open={!expanded && scheduleDatePickerOpen}
+        onOpenChange={(open) => !open && onScheduleDatePickerClose?.()}
+      >
+        <PopoverContent
+          anchor={cardRef}
+          align="start"
+          sideOffset={8}
+          className="w-auto p-0 bg-transparent border-0 shadow-none ring-0 gap-0"
+        >
+          <CalendarPopover
+            value={task.scheduledDate ?? undefined}
+            onChange={handleScheduledDateChange}
+            onSomedaySelect={handleSomedaySelect}
+            isSomeday={isSomeday}
+            showSomeday
+            showEvening
+            isEvening={task.isEvening}
+            onClose={onScheduleDatePickerClose}
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* Drag preview portal */}
       {dragState.type === 'preview' &&
@@ -850,11 +864,9 @@ export function TaskCard({
             <TaskCheckbox
               checked={isCompleted}
               onChange={() => {}}
-              variant={isSomeday ? 'someday' : 'default'}
+              dashed={isSomeday}
             />
-            <span className="text-[15px] leading-tight text-foreground">
-              {form.title}
-            </span>
+            <TaskTitle value={form.title} />
           </div>,
           dragState.container,
         )}

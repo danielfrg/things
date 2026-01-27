@@ -11,6 +11,7 @@ Use Bun instead of Node and npm.
 
 ## Components
 - Functional components only.
+- Reuse components in the components/ui directory, for example buttons, checkboxes, etc.
 - Use `useEffect` sparingly; prefer derived state or event handlers.
 - Co-locate small, specific components in the same file if they aren't reused elsewhere.
 

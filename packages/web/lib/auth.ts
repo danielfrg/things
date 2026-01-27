@@ -32,6 +32,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    changeEmail: {
+      enabled: true,
+      sendVerificationEmail: false,
+    },
+  },
   session: {
     cookieCache: {
       enabled: true,

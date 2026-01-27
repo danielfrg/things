@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { signUp } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/register')({
@@ -58,40 +60,32 @@ function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor={nameId} className="text-sm font-medium">
-              Name
-            </label>
-            <input
+            <Label htmlFor={nameId}>Name</Label>
+            <Input
               id={nameId}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               required
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={emailId} className="text-sm font-medium">
-              Email
-            </label>
-            <input
+            <Label htmlFor={emailId}>Email</Label>
+            <Input
               id={emailId}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={passwordId} className="text-sm font-medium">
-              Password
-            </label>
-            <input
+            <Label htmlFor={passwordId}>Password</Label>
+            <Input
               id={passwordId}
               type="password"
               value={password}
@@ -99,7 +93,6 @@ function RegisterPage() {
               placeholder="Choose a password"
               required
               minLength={8}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <p className="text-xs text-muted-foreground">
               Must be at least 8 characters

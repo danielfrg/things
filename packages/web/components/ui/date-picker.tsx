@@ -1,10 +1,13 @@
 import { format, isToday, isTomorrow } from 'date-fns';
 import type { ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useState } from 'react';
 import { CalendarIcon } from '@/components/icons';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
-import { getAnchoredPosition } from '@/lib/hooks/useAnchoredPosition';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn, parseLocalDate } from '@/lib/utils';
 
 interface DatePickerProps {
@@ -34,10 +37,9 @@ export function DatePicker({
   icon,
   showEvening,
   isEvening,
-  title,
+  title = 'When',
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const displayValue = useMemo(() => {
     if (isSomeday) return 'Someday';
@@ -48,56 +50,38 @@ export function DatePicker({
     return format(date, 'MMM d, yyyy');
   }, [value, placeholder, isSomeday, isEvening]);
 
-  const handleClose = () => setOpen(false);
-
-  const anchorRect = triggerRef.current?.getBoundingClientRect() ?? null;
-  const popoverStyle = getAnchoredPosition(anchorRect, { popoverHeight: 380 });
-
   return (
-    <div className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        disabled={disabled}
         className={cn(
           'inline-flex items-center gap-1 text-sm transition-colors',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
-        disabled={disabled}
-        onClick={() => setOpen(!open)}
       >
         {icon ?? <CalendarIcon className="h-3.5 w-3.5 opacity-70" />}
         <span className={cn(!value && !isSomeday && 'text-muted-foreground')}>
           {displayValue}
         </span>
-      </button>
-
-      {open &&
-        createPortal(
-          <>
-            {/* Mobile backdrop - captures taps to close popover without affecting task */}
-            <div
-              data-popover
-              className="fixed inset-0 z-40 md:hidden"
-              onClick={handleClose}
-              onKeyDown={(e) => e.key === 'Escape' && handleClose()}
-            />
-            <div data-popover style={popoverStyle} className="z-50">
-              <CalendarPopover
-                value={value}
-                onChange={onChange ?? (() => {})}
-                onSomedaySelect={onSomedaySelect}
-                isSomeday={isSomeday}
-                showSomeday={showSomeday}
-                showEvening={showEvening}
-                isEvening={isEvening}
-                onClose={handleClose}
-                title={title}
-              />
-            </div>
-          </>,
-          document.body,
-        )}
-    </div>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-0 bg-transparent border-0 shadow-xl ring-0"
+        align="start"
+        sideOffset={4}
+      >
+        <CalendarPopover
+          value={value}
+          onChange={onChange ?? (() => {})}
+          onSomedaySelect={onSomedaySelect}
+          isSomeday={isSomeday}
+          showSomeday={showSomeday}
+          showEvening={showEvening}
+          isEvening={isEvening}
+          onClose={() => setOpen(false)}
+          title={title}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -34,9 +34,3 @@ export function isDateOverdue(dateStr: string | null | undefined): boolean {
   const date = parseLocalDate(dateStr);
   return isPast(startOfDay(date)) && !isToday(date);
 }
-
-/**
- * Shared toolbar button class for task/template editors.
- */
-export const toolbarBtnClass =
-  'inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors';

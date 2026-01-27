@@ -1,9 +1,3 @@
-type DragLocationHistory = {
-  current: {
-    dropTargets: Array<{ data: Record<string | symbol, unknown> }>;
-  };
-};
-
 import {
   type KeyboardEvent,
   memo,
@@ -12,7 +6,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import invariant from 'tiny-invariant';
 import {
   BoxIcon,
   EveningIcon,
@@ -23,10 +16,12 @@ import {
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskShadow } from '@/components/tasks/TaskRow';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type {
   AreaRecord,
@@ -34,28 +29,23 @@ import type {
   ProjectRecord,
   TagRecord,
   TaskRecord,
+  TaskTagRecord,
 } from '@/db/validation';
 import {
   isDraggingATask,
-  isShallowEqual,
   isTaskDragData,
   isTaskDropTargetData,
-  loadDnd,
-  type TaskDragData,
 } from '@/lib/dnd';
+import {
+  type SectionDropTargetState,
+  sectionDropTargetIdle,
+  useSectionDropTarget,
+} from '@/lib/hooks/useDnd';
 import { getSectionData, type TSection } from './data';
 
-type TSectionState =
-  | {
-      type: 'is-task-over';
-      isOverChildTask: boolean;
-      dragging: DOMRect;
-    }
-  | {
-      type: 'idle';
-    };
+type TSectionState = SectionDropTargetState;
 
-const idle = { type: 'idle' } satisfies TSectionState;
+const idle = sectionDropTargetIdle;
 
 interface TaskListProps {
   section: TSection;
@@ -80,6 +70,7 @@ interface TaskListProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   hideToday?: boolean;
   showTodayStar?: boolean;
   isTrash?: boolean;
@@ -104,6 +95,7 @@ const TaskList = memo(function TaskList({
   areas,
   checklistItems,
   tags,
+  taskTags: taskTagsData,
   hideToday,
   showTodayStar,
   isTrash,
@@ -112,7 +104,11 @@ const TaskList = memo(function TaskList({
     const taskChecklistItems = checklistItems.filter(
       (item) => item.taskId === task.id,
     );
-    const taskTagIds = task.tags?.map((t: TagRecord) => t.id) ?? [];
+    // Use taskTagsData (from useTaskTags hook) if available for reactivity,
+    // otherwise fall back to embedded task.tags
+    const taskTagIds = taskTagsData
+      ? taskTagsData.filter((tt) => tt.taskId === task.id).map((tt) => tt.tagId)
+      : (task.tags?.map((t: TagRecord) => t.id) ?? []);
     const taskTags = tags.filter((tag) => taskTagIds.includes(tag.id));
 
     return (
@@ -172,6 +168,7 @@ interface TaskSectionProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   hideToday?: boolean;
   showTodayStar?: boolean;
   isTrash?: boolean;
@@ -200,6 +197,7 @@ export function TaskSection({
   areas,
   checklistItems,
   tags,
+  taskTags,
   hideToday,
   showTodayStar,
   isTrash,
@@ -210,109 +208,24 @@ export function TaskSection({
   const [state, setState] = useState<TSectionState>(idle);
   const [editValue, setEditValue] = useState(section.title);
   const inputRef = useRef<HTMLInputElement>(null);
-  const menu = createDropdownController();
 
   // Sync edit value when section title changes
   useEffect(() => {
     setEditValue(section.title);
   }, [section.title]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    invariant(container);
-
-    const data = getSectionData({ section });
-
-    function setIsTaskOver({
-      data,
-      location,
-    }: {
-      data: TaskDragData;
-      location: DragLocationHistory;
-    }) {
-      const innerMost = location.current.dropTargets[0];
-      const isOverChildTask = Boolean(
-        innerMost && isTaskDropTargetData(innerMost.data),
-      );
-
-      const proposed: TSectionState = {
-        type: 'is-task-over',
-        dragging: data.rect,
-        isOverChildTask,
-      };
-      setState((current) => {
-        if (
-          isShallowEqual(
-            proposed as unknown as Record<string, unknown>,
-            current as unknown as Record<string, unknown>,
-          )
-        ) {
-          return current;
-        }
-        return proposed;
-      });
-    }
-
-    let cleanup: (() => void) | undefined;
-
-    void loadDnd().then((dnd) => {
-      cleanup = dnd.combine(
-        dnd.dropTargetForElements({
-          element: container,
-          getData: () => data,
-          canDrop({
-            source,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-          }) {
-            return isDraggingATask({ source });
-          },
-          getIsSticky: () => true,
-          onDragStart({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDragEnter({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDropTargetChange({
-            source,
-            location,
-          }: {
-            source: { data: Record<string | symbol, unknown> };
-            location: DragLocationHistory;
-          }) {
-            if (isTaskDragData(source.data)) {
-              setIsTaskOver({ data: source.data, location });
-            }
-          },
-          onDragLeave() {
-            setState(idle);
-          },
-          onDrop() {
-            setState(idle);
-          },
-        }),
-      );
-    });
-
-    return () => cleanup?.();
-  }, [section.id, section.projectId, section.headingId, section.isEvening]);
+  useSectionDropTarget(
+    {
+      ref: containerRef,
+      getData: () => getSectionData({ section }),
+      canDrop: isDraggingATask,
+      isTaskDragData: (data): data is typeof data & { rect: DOMRect } =>
+        isTaskDragData(data),
+      isTaskDropTargetData,
+      setState,
+    },
+    [section.id, section.projectId, section.headingId, section.isEvening],
+  );
 
   // Calculate project progress for project sections
   const getProjectProgress = useCallback(() => {
@@ -387,37 +300,28 @@ export function TaskSection({
               <span className="w-[18px] shrink-0 flex items-center justify-center">
                 {section.isBacklog && <SomedayIcon className="w-4 h-4" />}
               </span>
-              <input
+              <Input
                 ref={inputRef}
+                variant="ghost"
                 type="text"
                 value={editValue}
                 onChange={(e) => setEditValue(e.currentTarget.value)}
                 onBlur={handleHeadingBlur}
                 onKeyDown={handleHeadingKeyDown}
-                className="flex-1 bg-transparent text-lg md:text-[15px] font-semibold text-things-blue outline-none border-0 p-0"
+                className="flex-1 text-lg md:text-[15px] font-semibold text-things-blue"
               />
             </div>
             {canDeleteHeading && (
-              <div className="relative">
-                <button
-                  type="button"
-                  className="p-1 text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => menu.toggleFromEvent(e)}
-                >
+              <DropdownMenu>
+                <DropdownMenuTrigger className="p-1 rounded-md text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 hover:bg-accent transition-colors">
                   <MoreHorizontalIcon className="w-4 h-4" />
-                </button>
-                <DropdownMenuContent
-                  open={menu.open}
-                  onClose={menu.close}
-                  anchorRect={menu.anchorRect}
-                  align="end"
-                >
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => {
                       if (section.headingId && onHeadingDelete) {
                         onHeadingDelete(section.headingId);
                       }
-                      menu.close();
                     }}
                     className="text-destructive"
                   >
@@ -425,7 +329,7 @@ export function TaskSection({
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </div>
+              </DropdownMenu>
             )}
           </div>
           <div className="border-b border-border" />
@@ -475,6 +379,7 @@ export function TaskSection({
           areas={areas}
           checklistItems={checklistItems}
           tags={tags}
+          taskTags={taskTags}
           hideToday={hideToday}
           showTodayStar={showTodayStar}
           isTrash={isTrash}

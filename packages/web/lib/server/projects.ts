@@ -46,14 +46,17 @@ export const createProject = createServerFn({ method: 'POST' })
       .values({ ...data, userId })
       .returning();
     // Auto-create backlog heading for the new project
-    await db.insert(headings).values({
-      userId,
-      title: 'Backlog',
-      position: 9999,
-      isBacklog: true,
-      projectId: project.id,
-    });
-    return { project, txid: Date.now() };
+    const [backlogHeading] = await db
+      .insert(headings)
+      .values({
+        userId,
+        title: 'Backlog',
+        position: 9999,
+        isBacklog: true,
+        projectId: project.id,
+      })
+      .returning();
+    return { project, backlogHeading, txid: Date.now() };
   });
 
 export const updateProject = createServerFn({ method: 'POST' })

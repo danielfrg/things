@@ -12,14 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UpcomingRouteImport } from './routes/upcoming'
 import { Route as TrashRouteImport } from './routes/trash'
 import { Route as TodayRouteImport } from './routes/today'
-import { Route as TagsRouteImport } from './routes/tags'
 import { Route as SomedayRouteImport } from './routes/someday'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogbookRouteImport } from './routes/logbook'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as AnytimeRouteImport } from './routes/anytime'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as AreaAreaIdRouteImport } from './routes/area.$areaId'
@@ -41,14 +40,14 @@ const TodayRoute = TodayRouteImport.update({
   path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TagsRoute = TagsRouteImport.update({
-  id: '/tags',
-  path: '/tags',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SomedayRoute = SomedayRouteImport.update({
   id: '/someday',
   path: '/someday',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -74,11 +73,6 @@ const InboxRoute = InboxRouteImport.update({
 const AnytimeRoute = AnytimeRouteImport.update({
   id: '/anytime',
   path: '/anytime',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -109,14 +103,13 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/anytime': typeof AnytimeRoute
   '/inbox': typeof InboxRoute
   '/logbook': typeof LogbookRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/someday': typeof SomedayRoute
-  '/tags': typeof TagsRoute
   '/today': typeof TodayRoute
   '/trash': typeof TrashRoute
   '/upcoming': typeof UpcomingRoute
@@ -127,14 +120,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/anytime': typeof AnytimeRoute
   '/inbox': typeof InboxRoute
   '/logbook': typeof LogbookRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/someday': typeof SomedayRoute
-  '/tags': typeof TagsRoute
   '/today': typeof TodayRoute
   '/trash': typeof TrashRoute
   '/upcoming': typeof UpcomingRoute
@@ -146,14 +138,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/anytime': typeof AnytimeRoute
   '/inbox': typeof InboxRoute
   '/logbook': typeof LogbookRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/someday': typeof SomedayRoute
-  '/tags': typeof TagsRoute
   '/today': typeof TodayRoute
   '/trash': typeof TrashRoute
   '/upcoming': typeof UpcomingRoute
@@ -166,14 +157,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/anytime'
     | '/inbox'
     | '/logbook'
     | '/login'
     | '/register'
+    | '/settings'
     | '/someday'
-    | '/tags'
     | '/today'
     | '/trash'
     | '/upcoming'
@@ -184,14 +174,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/anytime'
     | '/inbox'
     | '/logbook'
     | '/login'
     | '/register'
+    | '/settings'
     | '/someday'
-    | '/tags'
     | '/today'
     | '/trash'
     | '/upcoming'
@@ -202,14 +191,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/anytime'
     | '/inbox'
     | '/logbook'
     | '/login'
     | '/register'
+    | '/settings'
     | '/someday'
-    | '/tags'
     | '/today'
     | '/trash'
     | '/upcoming'
@@ -221,14 +209,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
   AnytimeRoute: typeof AnytimeRoute
   InboxRoute: typeof InboxRoute
   LogbookRoute: typeof LogbookRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   SomedayRoute: typeof SomedayRoute
-  TagsRoute: typeof TagsRoute
   TodayRoute: typeof TodayRoute
   TrashRoute: typeof TrashRoute
   UpcomingRoute: typeof UpcomingRoute
@@ -261,18 +248,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tags': {
-      id: '/tags'
-      path: '/tags'
-      fullPath: '/tags'
-      preLoaderRoute: typeof TagsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/someday': {
       id: '/someday'
       path: '/someday'
       fullPath: '/someday'
       preLoaderRoute: typeof SomedayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -308,13 +295,6 @@ declare module '@tanstack/react-router' {
       path: '/anytime'
       fullPath: '/anytime'
       preLoaderRoute: typeof AnytimeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -357,14 +337,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
   AnytimeRoute: AnytimeRoute,
   InboxRoute: InboxRoute,
   LogbookRoute: LogbookRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   SomedayRoute: SomedayRoute,
-  TagsRoute: TagsRoute,
   TodayRoute: TodayRoute,
   TrashRoute: TrashRoute,
   UpcomingRoute: UpcomingRoute,

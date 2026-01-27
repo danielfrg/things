@@ -1,13 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { isToday } from 'date-fns';
 import {
-  type ChangeEvent,
-  type FocusEvent,
   type KeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
@@ -30,13 +27,17 @@ import {
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
+import { ProseEditor } from '@/components/ui/prose-editor';
 import { TagFilterTabs } from '@/components/ui/tag-filter-tabs';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -96,17 +97,14 @@ function EditableText(props: {
   };
 
   return (
-    <input
+    <Input
+      variant="ghost"
       type="text"
       defaultValue={props.value}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       placeholder={props.placeholder}
-      className={cn(
-        'block w-full p-0 m-0 border-0 bg-transparent outline-none',
-        'placeholder:text-hint',
-        props.className,
-      )}
+      className={cn('block w-full', 'placeholder:text-hint', props.className)}
     />
   );
 }
@@ -164,20 +162,8 @@ function ProjectView() {
     [allProjectHeadings],
   );
 
-  const projectNotesRef = useRef<HTMLTextAreaElement>(null);
-
-  const resizeProjectNotes = useCallback(() => {
-    if (projectNotesRef.current) {
-      projectNotesRef.current.style.height = 'auto';
-      const scrollHeight = projectNotesRef.current.scrollHeight;
-      const maxHeight = 300;
-      projectNotesRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-      projectNotesRef.current.style.overflowY =
-        scrollHeight > maxHeight ? 'auto' : 'hidden';
-    }
-  }, []);
-
-  const projectMenu = createDropdownController();
+  const [projectNotes, setProjectNotes] = useState('');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -408,9 +394,9 @@ function ProjectView() {
 
   useEffect(() => {
     if (project) {
-      setTimeout(resizeProjectNotes, 0);
+      setProjectNotes(project.notes ?? '');
     }
-  }, [project, resizeProjectNotes]);
+  }, [project]);
 
   const handleTaskSelect = useCallback((taskId: string | null) => {
     setSelectedTaskId(taskId);
@@ -536,8 +522,7 @@ function ProjectView() {
       });
       navigate({ to: '/today' as '/inbox' });
     }
-    projectMenu.close();
-  }, [project, updateProject, navigate, projectMenu]);
+  }, [project, updateProject, navigate]);
 
   const handleDeleteProject = useCallback(() => {
     if (project) {
@@ -547,8 +532,7 @@ function ProjectView() {
       });
       navigate({ to: '/today' as '/inbox' });
     }
-    projectMenu.close();
-  }, [project, updateProject, navigate, projectMenu]);
+  }, [project, updateProject, navigate]);
 
   const isReady = !tasksLoading && !projectsLoading;
   const hasTasks = boardData.sections.length > 0;
@@ -571,23 +555,14 @@ function ProjectView() {
                   value={project.title ?? ''}
                   onChange={handleUpdateTitle}
                   placeholder="Project Title"
-                  className="text-[26px] font-bold text-foreground"
+                  className="text-[28px] font-bold text-foreground"
                 />
               </div>
-              <div className="relative">
-                <button
-                  type="button"
-                  className="ml-auto p-1 text-muted-foreground hover:text-foreground/70"
-                  onClick={(e) => projectMenu.toggleFromEvent(e)}
-                >
+              <DropdownMenu>
+                <DropdownMenuTrigger className="p-2 rounded-md text-muted-foreground hover:text-foreground/70 hover:bg-accent transition-colors">
                   <MoreHorizontalIcon className="w-5 h-5" />
-                </button>
-                <DropdownMenuContent
-                  open={projectMenu.open}
-                  onClose={projectMenu.close}
-                  anchorRect={projectMenu.anchorRect}
-                  align="end"
-                >
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleCompleteProject}>
                     <CheckCircleIcon className="w-4 h-4 mr-2" />
                     Complete Project
@@ -600,27 +575,23 @@ function ProjectView() {
                     Delete Project
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </div>
+              </DropdownMenu>
             </div>
 
             <div className="mt-1 px-2">
-              <textarea
-                key={project.id}
-                ref={projectNotesRef}
-                defaultValue={project.notes ?? ''}
-                onInput={(e: ChangeEvent<HTMLTextAreaElement>) => {
-                  handleUpdateNotes(e.currentTarget.value);
-                  resizeProjectNotes();
-                }}
-                onBlur={(e: FocusEvent<HTMLTextAreaElement>) => {
-                  const trimmed = e.currentTarget.value.trim();
+              <ProseEditor
+                value={projectNotes}
+                onChange={setProjectNotes}
+                onBlur={() => {
+                  const trimmed = projectNotes.trim();
                   if (trimmed !== (project.notes ?? '')) {
                     handleUpdateNotes(trimmed);
                   }
                 }}
                 placeholder="Notes"
-                rows={1}
-                className="w-full h-[24px] max-w-[300px] bg-transparent text-[15px] text-notes leading-relaxed resize-none overflow-hidden outline-none border-0 p-0 focus:outline-none focus:ring-0 placeholder:text-muted-foreground"
+                isEditing={isEditingNotes}
+                onStartEditing={() => setIsEditingNotes(true)}
+                className="text-[15px]"
               />
             </div>
 
@@ -652,7 +623,7 @@ function ProjectView() {
   return (
     <ViewContainer header={projectHeader} toolbar={projectToolbar}>
       {!isReady ? (
-        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+        <TaskListSkeleton />
       ) : !project ? (
         <div className="py-8 text-center text-muted-foreground">
           Project not found
@@ -682,6 +653,7 @@ function ProjectView() {
               areas={areas}
               checklistItems={checklistItems}
               tags={tags}
+              taskTags={taskTags}
               showTodayStar
               onHeadingEdit={handleHeadingEdit}
               onHeadingDelete={handleHeadingDelete}

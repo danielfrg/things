@@ -4,6 +4,7 @@ import {
   ListChecksIcon,
   RepeatIcon,
 } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
 import type { TagRecord } from '@/db/validation';
 import { cn } from '@/lib/utils';
 import { formatTaskDate, isDateOverdue } from './taskUtils';
@@ -87,12 +88,9 @@ export function TaskMetadata({
       {tagCount > 0 && (
         <span className="hidden md:flex items-center gap-1">
           {tags?.slice(0, 2).map((tag) => (
-            <span
-              key={tag.id}
-              className="text-[10px] px-1.5 py-0.5 rounded border border-border text-muted-foreground"
-            >
+            <Badge key={tag.id} variant="outline" size="xs">
               {tag.title}
-            </span>
+            </Badge>
           ))}
           {tagCount > 2 && (
             <span className="text-xs text-muted-foreground">
@@ -103,16 +101,13 @@ export function TaskMetadata({
       )}
 
       {showScheduledDate && (
-        <span
-          className={cn(
-            'text-[11px] shrink-0',
-            scheduledOverdue
-              ? 'text-things-pink'
-              : 'px-1.5 py-0.5 rounded bg-secondary text-muted-foreground',
-          )}
+        <Badge
+          variant="secondary"
+          size="sm"
+          className={cn(scheduledOverdue && 'bg-transparent text-things-pink')}
         >
           {scheduledDateStr}
-        </span>
+        </Badge>
       )}
 
       {deadlineStr && (

@@ -1,21 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
-  type CleanupFn,
-  type Edge,
   getTaskDragData,
   getTaskDropTargetData,
   isDraggingATask,
-  isShallowEqual,
+  isSidebarAreaDropTargetData,
+  isSidebarNavDropTargetData,
+  isSidebarProjectDropTargetData,
   isTaskDragData,
-  loadDnd,
 } from '@/lib/dnd';
+import {
+  type DraggableDropTargetState,
+  draggableDropTargetIdle,
+  useDraggableDropTarget,
+} from '@/lib/hooks/useDnd';
 import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 import { TaskCheckbox } from './TaskCheckbox';
 import { TaskMetadata } from './TaskMetadata';
+import { TaskProjectBadge } from './TaskProjectBadge';
+import { TaskTitle } from './TaskTitle';
 import { formatTaskDate, getDayOfWeekBadge } from './taskUtils';
 
 interface TaskRowProps {
@@ -38,14 +46,9 @@ interface TaskRowProps {
   areas?: AreaRecord[];
 }
 
-type TaskRowState =
-  | { type: 'idle' }
-  | { type: 'is-dragging' }
-  | { type: 'is-dragging-and-left-self' }
-  | { type: 'is-over'; dragging: DOMRect; closestEdge: Edge }
-  | { type: 'preview'; container: HTMLElement; dragging: DOMRect };
+type TaskRowState = DraggableDropTargetState;
 
-const idle: TaskRowState = { type: 'idle' };
+const idle: TaskRowState = draggableDropTargetIdle;
 
 export function TaskShadow({ dragging }: { dragging: DOMRect }) {
   return (
@@ -140,38 +143,40 @@ function TaskDisplay({
     ? { backgroundColor: 'var(--task-selected)' }
     : undefined;
 
+  const titleStatus = isCompleted
+    ? 'completed'
+    : isSomeday
+      ? 'someday'
+      : 'default';
+
   return (
     <div ref={outerRef} className={outerClass}>
       {state.type === 'is-over' && state.closestEdge === 'top' && (
         <TaskShadow dragging={state.dragging} />
       )}
 
-      <button
+      <Button
         ref={innerRef}
-        type="button"
+        variant="ghost"
         onClick={() => onSelect?.(task.id)}
         onDoubleClick={() => onExpand?.(task.id)}
         className={getInnerClass()}
         style={{ ...previewStyle, ...selectedStyle }}
       >
-        <span
-          className="shrink-0"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
-          }}
-        >
-          <TaskCheckbox
-            checked={isCompleted}
-            onChange={(checked) => onComplete?.(task.id, checked)}
-            variant={isSomeday ? 'someday' : 'default'}
-          />
-        </span>
+        <TaskCheckbox
+          checked={isCompleted}
+          onChange={(checked) => onComplete?.(task.id, checked)}
+          dashed={isSomeday}
+        />
 
         {dayBadgeStr && (
-          <span className="text-[12px] px-1.5 py-0.5 rounded bg-secondary text-foreground shrink-0">
+          <Badge
+            variant="secondary"
+            size="sm"
+            className="text-[12px] text-foreground"
+          >
             {dayBadgeStr}
-          </span>
+          </Badge>
         )}
 
         {showTodayStar && scheduledDateStr === 'Today' && !isCompleted && (
@@ -182,35 +187,18 @@ function TaskDisplay({
         )}
 
         <div className="flex-1 min-w-0">
-          <input
-            type="text"
+          <TaskTitle
             value={task.title}
-            readOnly
-            tabIndex={-1}
-            className={cn(
-              'w-full bg-transparent text-lg md:text-[15px] leading-tight outline-none border-0 p-0 cursor-inherit pointer-events-none truncate',
-              isCompleted
-                ? 'line-through text-muted-foreground'
-                : isSomeday
-                  ? 'text-foreground/80'
-                  : 'text-foreground',
-            )}
+            status={titleStatus}
+            className="w-full cursor-inherit"
           />
-          {showProjectInfo && (task.projectId || task.areaId) && (
-            <div className="text-[12px] text-muted-foreground truncate mt-0.5">
-              {(() => {
-                const project = task.projectId
-                  ? projects?.find((p) => p.id === task.projectId)
-                  : null;
-                const area = task.areaId
-                  ? areas?.find((a) => a.id === task.areaId)
-                  : null;
-                if (project && area) return `${area.title} › ${project.title}`;
-                if (project) return project.title;
-                if (area) return area.title;
-                return null;
-              })()}
-            </div>
+          {showProjectInfo && (
+            <TaskProjectBadge
+              projectId={task.projectId}
+              areaId={task.areaId}
+              projects={projects}
+              areas={areas}
+            />
           )}
         </div>
 
@@ -227,7 +215,7 @@ function TaskDisplay({
             showTodayStar={showTodayStar}
           />
         )}
-      </button>
+      </Button>
 
       {state.type === 'is-over' && state.closestEdge === 'bottom' && (
         <TaskShadow dragging={state.dragging} />
@@ -259,133 +247,49 @@ export function TaskRow({
   const innerRef = useRef<HTMLButtonElement>(null);
   const [state, setState] = useState<TaskRowState>(idle);
 
-  // Set up DnD on mount (client-side only)
-  useEffect(() => {
-    const outer = outerRef.current;
-    const inner = innerRef.current;
-    if (!outer || !inner) return;
-
-    let disposed = false;
-    let cleanup: CleanupFn | undefined;
-
-    void loadDnd().then((dnd) => {
-      if (disposed) return;
-
-      cleanup = dnd.combine(
-        dnd.draggable({
-          element: inner,
-          getInitialData: () =>
-            getTaskDragData({
-              task,
-              rect: inner.getBoundingClientRect(),
-              groupDate,
-              headingId,
-              projectId,
-              isEvening,
-            }),
-          onGenerateDragPreview({ nativeSetDragImage, location, source }: any) {
-            if (!isTaskDragData(source.data)) return;
-
-            dnd.setCustomNativeDragPreview({
-              nativeSetDragImage,
-              getOffset: dnd.preserveOffsetOnSource({
-                element: inner,
-                input: location.current.input,
-              }),
-              render({ container }: any) {
-                setState({
-                  type: 'preview',
-                  container,
-                  dragging: inner.getBoundingClientRect(),
-                });
-              },
-            });
-          },
-          onDragStart() {
-            setState({ type: 'is-dragging' });
-            // Haptic feedback on mobile
-            if (navigator.vibrate) navigator.vibrate(10);
-          },
-          onDrop() {
-            setState(idle);
-          },
+  useDraggableDropTarget(
+    {
+      outerRef,
+      innerRef,
+      getDragData: () =>
+        getTaskDragData({
+          task,
+          rect: innerRef.current?.getBoundingClientRect() ?? new DOMRect(),
+          groupDate,
+          headingId,
+          projectId,
+          isEvening,
         }),
-        dnd.dropTargetForElements({
-          element: outer,
-          getIsSticky: () => true,
-          canDrop: isDraggingATask,
-          getData: ({ input }: any) => {
-            const data = getTaskDropTargetData({
-              task,
-              groupDate,
-              headingId,
-              projectId,
-              isEvening,
-            });
-            return dnd.attachClosestEdge(data, {
-              element: outer,
-              input,
-              allowedEdges: ['top', 'bottom'],
-            });
-          },
-          onDragEnter({ source, self }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) return;
-
-            const closestEdge = dnd.extractClosestEdge(self.data);
-            if (!closestEdge) return;
-
-            setState({
-              type: 'is-over',
-              dragging: source.data.rect,
-              closestEdge,
-            });
-          },
-          onDrag({ source, self }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) return;
-
-            const closestEdge = dnd.extractClosestEdge(self.data);
-            if (!closestEdge) return;
-
-            const proposed: TaskRowState = {
-              type: 'is-over',
-              dragging: source.data.rect,
-              closestEdge,
-            };
-            setState((current) => {
-              if (
-                current.type === 'is-over' &&
-                isShallowEqual(
-                  proposed as unknown as Record<string, unknown>,
-                  current as unknown as Record<string, unknown>,
-                )
-              ) {
-                return current;
-              }
-              return proposed;
-            });
-          },
-          onDragLeave({ source }: any) {
-            if (!isTaskDragData(source.data)) return;
-            if (source.data.task.id === task.id) {
-              setState({ type: 'is-dragging-and-left-self' });
-              return;
-            }
-            setState(idle);
-          },
-          onDrop() {
-            setState(idle);
-          },
+      getDropData: () =>
+        getTaskDropTargetData({
+          task,
+          groupDate,
+          headingId,
+          projectId,
+          isEvening,
         }),
-      );
-    });
-
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
-  }, [task.id, groupDate, headingId, projectId, isEvening]);
+      canDrop: isDraggingATask,
+      isSelf: (data) => isTaskDragData(data) && data.task.id === task.id,
+      setState,
+      onDrop: ({ location }) => {
+        const target = location.current.dropTargets[0];
+        if (target) {
+          const data = target.data;
+          if (
+            isSidebarProjectDropTargetData(data) ||
+            isSidebarNavDropTargetData(data) ||
+            isSidebarAreaDropTargetData(data)
+          ) {
+            // Keep hidden for sidebar drops, add fallback timeout
+            setTimeout(() => setState(idle), 300);
+            return true;
+          }
+        }
+        return false;
+      },
+    },
+    [task.id, groupDate, headingId, projectId, isEvening],
+  );
 
   return (
     <>

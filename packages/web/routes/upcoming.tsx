@@ -7,6 +7,7 @@ import {
   SearchButton,
   ViewToolbar,
 } from '@/components/ToolbarButtons';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import { UpcomingDaySection } from '@/components/UpcomingDaySection';
 import type { TaskRecord } from '@/db/validation';
 import {
@@ -14,6 +15,7 @@ import {
   useChecklistItems,
   useProjects,
   useTags,
+  useTaskTags,
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
 import { useHotkey } from '@/lib/hooks/useHotkey';
@@ -60,6 +62,7 @@ function UpcomingView() {
   const { data: areas } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
+  const { data: taskTags } = useTaskTags();
 
   const updateTask = useUpdateTask();
   const ops = useTaskOperations({ uncompleteStatus: 'scheduled' });
@@ -171,7 +174,7 @@ function UpcomingView() {
       }
     >
       {loading ? (
-        <div className="py-8 text-center text-muted-foreground">Loading...</div>
+        <TaskListSkeleton />
       ) : dayGroups.length === 0 ? (
         <p className="text-muted-foreground">No upcoming tasks scheduled.</p>
       ) : (
@@ -189,6 +192,7 @@ function UpcomingView() {
               areas={areas}
               checklistItems={checklistItems}
               tags={tags}
+              taskTags={taskTags}
               onTaskSelect={handleTaskSelect}
               onTaskExpand={handleTaskExpand}
               onTaskComplete={ops.complete}

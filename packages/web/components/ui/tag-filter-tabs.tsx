@@ -1,5 +1,5 @@
 import type { TagRecord } from '@/db/validation';
-import { cn } from '@/lib/utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface TagFilterTabsProps {
   tags: TagRecord[];
@@ -7,36 +7,30 @@ interface TagFilterTabsProps {
   onTagSelect: (tagId: string | null) => void;
 }
 
+const ALL_VALUE = '__all__';
+
 export function TagFilterTabs({ tags, activeTagId, onTagSelect }: TagFilterTabsProps) {
+  const value = activeTagId ?? ALL_VALUE;
+
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      <button
-        type="button"
-        onClick={() => onTagSelect(null)}
-        className={cn(
-          'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-          activeTagId === null
-            ? 'bg-things-grey text-white'
-            : 'text-muted-foreground hover:text-foreground/70',
-        )}
-      >
+    <ToggleGroup
+    // orientation="vertical"
+    spacing={2}
+      // variant="outline"
+      value={[value]}
+      onValueChange={(values) => {
+        const selected = values[0];
+        onTagSelect(selected === ALL_VALUE ? null : selected);
+      }}
+    >
+      <ToggleGroupItem value={ALL_VALUE} size="sm">
         All
-      </button>
+      </ToggleGroupItem>
       {tags.map((tag) => (
-        <button
-          key={tag.id}
-          type="button"
-          onClick={() => onTagSelect(tag.id)}
-          className={cn(
-            'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-            activeTagId === tag.id
-              ? 'bg-things-grey text-white'
-              : 'text-muted-foreground hover:text-foreground/70',
-          )}
-        >
+        <ToggleGroupItem key={tag.id} value={tag.id} size="sm">
           {tag.title}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

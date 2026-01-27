@@ -162,3 +162,110 @@ export const UpdateTagSchema = z
     position: z.number().optional(),
   })
   .openapi('UpdateTag');
+
+// Checklist Items
+export const ChecklistItemSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    completed: z.boolean(),
+    position: z.number(),
+    taskId: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi('ChecklistItem');
+
+export const CreateChecklistItemSchema = z
+  .object({
+    title: z.string().min(1),
+    completed: z.boolean().optional().default(false),
+    position: z.number().optional(),
+  })
+  .openapi('CreateChecklistItem');
+
+export const UpdateChecklistItemSchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    completed: z.boolean().optional(),
+    position: z.number().optional(),
+  })
+  .openapi('UpdateChecklistItem');
+
+// Headings
+export const HeadingSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    position: z.number(),
+    isBacklog: z.boolean(),
+    projectId: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi('Heading');
+
+export const CreateHeadingSchema = z
+  .object({
+    title: z.string().min(1),
+    projectId: z.string(),
+    position: z.number().optional(),
+    isBacklog: z.boolean().optional().default(false),
+  })
+  .openapi('CreateHeading');
+
+export const UpdateHeadingSchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    position: z.number().optional(),
+    isBacklog: z.boolean().optional(),
+  })
+  .openapi('UpdateHeading');
+
+// Repeating Rules
+export const RepeatingRuleStatusSchema = z.enum(['active', 'paused']);
+
+export const RepeatingRuleSchema = z
+  .object({
+    id: z.string(),
+    rrule: z.string(),
+    nextOccurrence: z.string(),
+    status: RepeatingRuleStatusSchema,
+    title: z.string(),
+    notes: z.string().nullable(),
+    projectId: z.string().nullable(),
+    headingId: z.string().nullable(),
+    areaId: z.string().nullable(),
+    checklistTemplate: z.string().nullable(),
+    tagsTemplate: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .openapi('RepeatingRule');
+
+export const CreateRepeatingRuleSchema = z
+  .object({
+    rrule: z.string().min(1),
+    nextOccurrence: z.string(),
+    title: z.string().min(1),
+    notes: z.string().optional(),
+    status: RepeatingRuleStatusSchema.optional().default('active'),
+    projectId: z.string().nullable().optional(),
+    headingId: z.string().nullable().optional(),
+    areaId: z.string().nullable().optional(),
+    checklistTemplate: z.string().nullable().optional(),
+    tagsTemplate: z.string().nullable().optional(),
+  })
+  .openapi('CreateRepeatingRule');
+
+export const UpdateRepeatingRuleSchema = z
+  .object({
+    rrule: z.string().min(1).optional(),
+    nextOccurrence: z.string().optional(),
+    title: z.string().min(1).optional(),
+    notes: z.string().nullable().optional(),
+    status: RepeatingRuleStatusSchema.optional(),
+    projectId: z.string().nullable().optional(),
+    headingId: z.string().nullable().optional(),
+    areaId: z.string().nullable().optional(),
+    checklistTemplate: z.string().nullable().optional(),
+    tagsTemplate: z.string().nullable().optional(),
+  })
+  .openapi('UpdateRepeatingRule');

@@ -5,6 +5,7 @@ import type {
   ProjectRecord,
   TagRecord,
   TaskRecord,
+  TaskTagRecord,
 } from '@/db/validation';
 import {
   type DndModules,
@@ -87,6 +88,7 @@ interface TaskListProps {
   onTagRemove?: (taskId: string, tagId: string) => void;
   checklistItems?: ChecklistItemRecord[];
   tags?: TagRecord[];
+  taskTags?: TaskTagRecord[];
   allTags?: TagRecord[];
   projects?: ProjectRecord[];
   areas?: AreaRecord[];
@@ -483,7 +485,11 @@ export function TaskList(props: TaskListProps) {
         const taskChecklistItems = (props.checklistItems ?? []).filter(
           (row) => row.taskId === task.id,
         );
-        const taskTagIds = task.tags?.map((t: TagRecord) => t.id) ?? [];
+        // Use props.taskTags (from useTaskTags hook) if available for reactivity,
+        // otherwise fall back to embedded task.tags
+        const taskTagIds = props.taskTags
+          ? props.taskTags.filter((tt) => tt.taskId === task.id).map((tt) => tt.tagId)
+          : (task.tags?.map((t: TagRecord) => t.id) ?? []);
         const taskTags = (props.allTags ?? []).filter((tag) =>
           taskTagIds.includes(tag.id),
         );

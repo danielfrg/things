@@ -10,19 +10,20 @@ import {
   InboxIcon,
   LayersIcon,
   PlusIcon,
-  SettingsIcon,
+  Settings2Icon,
   SomedayIcon,
-  TagIcon,
   TodayStarIcon,
   Trash2Icon,
 } from '@/components/icons';
 import {
-  createDropdownController,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
+import { useSidebar } from '@/components/ui/sidebar';
 import { generateId } from '@/db/schema';
 import {
   useAreas,
@@ -34,7 +35,6 @@ import {
   useUpdateProject,
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
-import { useMobileNav } from '@/lib/contexts/MobileNavContext';
 import {
   type CleanupFn,
   type Edge,
@@ -75,7 +75,7 @@ function NavItem(props: NavItemProps) {
   const router = useRouterState();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
   const isActive = router.location.pathname === props.to;
   const [isTaskOver, setIsTaskOver] = useState(false);
 
@@ -120,15 +120,18 @@ function NavItem(props: NavItemProps) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (typeof document === 'undefined') return;
 
-    // On mobile, if already on this route, just show content
+    // On mobile, if already on this route, just close sidebar
     if (isMobile && isActive) {
       e.preventDefault();
-      showContent();
+      setOpenMobile(false);
       return;
     }
 
-    // On mobile, let the link navigate normally
-    if (isMobile) return;
+    // On mobile, close sidebar and let the link navigate
+    if (isMobile) {
+      setOpenMobile(false);
+      return;
+    }
 
     // Check if pending from pointerDown
     if (e.currentTarget.dataset.navPending === '1') {
@@ -239,95 +242,32 @@ function ProjectShadow({ dragging }: { dragging: DOMRect }) {
 interface AreaHeaderProps {
   areaId: string;
   title: string;
-  onUpdateTitle: (title: string) => void;
 }
 
 function AreaHeader(props: AreaHeaderProps) {
   const navigate = useNavigate();
   const router = useRouterState();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(props.title);
+  const { setOpenMobile } = useSidebar();
 
   const isActive = router.location.pathname === `/area/${props.areaId}`;
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const finishEdit = () => {
-    setIsEditing(false);
-    const trimmed = editValue.trim();
-    if (trimmed && trimmed !== props.title) {
-      props.onUpdateTitle(trimmed);
-      return;
-    }
-    setEditValue(props.title);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      finishEdit();
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      setEditValue(props.title);
-      setIsEditing(false);
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isMobile) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setEditValue(props.title);
-    setIsEditing(true);
-    // Focus after render
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 0);
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isEditing) return;
-    if (!isMobile && e.detail !== 1) return;
-
+  const handleClick = () => {
     if (isMobile) {
-      if (isActive) {
-        showContent();
-      } else {
+      setOpenMobile(false);
+      if (!isActive) {
         navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
       }
       return;
     }
-
-    setTimeout(() => {
-      if (isEditing) return;
-      navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
-    }, 200);
+    navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
   };
-
-  if (isEditing) {
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={editValue}
-        onChange={(e) => setEditValue(e.currentTarget.value)}
-        onBlur={finishEdit}
-        onKeyDown={handleKeyDown}
-        className="flex-1 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wide bg-transparent outline-none"
-      />
-    );
-  }
 
   return (
     <button
       type="button"
       className="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
       onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
     >
       <BoxIcon className="w-4 h-4 md:w-3.5 md:h-3.5 text-muted-foreground" />
       <span className="truncate">{props.title}</span>
@@ -344,7 +284,6 @@ interface AreaItemProps {
     progress: number;
     areaId?: string | null;
   }>;
-  onUpdateTitle: (title: string) => void;
 }
 
 type AreaItemState =
@@ -495,10 +434,10 @@ function AreaItem(props: AreaItemProps) {
 
   const outerStyles: Record<AreaItemState['type'], string | undefined> = {
     idle: undefined,
-    'is-dragging': 'opacity-40',
+    'is-dragging': 'opacity-0',
     'is-over': undefined,
     'is-task-over': undefined,
-    preview: undefined,
+    preview: 'opacity-0',
   };
 
   return (
@@ -521,11 +460,7 @@ function AreaItem(props: AreaItemProps) {
                 'bg-things-blue/20 ring-2 ring-things-blue',
             )}
           >
-            <AreaHeader
-              areaId={props.areaId}
-              title={props.title}
-              onUpdateTitle={props.onUpdateTitle}
-            />
+            <AreaHeader areaId={props.areaId} title={props.title} />
           </div>
           <div className="">
             {props.projects.length > 0 ? (
@@ -705,7 +640,7 @@ function NoAreaDropZone() {
 function ProjectItem(props: ProjectItemProps) {
   const router = useRouterState();
   const isMobile = useIsMobile();
-  const { showContent } = useMobileNav();
+  const { setOpenMobile } = useSidebar();
   const isActive = router.location.pathname === `/project/${props.projectId}`;
 
   const outerRef = useRef<HTMLDivElement>(null);
@@ -841,24 +776,41 @@ function ProjectItem(props: ProjectItemProps) {
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isMobile) return;
+    // On mobile, close sidebar
+    setOpenMobile(false);
     if (isActive) {
       e.preventDefault();
-      showContent();
     }
     // Otherwise let the link navigate normally
   };
 
+  const outerStyles: Partial<Record<ProjectItemState['type'], string>> = {
+    idle: undefined,
+    'is-dragging': 'opacity-0',
+    'is-dragging-and-left-self': 'hidden',
+    'is-over': undefined,
+    'is-task-over': undefined,
+    preview: 'opacity-0',
+  };
+
   const linkStyles: Partial<Record<ProjectItemState['type'], string>> = {
     idle: 'md:hover:bg-sidebar-accent md:cursor-grab',
-    'is-dragging': 'opacity-40',
-    'is-dragging-and-left-self': 'h-0 py-0 overflow-hidden',
+    'is-dragging': '',
+    'is-dragging-and-left-self': '',
     'is-task-over': 'bg-things-blue/20 ring-2 ring-things-blue',
-    preview: 'bg-sidebar shadow-lg border border-border',
+    'is-over': undefined,
+    preview: '',
   };
 
   return (
     <>
-      <div ref={outerRef} className={cn('m-0 flex flex-shrink-0 flex-col')}>
+      <div
+        ref={outerRef}
+        className={cn(
+          'm-0 flex flex-shrink-0 flex-col',
+          outerStyles[state.type],
+        )}
+      >
         {state.type === 'is-over' && state.closestEdge === 'top' && (
           <ProjectShadow dragging={state.dragging} />
         )}
@@ -873,14 +825,6 @@ function ProjectItem(props: ProjectItemProps) {
             !isMobile && isActive && 'bg-sidebar-accent',
             linkStyles[state.type],
           )}
-          style={
-            state.type === 'preview'
-              ? {
-                  width: `${state.dragging.width}px`,
-                  height: `${state.dragging.height}px`,
-                }
-              : undefined
-          }
         >
           <ProjectProgressIcon
             progress={props.progress}
@@ -899,14 +843,8 @@ function ProjectItem(props: ProjectItemProps) {
 
       {state.type === 'preview' &&
         createPortal(
-          <Link
-            to="/project/$projectId"
-            params={{ projectId: props.projectId }}
-            className={cn(
-              'flex items-center gap-2 mx-2 px-2 py-1.5 rounded-md text-[13px] font-medium',
-              isActive && 'bg-sidebar-accent',
-              linkStyles[state.type],
-            )}
+          <div
+            className="flex items-center gap-2 mx-2 px-2 py-1.5 rounded-md text-[13px] font-medium bg-sidebar shadow-lg border border-border"
             style={{
               width: `${state.dragging.width}px`,
               height: `${state.dragging.height}px`,
@@ -920,14 +858,14 @@ function ProjectItem(props: ProjectItemProps) {
             <span className="flex-1 truncate text-sidebar-foreground">
               {props.label}
             </span>
-          </Link>,
+          </div>,
           state.container,
         )}
     </>
   );
 }
 
-export function Sidebar() {
+export function AppSidebar() {
   const navigate = useNavigate();
 
   const tasksResource = useTasks();
@@ -1413,13 +1351,11 @@ export function Sidebar() {
     // Set up monitors once - use refs to access latest data
   }, []);
 
-  const createMenu = createDropdownController();
-
   return (
     <aside className="w-full md:w-64 bg-white md:bg-sidebar flex flex-col h-full md:border-r border-sidebar-border">
       <div className="h-8 flex-shrink-0" />
 
-      <ScrollArea className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
         <div className="pb-2 pt-1">
           <div className="space-y-0.5">
             <NavItem
@@ -1484,50 +1420,31 @@ export function Sidebar() {
                   areaId={area.id}
                   title={area.title}
                   projects={area.projects}
-                  onUpdateTitle={(title) => {
-                    updateArea.mutate({ id: area.id, changes: { title } });
-                  }}
                 />
               ))}
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-8 md:px-2 h-[52px] flex items-center">
         <div className="flex items-center justify-between w-full">
-          <button
-            type="button"
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Create"
-            onClick={(e) => createMenu.toggleFromEvent(e)}
-          >
-            <PlusIcon className="w-5 h-5" />
-          </button>
-          <DropdownMenuContent
-            align="start"
-            side="top"
-            open={createMenu.open}
-            anchorRect={createMenu.anchorRect}
-            onClose={createMenu.close}
-          >
-            <DropdownMenuItem
-              onClick={() => {
-                createMenu.close();
-                handleNewProject();
-              }}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+              aria-label="Create"
             >
-              New Project
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                createMenu.close();
-                handleNewArea();
-              }}
-            >
-              New Area
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+              <PlusIcon className="w-5 h-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top">
+              <DropdownMenuItem onClick={handleNewProject}>
+                New Project
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNewArea}>
+                New Area
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Link
             to={'/logbook' as any}
@@ -1535,14 +1452,6 @@ export function Sidebar() {
             aria-label="Logbook"
           >
             <BookCheckIcon className="w-5 h-5" />
-          </Link>
-
-          <Link
-            to={'/tags' as any}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Tags"
-          >
-            <TagIcon className="w-5 h-5" />
           </Link>
 
           <Link
@@ -1554,11 +1463,11 @@ export function Sidebar() {
           </Link>
 
           <Link
-            to={'/admin' as any}
+            to={'/settings' as any}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-            aria-label="Admin"
+            aria-label="Settings"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <Settings2Icon className="w-5 h-5" />
           </Link>
         </div>
       </div>

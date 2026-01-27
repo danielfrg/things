@@ -4,6 +4,7 @@ import {
   type TaskGroupsData,
   type TaskMoveInfo,
 } from '@/components/board';
+import { TaskListSkeleton } from '@/components/tasks/TaskRowSkeleton';
 import type { ProjectRecord, TaskRecord } from '@/db/validation';
 import {
   useAreas,
@@ -80,7 +81,7 @@ export function StandardListView({
   const { data: areas } = useAreas();
   const { data: checklistItems } = useChecklistItems();
   const { data: tags } = useTags();
-  useTaskTags();
+  const { data: taskTags } = useTaskTags();
 
   const ops = useTaskOperations({ uncompleteStatus });
 
@@ -158,9 +159,7 @@ export function StandardListView({
   );
 
   if (loading) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">Loading...</div>
-    );
+    return <TaskListSkeleton />;
   }
 
   if (boardData.sections.length === 0) {
@@ -191,6 +190,7 @@ export function StandardListView({
       areas={areas}
       checklistItems={checklistItems}
       tags={tags}
+      taskTags={taskTags}
       hideToday={hideToday}
       showTodayStar={showTodayStar}
       isTrash={isTrash}

@@ -6,6 +6,7 @@ import type {
   ProjectRecord,
   TagRecord,
   TaskRecord,
+  TaskTagRecord,
 } from '@/db/validation';
 import {
   isDraggingATask,
@@ -48,6 +49,7 @@ interface GroupedTaskListProps {
   areas: AreaRecord[];
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
+  taskTags?: TaskTagRecord[];
   /** Hide the Today toggle in task items */
   hideToday?: boolean;
   /** Show the Today star indicator */
@@ -81,6 +83,7 @@ export function GroupedTaskList({
   areas,
   checklistItems,
   tags,
+  taskTags,
   hideToday,
   showTodayStar,
   isTrash,
@@ -359,6 +362,7 @@ export function GroupedTaskList({
             areas={areas}
             checklistItems={checklistItems}
             tags={tags}
+            taskTags={taskTags}
             hideToday={hideToday}
             showTodayStar={showTodayStar}
             isTrash={isTrash}

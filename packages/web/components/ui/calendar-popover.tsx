@@ -1,4 +1,4 @@
-import { addDays, format, isToday, isTomorrow } from 'date-fns';
+import { addDays, format, isBefore, isToday, isTomorrow, startOfDay } from 'date-fns';
 import { useCallback, useMemo } from 'react';
 import {
   CalendarIcon,
@@ -6,10 +6,8 @@ import {
   EveningIcon,
   SomedayIcon,
   StarIcon,
-  XIcon,
 } from '@/components/icons';
-import { CalendarGrid } from '@/components/ui/calendar-grid';
-import { useOverlay } from '@/lib/hooks/useOverlay';
+import { Calendar } from '@/components/ui/calendar';
 import { cn, parseLocalDate } from '@/lib/utils';
 
 interface CalendarPopoverProps {
@@ -24,6 +22,10 @@ interface CalendarPopoverProps {
   title?: string;
 }
 
+/**
+ * Calendar popover content - for use with createPortal or inside a Popover.
+ * Does NOT include Popover wrapper - use DatePicker for the full component.
+ */
 export function CalendarPopover({
   value,
   onChange,
@@ -35,11 +37,6 @@ export function CalendarPopover({
   onClose,
   title = 'When',
 }: CalendarPopoverProps) {
-  const overlayRef = useOverlay({
-    open: true,
-    onClose: onClose ?? (() => {}),
-  });
-
   const selectedDate = useMemo(() => {
     if (!value) return null;
     return parseLocalDate(value);
@@ -91,20 +88,12 @@ export function CalendarPopover({
   }, [selectedDate]);
 
   return (
-    <div
-      ref={overlayRef}
-      className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden"
-    >
-      {/* Header with title and close button */}
-      <div className="flex items-center justify-center relative mb-3 max-md:mb-4">
-        <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">{title}</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-0"
-        >
-          <XIcon className="h-5 w-5" />
-        </button>
+    <div className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden">
+      {/* Header with title */}
+      <div className="flex items-center justify-center relative mb-2 max-md:mb-4">
+        <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">
+          {title}
+        </h3>
       </div>
 
       {/* Quick Select Options */}
@@ -158,16 +147,71 @@ export function CalendarPopover({
       </div>
 
       {/* Calendar Section */}
-      <CalendarGrid
-        selectedDate={selectedDate}
-        onSelect={(date) => handleSelect(date, false)}
-        hidePastDates
-        className="mt-3 max-md:mt-4"
+      <Calendar
+        mode="single"
+        selected={selectedDate ?? undefined}
+        onSelect={(date) => date && handleSelect(date, false)}
+        disabled={(date) => isBefore(startOfDay(date), startOfDay(new Date()))}
+        showOutsideDays={false}
+        fixedWeeks={false}
+        className="mt-3 max-md:mt-4 p-0 bg-transparent w-full gap-0"
+        classNames={{
+          months: 'flex flex-col w-full relative',
+          month: 'w-full',
+          nav: 'absolute inset-x-0 top-0 z-10 flex items-center justify-between pointer-events-none [&>button]:pointer-events-auto',
+          button_previous: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
+          button_next: 'p-1 max-md:p-2 text-popover-dark-muted hover:text-popover-dark-foreground transition-colors rounded size-auto',
+          month_caption: 'flex items-center justify-center mb-2 max-md:mb-3',
+          caption_label: 'text-sm max-md:text-base font-semibold text-popover-dark-foreground',
+          weekdays: 'grid grid-cols-7 mb-1 max-md:mb-2',
+          weekday: 'text-[11px] max-md:text-sm font-bold text-popover-dark-muted text-center py-1 max-md:py-2',
+          week: 'grid grid-cols-7',
+          day: 'h-8 w-8 max-md:h-11 max-md:w-full p-0 flex items-center justify-center',
+          today: 'bg-transparent',
+          outside: 'opacity-30',
+          disabled: '',
+          hidden: 'invisible',
+        }}
+        formatters={{
+          formatWeekdayName: (date) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+        }}
+        components={{
+          DayButton: ({ day, modifiers, ...props }) => {
+            const dayIsToday = isToday(day.date);
+            const dayIsSelected = modifiers.selected;
+            const dayIsDisabled = modifiers.disabled;
+
+            return (
+              <button
+                type="button"
+                {...props}
+                disabled={dayIsDisabled}
+                className={cn(
+                  'h-8 w-8 max-md:h-11 max-md:w-full rounded-md text-sm max-md:text-base font-bold transition-colors flex items-center justify-center',
+                  modifiers.outside && 'opacity-30',
+                  dayIsDisabled
+                    ? 'text-popover-dark-muted/30 cursor-default'
+                    : dayIsSelected
+                      ? 'bg-popover-dark-selected text-popover-dark-foreground'
+                      : dayIsToday
+                        ? 'text-popover-dark-selected'
+                        : 'text-popover-dark-foreground hover:bg-popover-dark-accent',
+                )}
+              >
+                {dayIsToday && !dayIsSelected ? (
+                  <StarIcon className="h-3 w-3 max-md:h-4 max-md:w-4" fill="#8E8E93" color="#8E8E93" />
+                ) : (
+                  day.date.getDate()
+                )}
+              </button>
+            );
+          },
+        }}
       />
 
       {/* Bottom Options */}
-      <div className="mt-3 max-md:mt-4 space-y-0.5 max-md:space-y-1">
-        {showSomeday && (
+      {showSomeday && (
+        <div className="mt-3 max-md:mt-4 space-y-0.5 max-md:space-y-1">
           <button
             type="button"
             onClick={handleSomeday}
@@ -182,8 +226,8 @@ export function CalendarPopover({
             <span className="flex-1 text-left">Someday</span>
             {isSomeday && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Clear Button */}
       {(value || isSomeday) && (
