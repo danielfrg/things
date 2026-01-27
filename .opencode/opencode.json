@@ -5,17 +5,6 @@
   //   "url": "https://enterprise.dev.opencode.ai",
   // },
   "instructions": ["STYLE_GUIDE.md"],
-  "provider": {
-    "opencode": {
-      "options": {},
-    },
-  },
-  "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-    },
-  },
   "tools": {
     "github-triage": false,
     "github-pr-search": false,
