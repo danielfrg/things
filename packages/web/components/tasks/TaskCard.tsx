@@ -48,6 +48,7 @@ import {
   loadDnd,
 } from '@/lib/dnd';
 import { useDetailCard } from '@/lib/hooks/useDetailCard';
+import { usePendingTaskChanges } from '@/lib/hooks/usePendingTaskChanges';
 import { useTaskEditorForm } from '@/lib/hooks/useTaskEditorForm';
 import { createRepeatingRuleFromTaskFn } from '@/lib/server/repeatingRules';
 import { cn } from '@/lib/utils';
@@ -153,6 +154,35 @@ export function TaskCard({
   const isCompleted = task.status === 'completed';
   const isSomeday = task.status === 'someday';
 
+  // Pending changes - accumulated and committed on close
+  const { pending, addChange, commit, reset } = usePendingTaskChanges(
+    task.id,
+    (taskId, changes) => {
+      // Handle project change separately if needed
+      if (
+        onProjectChange &&
+        ('projectId' in changes || 'areaId' in changes)
+      ) {
+        const projId = 'projectId' in changes ? changes.projectId : task.projectId;
+        const areaVal = 'areaId' in changes ? changes.areaId : task.areaId;
+        // Remove project/area from changes since we handle them separately
+        const { projectId: _p, areaId: _a, headingId: _h, ...rest } = changes;
+        if (Object.keys(rest).length > 0) {
+          onUpdate(taskId, rest);
+        }
+        onProjectChange(taskId, projId ?? null, areaVal);
+      } else {
+        onUpdate(taskId, changes);
+      }
+    },
+  );
+
+  // Create a merged view of task with pending changes for display
+  const pendingTask = useMemo(() => ({
+    ...task,
+    ...pending,
+  }), [task, pending]);
+
   const { showInfo, setShowInfo, handleClose } = useDetailCard({
     id: task.id,
     expanded,
@@ -160,6 +190,27 @@ export function TaskCard({
     cardRef,
     dataAttribute: 'data-task-detail-card',
   });
+
+  // Commit pending changes when task collapses (expanded changes from true to false)
+  const wasExpandedForCommitRef = useRef(expanded);
+  useEffect(() => {
+    const wasExpanded = wasExpandedForCommitRef.current;
+    wasExpandedForCommitRef.current = expanded;
+
+    // Commit when transitioning from expanded to collapsed
+    if (wasExpanded && !expanded) {
+      commit();
+    }
+  }, [expanded, commit]);
+
+  // Reset pending changes when switching to a different task
+  const prevTaskIdRef = useRef(task.id);
+  useEffect(() => {
+    if (prevTaskIdRef.current !== task.id) {
+      prevTaskIdRef.current = task.id;
+      reset();
+    }
+  }, [task.id, reset]);
 
   const form = useTaskEditorForm({
     initialTitle: task.title,
@@ -357,33 +408,30 @@ export function TaskCard({
 
   const handleScheduledDateChange = useCallback(
     (date: string | undefined, isEveningValue?: boolean) => {
-      const updates: Partial<TaskRecord> = {
+      addChange({
         scheduledDate: date ?? null,
         status: date ? 'scheduled' : 'anytime',
         isEvening: isEveningValue ?? false,
-      };
-      onUpdate(task.id, updates);
+      });
     },
-    [task.id, onUpdate],
+    [addChange],
   );
 
   const handleSomedaySelect = useCallback(() => {
-    const updates: Partial<TaskRecord> = {
+    addChange({
       scheduledDate: null,
       status: 'someday',
       isEvening: false,
-    };
-    onUpdate(task.id, updates);
-  }, [task.id, onUpdate]);
+    });
+  }, [addChange]);
 
   const handleDeadlineChange = useCallback(
     (date: string | undefined) => {
-      const updates: Partial<TaskRecord> = {
+      addChange({
         deadline: date ?? null,
-      };
-      onUpdate(task.id, updates);
+      });
     },
-    [task.id, onUpdate],
+    [addChange],
   );
 
   const handleAddChecklist = useCallback(() => {
@@ -520,15 +568,15 @@ export function TaskCard({
       {/* Schedule picker */}
       {!isCompleted && (
         <DatePicker
-          value={task.scheduledDate ?? undefined}
+          value={pendingTask.scheduledDate ?? undefined}
           onChange={handleScheduledDateChange}
           placeholder="When"
           disabled={isCompleted}
           showSomeday
           onSomedaySelect={handleSomedaySelect}
-          isSomeday={isSomeday}
+          isSomeday={pendingTask.status === 'someday'}
           showEvening
-          isEvening={task.isEvening}
+          isEvening={pendingTask.isEvening}
           className={toolbarButtonVariants()}
         />
       )}
@@ -536,7 +584,7 @@ export function TaskCard({
       {/* Deadline picker */}
       {!isCompleted && (
         <DatePicker
-          value={task.deadline ?? undefined}
+          value={pendingTask.deadline ?? undefined}
           onChange={handleDeadlineChange}
           placeholder="Deadline"
           disabled={isCompleted}
@@ -550,7 +598,7 @@ export function TaskCard({
       {!ruleId && !isCompleted && (
         <RepeatPicker
           value={rule?.rrule}
-          startDate={rule?.nextOccurrence ?? task.scheduledDate ?? undefined}
+          startDate={rule?.nextOccurrence ?? pendingTask.scheduledDate ?? undefined}
           onChange={(rrule, startDate) => {
             if (onRepeatChange) {
               onRepeatChange(task.id, rrule, startDate);
@@ -583,25 +631,21 @@ export function TaskCard({
       {/* Move picker */}
       {(projects?.length ?? 0) > 0 && !isCompleted && (
         <MovePicker
-          value={task.projectId}
-          areaValue={task.areaId}
+          value={pendingTask.projectId}
+          areaValue={pendingTask.areaId}
           onChange={(projId: string | null, areaVal?: string | null) => {
-            if (onProjectChange) {
-              onProjectChange(task.id, projId, areaVal);
-            } else {
-              onUpdate(task.id, {
-                projectId: projId,
-                areaId: areaVal ?? null,
-                headingId: null,
-              });
-            }
+            addChange({
+              projectId: projId,
+              areaId: areaVal ?? null,
+              headingId: null,
+            });
           }}
           projects={projects ?? []}
           areas={areas}
           placeholder="Move"
           disabled={isCompleted}
           className={toolbarButtonVariants()}
-          isInbox={task.status === 'inbox'}
+          isInbox={pendingTask.status === 'inbox'}
         />
       )}
 
