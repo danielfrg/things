@@ -9,6 +9,7 @@ import {
   RestoreIcon,
   Trash2Icon,
 } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { DatePicker } from '@/components/ui/date-picker';
 import { MovePicker } from '@/components/ui/move-picker';
@@ -38,6 +39,7 @@ import {
   isTaskDragData,
   loadDnd,
 } from '@/lib/dnd';
+import { useDetailCard } from '@/lib/hooks/useDetailCard';
 import { useTaskEditorForm } from '@/lib/hooks/useTaskEditorForm';
 import { createRepeatingRuleFromTaskFn } from '@/lib/server/repeatingRules';
 import { cn } from '@/lib/utils';
@@ -134,7 +136,6 @@ export function TaskCard({
   projectId,
   isEvening,
 }: TaskCardProps) {
-  const [showInfo, setShowInfo] = useState(false);
   const [dragState, setDragState] = useState<DragState>(idle);
   const cardRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -143,9 +144,13 @@ export function TaskCard({
   const isCompleted = task.status === 'completed';
   const isSomeday = task.status === 'someday';
 
-  const handleClose = useCallback(() => {
-    onExpand(task.id);
-  }, [onExpand, task.id]);
+  const { showInfo, setShowInfo, handleClose } = useDetailCard({
+    id: task.id,
+    expanded,
+    onExpand,
+    cardRef,
+    dataAttribute: 'data-task-detail-card',
+  });
 
   const form = useTaskEditorForm({
     initialTitle: task.title,
@@ -286,44 +291,6 @@ export function TaskCard({
     };
   }, [task.id, groupDate, headingId, projectId, isEvening, expanded]);
 
-  // Click outside handler
-  useEffect(() => {
-    if (!expanded) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!cardRef.current) return;
-
-      const target = e.target as HTMLElement;
-
-      if (cardRef.current.contains(target)) return;
-
-      const isInPopover =
-        target.closest('[data-popover]') ||
-        target.closest('[role="listbox"]') ||
-        target.closest('[role="dialog"]') ||
-        target.closest('[role="menu"]');
-      if (isInPopover) return;
-
-      const closestWithBg = target.closest('div');
-      if (closestWithBg) {
-        const bg = getComputedStyle(closestWithBg).backgroundColor;
-        if (bg === 'rgb(44, 44, 46)') return;
-      }
-
-      const anyExpandedCard = target.closest('[data-task-detail-card]');
-      if (anyExpandedCard) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
-    };
-
-    document.addEventListener('mousedown', handleClickOutside, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [expanded, handleClose]);
-
   const repeatingRulesResource = useRepeatingRules();
   const deleteRepeatingRule = useDeleteRepeatingRule();
   const deleteChecklistItem = useDeleteChecklistItem();
@@ -396,6 +363,20 @@ export function TaskCard({
       position: 1,
     });
   }, [task.id, createChecklistItem]);
+
+  const handleTagAdd = useCallback(
+    (tagId: string) => {
+      if (onTagAdd) onTagAdd(task.id, tagId);
+    },
+    [task.id, onTagAdd],
+  );
+
+  const handleTagRemove = useCallback(
+    (tagId: string) => {
+      if (onTagRemove) onTagRemove(task.id, tagId);
+    },
+    [task.id, onTagRemove],
+  );
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -526,8 +507,8 @@ export function TaskCard({
     <>
       {/* Restore (trash only) */}
       {isTrash && onRestore && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={() => {
             onRestore(task.id);
             handleClose();
@@ -539,7 +520,7 @@ export function TaskCard({
         >
           <RestoreIcon className="w-3.5 h-3.5" />
           <span>Restore</span>
-        </button>
+        </Button>
       )}
 
       {/* Schedule picker */}
@@ -632,14 +613,14 @@ export function TaskCard({
 
       {/* Add checklist button - only show if no checklist items exist */}
       {!isCompleted && checklistItems.length === 0 && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={handleAddChecklist}
           className={toolbarBtnClass}
         >
           <ListChecksIcon className="h-3.5 w-3.5 opacity-70" />
           <span>Checklist</span>
-        </button>
+        </Button>
       )}
 
       {/* Tags picker */}
@@ -647,8 +628,8 @@ export function TaskCard({
         <TagPicker
           selectedTagIds={tags.map((t) => t.id)}
           tags={allTags}
-          onAdd={(tagId) => onTagAdd(task.id, tagId)}
-          onRemove={(tagId) => onTagRemove(task.id, tagId)}
+          onAdd={handleTagAdd}
+          onRemove={handleTagRemove}
           disabled={isCompleted}
         />
       )}
@@ -669,16 +650,17 @@ export function TaskCard({
 
       {/* Info button */}
       <div className="relative flex items-center">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={(e) => {
             e.stopPropagation();
             setShowInfo(!showInfo);
           }}
-          className="flex items-center justify-center h-6 w-6 rounded text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+          className="text-border hover:text-muted-foreground hover:bg-secondary"
         >
           <InfoIcon className="w-3.5 h-3.5" />
-        </button>
+        </Button>
 
         {/* Info popover */}
         {showInfo && (
@@ -709,16 +691,17 @@ export function TaskCard({
       </div>
 
       {/* Delete button */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => {
           onDelete(task.id);
           handleClose();
         }}
-        className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="text-hint hover:text-destructive hover:bg-destructive/10"
       >
         <Trash2Icon className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     </>
   );
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
 import {
   type CleanupFn,
@@ -146,9 +147,9 @@ function TaskDisplay({
         <TaskShadow dragging={state.dragging} />
       )}
 
-      <button
+      <Button
         ref={innerRef}
-        type="button"
+        variant="ghost"
         onClick={() => onSelect?.(task.id)}
         onDoubleClick={() => onExpand?.(task.id)}
         className={getInnerClass()}
@@ -227,7 +228,7 @@ function TaskDisplay({
             showTodayStar={showTodayStar}
           />
         )}
-      </button>
+      </Button>
 
       {state.type === 'is-over' && state.closestEdge === 'bottom' && (
         <TaskShadow dragging={state.dragging} />

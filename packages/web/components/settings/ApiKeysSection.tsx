@@ -1,8 +1,18 @@
 import { format, formatDistanceToNow } from 'date-fns';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { KeyIcon, Trash2Icon, XIcon } from '@/components/icons';
+import { KeyIcon, Trash2Icon } from '@/components/icons';
 import { Card, SectionHeader } from '@/components/settings/AccountSection';
-import { Radio } from '@/components/ui/radio';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   useApiKeys,
   useCreateApiKey,
@@ -58,13 +68,13 @@ export function ApiKeysSection() {
               <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
                 API Key Created
               </p>
-              <button
-                type="button"
+              <Button
+                variant="link"
+                size="sm"
                 onClick={() => handleCopyKey(createdKey)}
-                className="text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100"
               >
                 {copied ? 'Copied!' : 'Copy'}
-              </button>
+              </Button>
             </div>
             <p className="text-xs text-emerald-700 dark:text-emerald-300 mb-2">
               Copy this key now. You won't see it again.
@@ -83,13 +93,13 @@ export function ApiKeysSection() {
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 {keys.length} API key{keys.length !== 1 && 's'}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
               >
                 New API key
-              </button>
+              </Button>
             </div>
             {/* Key Items */}
             {keys.map((key, index) => (
@@ -129,14 +139,14 @@ export function ApiKeysSection() {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => handleDeleteKey(key.id)}
-                  className="p-2 text-gray-400 hover:text-red-500 rounded transition-colors"
                   title="Delete API key"
                 >
                   <Trash2Icon className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))}
           </Card>
@@ -144,34 +154,35 @@ export function ApiKeysSection() {
           <Card>
             <div className="flex items-center justify-between px-5 py-5">
               <p className="text-sm text-gray-500">No API keys created</p>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
               >
                 New API key
-              </button>
+              </Button>
             </div>
           </Card>
         )}
       </section>
 
       {/* Create API Key Modal */}
-      {showModal && (
-        <CreateApiKeyModal
-          onClose={() => setShowModal(false)}
-          onCreate={handleCreateKey}
-        />
-      )}
+      <CreateApiKeyModal
+        open={showModal}
+        onOpenChange={setShowModal}
+        onCreate={handleCreateKey}
+      />
     </>
   );
 }
 
 function CreateApiKeyModal({
-  onClose,
+  open,
+  onOpenChange,
   onCreate,
 }: {
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onCreate: (name: string, scope: 'read' | 'read-write') => void;
 }) {
   const [name, setName] = useState('');
@@ -180,16 +191,13 @@ function CreateApiKeyModal({
   const nameId = useId();
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      setName('');
+      setScope('read-write');
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,32 +206,18 @@ function CreateApiKeyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-label="Close modal"
-      />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create API Key</DialogTitle>
+        </DialogHeader>
 
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 p-6">
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
-        >
-          <XIcon className="w-5 h-5" />
-        </button>
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Key name input */}
-          <div className="mb-6">
+          <div>
             <label
               htmlFor={nameId}
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               Key name
             </label>
@@ -234,66 +228,42 @@ function CreateApiKeyModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="A descriptive name for this API key..."
-              className="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-things-blue focus:border-things-blue transition-shadow"
+              className="w-full h-10 px-3 text-sm border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
             />
           </div>
 
           {/* Permissions radio group */}
-          <div className="mb-8">
-            <div className="mb-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Permissions
-              </p>
-            </div>
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                onClick={() => setScope('read-write')}
-                className="flex items-center gap-3 w-full text-left"
-              >
-                <Radio
-                  checked={scope === 'read-write'}
-                  onChange={() => setScope('read-write')}
-                />
-                <span className="text-sm text-gray-800 dark:text-gray-200">
-                  Full access
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setScope('read')}
-                className="flex items-center gap-3 w-full text-left"
-              >
-                <Radio
-                  checked={scope === 'read'}
-                  onChange={() => setScope('read')}
-                />
-                <span className="text-sm text-gray-800 dark:text-gray-200">
-                  Read only
-                </span>
-              </button>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-foreground mb-3">
+              Permissions
+            </p>
+            <RadioGroup
+              value={scope}
+              onValueChange={(value) =>
+                setScope(value as 'read' | 'read-write')
+              }
+            >
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="read-write" id="scope-full" />
+                <Label htmlFor="scope-full">Full access</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="read" id="scope-read" />
+                <Label htmlFor="scope-read">Read only</Label>
+              </div>
+            </RadioGroup>
           </div>
 
-          {/* Footer actions */}
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!name.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-things-blue rounded-md hover:bg-things-blue/90 shadow-sm shadow-things-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            </DialogClose>
+            <Button type="submit" disabled={!name.trim()}>
               Create
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -15,6 +15,7 @@ import {
   ViewToolbar,
 } from '@/components/ToolbarButtons';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
+import { Button } from '@/components/ui/button';
 import {
   createDropdownController,
   DropdownMenuContent,
@@ -379,13 +380,14 @@ function AreaView() {
             />
           </div>
           <div className="relative">
-            <button
-              type="button"
-              className="p-1 text-muted-foreground hover:text-foreground/70"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground/70"
               onClick={(e) => areaMenu.toggleFromEvent(e)}
             >
               <MoreHorizontalIcon className="w-5 h-5" />
-            </button>
+            </Button>
             <DropdownMenuContent
               open={areaMenu.open}
               onClose={areaMenu.close}

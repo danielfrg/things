@@ -3,6 +3,7 @@ import {
   SearchIcon,
   SeparatorHorizontalIcon,
 } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { useApp } from '@/lib/contexts/AppContext';
 import { cn } from '@/lib/utils';
 
@@ -15,14 +16,14 @@ export function NewTaskButton() {
   const app = useApp();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={app.openGlobalInput}
       className={toolbarButtonClass}
     >
       <PlusIcon className="w-4 h-4" />
       <span className="hidden md:inline">New To-Do</span>
-    </button>
+    </Button>
   );
 }
 
@@ -30,23 +31,23 @@ export function SearchButton() {
   const app = useApp();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={app.openCommandPalette}
       className={toolbarButtonClass}
     >
       <SearchIcon className="w-4 h-4" />
       <span className="hidden md:inline">Search</span>
-    </button>
+    </Button>
   );
 }
 
 export function AddHeadingButton({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className={toolbarButtonClass}>
+    <Button variant="ghost" onClick={onClick} className={toolbarButtonClass}>
       <SeparatorHorizontalIcon className="w-4 h-4" />
       <span className="hidden md:inline">Add Heading</span>
-    </button>
+    </Button>
   );
 }
 

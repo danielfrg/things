@@ -31,6 +31,7 @@ import {
   ViewToolbar,
 } from '@/components/ToolbarButtons';
 import { TemplateCard } from '@/components/tasks/TemplateCard';
+import { Button } from '@/components/ui/button';
 import {
   createDropdownController,
   DropdownMenuContent,
@@ -575,13 +576,14 @@ function ProjectView() {
                 />
               </div>
               <div className="relative">
-                <button
-                  type="button"
-                  className="ml-auto p-1 text-muted-foreground hover:text-foreground/70"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="ml-auto text-muted-foreground hover:text-foreground/70"
                   onClick={(e) => projectMenu.toggleFromEvent(e)}
                 >
                   <MoreHorizontalIcon className="w-5 h-5" />
-                </button>
+                </Button>
                 <DropdownMenuContent
                   open={projectMenu.open}
                   onClose={projectMenu.close}

@@ -238,7 +238,6 @@ function ProjectShadow({ dragging }: { dragging: DOMRect }) {
 interface AreaHeaderProps {
   areaId: string;
   title: string;
-  onUpdateTitle: (title: string) => void;
 }
 
 function AreaHeader(props: AreaHeaderProps) {
@@ -246,52 +245,10 @@ function AreaHeader(props: AreaHeaderProps) {
   const router = useRouterState();
   const isMobile = useIsMobile();
   const { showContent } = useMobileNav();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(props.title);
 
   const isActive = router.location.pathname === `/area/${props.areaId}`;
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const finishEdit = () => {
-    setIsEditing(false);
-    const trimmed = editValue.trim();
-    if (trimmed && trimmed !== props.title) {
-      props.onUpdateTitle(trimmed);
-      return;
-    }
-    setEditValue(props.title);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      finishEdit();
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      setEditValue(props.title);
-      setIsEditing(false);
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isMobile) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setEditValue(props.title);
-    setIsEditing(true);
-    // Focus after render
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 0);
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isEditing) return;
-    if (!isMobile && e.detail !== 1) return;
-
+  const handleClick = () => {
     if (isMobile) {
       if (isActive) {
         showContent();
@@ -300,33 +257,14 @@ function AreaHeader(props: AreaHeaderProps) {
       }
       return;
     }
-
-    setTimeout(() => {
-      if (isEditing) return;
-      navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
-    }, 200);
+    navigate({ to: '/area/$areaId', params: { areaId: props.areaId } });
   };
-
-  if (isEditing) {
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={editValue}
-        onChange={(e) => setEditValue(e.currentTarget.value)}
-        onBlur={finishEdit}
-        onKeyDown={handleKeyDown}
-        className="flex-1 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wide bg-transparent outline-none"
-      />
-    );
-  }
 
   return (
     <button
       type="button"
       className="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
       onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
     >
       <BoxIcon className="w-4 h-4 md:w-3.5 md:h-3.5 text-muted-foreground" />
       <span className="truncate">{props.title}</span>
@@ -343,7 +281,6 @@ interface AreaItemProps {
     progress: number;
     areaId?: string | null;
   }>;
-  onUpdateTitle: (title: string) => void;
 }
 
 type AreaItemState =
@@ -520,11 +457,7 @@ function AreaItem(props: AreaItemProps) {
                 'bg-things-blue/20 ring-2 ring-things-blue',
             )}
           >
-            <AreaHeader
-              areaId={props.areaId}
-              title={props.title}
-              onUpdateTitle={props.onUpdateTitle}
-            />
+            <AreaHeader areaId={props.areaId} title={props.title} />
           </div>
           <div className="">
             {props.projects.length > 0 ? (
@@ -1483,9 +1416,6 @@ export function Sidebar() {
                   areaId={area.id}
                   title={area.title}
                   projects={area.projects}
-                  onUpdateTitle={(title) => {
-                    updateArea.mutate({ id: area.id, changes: { title } });
-                  }}
                 />
               ))}
             </div>

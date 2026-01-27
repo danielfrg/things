@@ -4,6 +4,7 @@ import { Calendar, FolderOpen, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BoxIcon, CheckIcon, InboxIcon } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import { generateId } from '@/db/schema';
@@ -301,13 +302,14 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                 onKeyDown={handleKeyDown}
                 className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 text-2xl font-bold placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
               />
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-1"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1"
               >
                 <X className="size-5" />
-              </button>
+              </Button>
             </div>
             <textarea
               ref={notesInputRef}
@@ -320,15 +322,16 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
 
           {/* Properties bar */}
           <div className="px-6 pb-4 flex items-center gap-2">
-            <button
+            <Button
               ref={dateButtonRef}
-              type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setProjectPickerOpen(false);
                 setDatePickerOpen(!datePickerOpen);
               }}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors border',
+                'flex items-center gap-1.5 rounded-lg text-[13px] font-medium',
                 scheduledDate
                   ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
@@ -336,17 +339,18 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
             >
               <Calendar className="size-3.5" />
               <span>{dateDisplay}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               ref={projectButtonRef}
-              type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setDatePickerOpen(false);
                 setProjectPickerOpen(!projectPickerOpen);
               }}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors border',
+                'flex items-center gap-1.5 rounded-lg text-[13px] font-medium',
                 projectId || areaId
                   ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
@@ -364,7 +368,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                 <FolderOpen className="size-3.5" />
               )}
               <span>{projectDisplay}</span>
-            </button>
+            </Button>
           </div>
 
           {/* Footer */}
@@ -394,19 +398,18 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
               </label>
             </div>
 
-            <button
-              type="button"
+            <Button
               onClick={handleSubmit}
               disabled={!title.trim()}
               className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                'px-4 py-2 rounded-lg text-sm font-medium',
                 title.trim()
                   ? 'bg-things-blue text-white hover:bg-things-blue/90 shadow-sm'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed',
               )}
             >
               Create task
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -428,12 +431,12 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
           style={{ ...projectPopoverStyle, zIndex: 60 }}
         >
           <div className="max-h-64 overflow-y-auto overscroll-contain py-2">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               onClick={handleSelectInbox}
               className={cn(
-                'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-bold text-popover-dark-foreground',
-                'hover:bg-popover-dark-accent transition-colors',
+                'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-bold text-popover-dark-foreground justify-start',
+                'hover:bg-popover-dark-accent',
               )}
             >
               <InboxIcon className="w-3.5 h-3.5 text-popover-dark-muted" />
@@ -441,20 +444,20 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
               {!projectId && !areaId && (
                 <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
               )}
-            </button>
+            </Button>
 
             <div className="my-1 border-t border-popover-dark-border" />
 
             {projectsWithoutArea.length > 0 && (
               <>
                 {projectsWithoutArea.map((project) => (
-                  <button
+                  <Button
                     key={project.id}
-                    type="button"
+                    variant="ghost"
                     onClick={() => handleSelectProject(project.id)}
                     className={cn(
-                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground',
-                      'hover:bg-popover-dark-accent transition-colors',
+                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
+                      'hover:bg-popover-dark-accent',
                     )}
                   >
                     <ProjectProgressIcon
@@ -468,7 +471,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                     {projectId === project.id && (
                       <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
                     )}
-                  </button>
+                  </Button>
                 ))}
               </>
             )}
@@ -479,12 +482,12 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                   <div className="my-1 border-t border-popover-dark-border" />
                 )}
 
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => handleSelectArea(area.id)}
                   className={cn(
-                    'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-extrabold text-popover-dark-foreground',
-                    'hover:bg-popover-dark-accent transition-colors',
+                    'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-extrabold text-popover-dark-foreground justify-start',
+                    'hover:bg-popover-dark-accent',
                   )}
                 >
                   <BoxIcon className="w-3 h-3 text-things-green" />
@@ -494,16 +497,16 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                   {!projectId && areaId === area.id && (
                     <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
                   )}
-                </button>
+                </Button>
 
                 {area.projects.map((project) => (
-                  <button
+                  <Button
                     key={project.id}
-                    type="button"
+                    variant="ghost"
                     onClick={() => handleSelectProject(project.id)}
                     className={cn(
-                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground',
-                      'hover:bg-popover-dark-accent transition-colors',
+                      'flex items-center gap-2 w-full h-[28px] px-3 text-[13px] font-semibold text-popover-dark-foreground justify-start',
+                      'hover:bg-popover-dark-accent',
                     )}
                   >
                     <ProjectProgressIcon
@@ -517,7 +520,7 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
                     {projectId === project.id && (
                       <CheckIcon className="w-3.5 h-3.5 text-popover-dark-selected" />
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
             ))}

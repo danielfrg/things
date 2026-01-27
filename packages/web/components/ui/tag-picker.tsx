@@ -161,7 +161,10 @@ export function TagPicker({
               'text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors',
               triggerClass,
             )}
-            onClick={() => setOpen(!open)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(!open);
+            }}
           >
             <PlusIcon className="w-3.5 h-3.5" />
             <span>Add tag</span>
@@ -211,7 +214,10 @@ export function TagPicker({
                         'hover:bg-popover-dark-accent',
                         selected && 'bg-popover-dark-accent',
                       )}
-                      onClick={() => handleToggle(tag.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggle(tag.id);
+                      }}
                     >
                       <span
                         className={cn(

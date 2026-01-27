@@ -12,6 +12,7 @@ import {
   TodayStarIcon,
   Trash2Icon,
 } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
 import type { TaskRecord } from '@/db/validation';
 import { useAreas, useProjects, useTasks } from '@/lib/contexts/DataContext';
@@ -342,13 +343,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             className="flex-1 bg-transparent text-white text-[15px] placeholder:text-popover-dark-muted outline-none"
           />
           {query && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={() => setQuery('')}
-              className="text-popover-dark-muted hover:text-white transition-colors"
+              className="text-popover-dark-muted hover:text-white"
             >
               <span className="text-xs">ESC</span>
-            </button>
+            </Button>
           )}
         </div>
 
@@ -356,13 +358,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           {searchResults.length > 0 ? (
             <div className="py-2">
               {searchResults.map((result, index) => (
-                <button
+                <Button
                   key={result.id}
-                  type="button"
+                  variant="ghost"
                   onClick={() => handleSelect(result)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                    'w-full flex items-center gap-3 px-4 py-2 text-left justify-start h-auto',
                     selectedIndex === index
                       ? 'bg-popover-dark-accent'
                       : 'hover:bg-popover-dark-accent/50',
@@ -392,7 +394,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   <span className="text-subtle text-xs capitalize flex-shrink-0">
                     {result.type}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           ) : (

@@ -22,6 +22,7 @@ import {
 } from '@/components/icons';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskShadow } from '@/components/tasks/TaskRow';
+import { Button } from '@/components/ui/button';
 import {
   createDropdownController,
   DropdownMenuContent,
@@ -399,13 +400,14 @@ export function TaskSection({
             </div>
             {canDeleteHeading && (
               <div className="relative">
-                <button
-                  type="button"
-                  className="p-1 text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-muted-foreground hover:text-foreground/70 opacity-0 group-hover:opacity-100"
                   onClick={(e) => menu.toggleFromEvent(e)}
                 >
                   <MoreHorizontalIcon className="w-4 h-4" />
-                </button>
+                </Button>
                 <DropdownMenuContent
                   open={menu.open}
                   onClose={menu.close}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlusIcon, Trash2Icon } from '@/components/icons';
 import { Card, SectionHeader } from '@/components/settings/AccountSection';
+import { Button } from '@/components/ui/button';
 import {
   useCreateTag,
   useDeleteTag,
@@ -95,13 +96,9 @@ export function TagsSection() {
             className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400"
           />
           {newTagTitle.trim() && (
-            <button
-              type="button"
-              onClick={handleCreateTag}
-              className="px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={handleCreateTag}>
               Add
-            </button>
+            </Button>
           )}
         </div>
 
@@ -175,14 +172,15 @@ export function TagsSection() {
                 />
 
                 {/* Delete button */}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => handleDeleteTag(tag.id)}
-                  className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Delete tag"
                 >
                   <Trash2Icon className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

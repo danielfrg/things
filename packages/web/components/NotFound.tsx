@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 
 export function NotFound() {
   return (
@@ -13,13 +14,8 @@ export function NotFound() {
         </p>
 
         <div className="space-y-4">
-          <Link to="/" className="block w-full">
-            <button
-              type="button"
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Go Home
-            </button>
+          <Link to="/">
+            <Button className="w-full">Go Home</Button>
           </Link>
         </div>
       </div>

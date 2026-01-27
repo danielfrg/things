@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { signOut, useSession } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 
@@ -32,14 +33,14 @@ export function AccountSection() {
               <p className="text-sm text-gray-500">{session?.user?.email}</p>
             </div>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
           >
             {loggingOut ? 'Signing out...' : 'Sign out'}
-          </button>
+          </Button>
         </div>
       </Card>
     </section>

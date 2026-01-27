@@ -12,6 +12,7 @@ import {
   RepeatIcon,
   Trash2Icon,
 } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { MovePicker } from '@/components/ui/move-picker';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
@@ -30,12 +31,11 @@ import {
   useTags,
   useUpdateRepeatingRule,
 } from '@/lib/hooks/useData';
+import { useDetailCard } from '@/lib/hooks/useDetailCard';
 import { useTaskEditorForm } from '@/lib/hooks/useTaskEditorForm';
 import { cn, parseLocalDate } from '@/lib/utils';
 import { ChecklistEditor, type ChecklistItem } from './ChecklistEditor';
 import { ItemDetailLayout } from './ItemDetailLayout';
-
-const TRANSITION_DURATION_MS = 250;
 
 function computeNextOccurrences(
   rruleStr: string,
@@ -76,57 +76,6 @@ interface TemplateCardProps {
   showNextDate?: boolean;
 }
 
-// Collapsed state - simple button row
-function TemplateRow({
-  template,
-  selected,
-  onSelect,
-  onExpand,
-  showNextDate,
-}: {
-  template: RepeatingRuleRecord;
-  selected: boolean;
-  onSelect: (templateId: string | null) => void;
-  onExpand: (templateId: string) => void;
-  showNextDate?: boolean;
-}) {
-  const selectedStyle = selected
-    ? { backgroundColor: 'var(--task-selected)' }
-    : undefined;
-
-  return (
-    <button
-      type="button"
-      className={cn(
-        'flex items-center gap-2 py-2 px-4 rounded-md cursor-pointer hover:bg-secondary/50 transition-colors w-full text-left',
-        template.status === 'paused' && 'opacity-60',
-      )}
-      style={selectedStyle}
-      onClick={() => onSelect(template.id)}
-      onDoubleClick={() => onExpand(template.id)}
-    >
-      <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center text-muted-foreground">
-        <RepeatIcon className="w-4 h-4" />
-      </span>
-      <input
-        type="text"
-        value={template.title}
-        readOnly
-        tabIndex={-1}
-        className="flex-1 bg-transparent text-[15px] leading-tight outline-none border-0 p-0 cursor-inherit pointer-events-none truncate text-foreground"
-      />
-      {template.status === 'paused' && (
-        <span className="text-xs text-amber-600 font-medium">Paused</span>
-      )}
-      {showNextDate && (
-        <span className="text-xs text-muted-foreground">
-          {format(parseLocalDate(template.nextOccurrence), 'MMM d')}
-        </span>
-      )}
-    </button>
-  );
-}
-
 export function TemplateCard({
   template,
   expanded,
@@ -156,11 +105,17 @@ export function TemplateCard({
       position: idx + 1,
     }));
   });
-  const [showInfo, setShowInfo] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const lastTemplateIdRef = useRef(template.id);
+
+  const { showInfo, setShowInfo, handleClose } = useDetailCard({
+    id: template.id,
+    expanded,
+    onExpand,
+    cardRef,
+    dataAttribute: 'data-template-detail-card',
+  });
 
   const projectsResource = useProjects();
   const areasResource = useAreas();
@@ -191,17 +146,6 @@ export function TemplateCard({
       return [];
     }
   }, [template.tagsTemplate]);
-
-  const handleClose = useCallback(() => {
-    if (isClosing) return;
-
-    setIsClosing(true);
-    onExpand(template.id);
-
-    setTimeout(() => {
-      setIsClosing(false);
-    }, TRANSITION_DURATION_MS);
-  }, [isClosing, onExpand, template.id]);
 
   const form = useTaskEditorForm({
     initialTitle: template.title,
@@ -242,45 +186,6 @@ export function TemplateCard({
       form.focusTitle();
     }
   }, [expanded, form.focusTitle]);
-
-  // Click outside handler
-  useEffect(() => {
-    if (!expanded) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (isClosing) return;
-      if (!cardRef.current) return;
-
-      const target = e.target as HTMLElement;
-
-      if (cardRef.current.contains(target)) return;
-
-      const isInPopover =
-        target.closest('[data-popover]') ||
-        target.closest('[role="listbox"]') ||
-        target.closest('[role="dialog"]') ||
-        target.closest('[role="menu"]');
-      if (isInPopover) return;
-
-      const closestWithBg = target.closest('div');
-      if (closestWithBg) {
-        const bg = getComputedStyle(closestWithBg).backgroundColor;
-        if (bg === 'rgb(44, 44, 46)') return;
-      }
-
-      const anyExpandedCard = target.closest('[data-template-detail-card]');
-      if (anyExpandedCard) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
-    };
-
-    document.addEventListener('mousedown', handleClickOutside, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [expanded, isClosing, handleClose]);
 
   const nextOccurrences = useMemo(
     () => computeNextOccurrences(template.rrule, template.nextOccurrence, 4),
@@ -384,55 +289,88 @@ export function TemplateCard({
   const toolbarBtnClass =
     'inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors';
 
-  const showExpanded = expanded || isClosing;
-
-  if (!showExpanded) {
-    return (
-      <div className="mx-4">
-        <TemplateRow
-          template={template}
-          selected={selected}
-          onSelect={onSelect}
-          onExpand={onExpand}
-          showNextDate={showNextDate}
-        />
-      </div>
-    );
-  }
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    if ((e.target as HTMLElement).closest('input')) return;
+    if ((e.target as HTMLElement).closest('textarea')) return;
+    if ((e.target as HTMLElement).closest('.prose-editor')) return;
+    onExpand(template.id);
+  };
 
   const headerContent = (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={cn(
-        'flex items-center gap-2 px-4 pb-2 transition-all duration-300 ease-in-out rounded-md w-full text-left',
-        expanded ? 'pt-4' : 'pt-2',
+        'flex items-center gap-2 px-4 pb-2 transition-all duration-300 ease-in-out md:rounded-md overflow-hidden',
+        expanded ? 'pt-4' : 'py-3 md:py-2 md:cursor-grab',
+        !expanded && selected && 'bg-task-selected',
+        !expanded && !selected && 'hover:bg-secondary/50',
       )}
-      onClick={() => handleClose()}
+      onClick={() => !expanded && onSelect(template.id)}
+      onKeyDown={(e) => {
+        if (!expanded && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onSelect(template.id);
+        }
+      }}
     >
       <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center text-muted-foreground">
         <RepeatIcon className="w-4 h-4" />
       </span>
 
-      <input
-        ref={form.titleRef}
-        type="text"
-        value={form.title}
-        onChange={(e) => form.setTitle(e.target.value)}
-        onBlur={form.handleTitleBlur}
-        onKeyDown={form.handleTitleKeyDown}
-        onClick={(e) => e.stopPropagation()}
-        className={cn(
-          'flex-1 bg-transparent text-[15px] leading-tight outline-none border-0 p-0',
-          'text-foreground caret-things-blue',
-          isPaused && 'text-muted-foreground',
-        )}
-        placeholder="Template title"
-      />
+      {expanded ? (
+        <input
+          ref={form.titleRef}
+          type="text"
+          value={form.title}
+          onChange={(e) => form.setTitle(e.target.value)}
+          onBlur={form.handleTitleBlur}
+          onKeyDown={form.handleTitleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            'flex-1 bg-transparent text-lg md:text-[15px] leading-tight outline-none border-0 p-0',
+            'text-foreground caret-things-blue',
+            isPaused && 'text-muted-foreground',
+          )}
+          placeholder="Template title"
+        />
+      ) : (
+        <div
+          role="button"
+          tabIndex={0}
+          className="flex-1 min-w-0"
+          onClick={() => onSelect(template.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelect(template.id);
+            }
+          }}
+        >
+          <span
+            className={cn(
+              'block text-lg md:text-[15px] leading-tight truncate',
+              'text-foreground',
+              isPaused && 'text-muted-foreground',
+            )}
+          >
+            {form.title}
+          </span>
+        </div>
+      )}
 
       {isPaused && (
         <span className="text-xs text-amber-600 font-medium px-2">Paused</span>
       )}
-    </button>
+
+      {/* Next occurrence - only shown when collapsed */}
+      {!expanded && showNextDate && (
+        <span className="text-xs text-muted-foreground">
+          {format(parseLocalDate(template.nextOccurrence), 'MMM d')}
+        </span>
+      )}
+    </div>
   );
 
   const toolbarContent = (
@@ -473,8 +411,8 @@ export function TemplateCard({
       )}
 
       {/* Pause/Resume button */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={handlePauseResume}
         className={cn(
           toolbarBtnClass,
@@ -489,7 +427,7 @@ export function TemplateCard({
           <PauseIcon className="w-3.5 h-3.5" />
         )}
         <span>{isPaused ? 'Resume' : 'Pause'}</span>
-      </button>
+      </Button>
     </>
   );
 
@@ -497,16 +435,17 @@ export function TemplateCard({
     <>
       {/* Info button */}
       <div className="relative flex items-center">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={(e) => {
             e.stopPropagation();
             setShowInfo(!showInfo);
           }}
-          className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-muted-foreground hover:bg-secondary transition-colors"
+          className="text-hint hover:text-muted-foreground hover:bg-secondary"
         >
           <InfoIcon className="w-3.5 h-3.5" />
-        </button>
+        </Button>
 
         {/* Info popover */}
         {showInfo && (
@@ -537,13 +476,14 @@ export function TemplateCard({
       </div>
 
       {/* Delete button */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={handleDelete}
-        className="flex items-center justify-center h-6 w-6 rounded text-hint hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="text-hint hover:text-destructive hover:bg-destructive/10"
       >
         <Trash2Icon className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     </>
   );
 
@@ -552,6 +492,7 @@ export function TemplateCard({
       expanded={expanded}
       cardRef={cardRef}
       dataAttribute="data-template-detail-card"
+      onDoubleClick={handleDoubleClick}
       header={headerContent}
       toolbar={toolbarContent}
       toolbarPrefix={
