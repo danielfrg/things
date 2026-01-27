@@ -126,6 +126,29 @@ function ChecklistItemRow({
           element: row,
           dragHandle: handle,
           getInitialData: () => getChecklistItemDragData(item, index, editorId),
+          onGenerateDragPreview: ({
+            nativeSetDragImage,
+          }: {
+            nativeSetDragImage: (image: Element, x: number, y: number) => void;
+          }) => {
+            // Use the row element as the drag preview
+            if (row) {
+              const rect = row.getBoundingClientRect();
+              dnd.setCustomNativeDragPreview({
+                nativeSetDragImage,
+                getOffset: () => ({ x: rect.width / 2, y: rect.height / 2 }),
+                render: ({ container }: { container: HTMLElement }) => {
+                  const clone = row.cloneNode(true) as HTMLElement;
+                  clone.style.width = `${rect.width}px`;
+                  clone.style.backgroundColor = 'var(--background)';
+                  clone.style.borderRadius = '4px';
+                  clone.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                  clone.style.opacity = '1';
+                  container.appendChild(clone);
+                },
+              });
+            }
+          },
           onDragStart: () => {
             setState({ type: 'dragging' });
             if (navigator.vibrate) navigator.vibrate(10);
