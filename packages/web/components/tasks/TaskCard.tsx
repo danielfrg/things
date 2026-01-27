@@ -17,7 +17,7 @@ import { MovePicker } from '@/components/ui/move-picker';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { ProseEditor } from '@/components/ui/prose-editor';
 import { RepeatPicker } from '@/components/ui/repeat-picker';
-import { TAG_COLORS, TagPicker } from '@/components/ui/tag-picker';
+import { TagPicker } from '@/components/ui/tag-picker';
 import {
   ToolbarButton,
   toolbarButtonVariants,

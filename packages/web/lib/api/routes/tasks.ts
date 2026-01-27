@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
-import { tasks } from '@/db/schema';
+import { tags, tasks, taskTags } from '@/db/schema';
 import type { AuthContext } from '../middleware/auth';
 import { requireWriteScope } from '../middleware/auth';
 import {
@@ -9,6 +9,7 @@ import {
   CreateTaskSchema,
   ErrorSchema,
   SuccessSchema,
+  TagSchema,
   TaskSchema,
   UpdateTaskSchema,
 } from '../schemas';
@@ -495,6 +496,207 @@ app.openapi(
     }
 
     return c.json({ success: true, message: 'Task permanently deleted' }, 200);
+  },
+);
+
+const TaskTagParams = z.object({ id: z.string(), tagId: z.string() });
+
+// GET /tasks/:id/tags
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{id}/tags',
+    tags: ['Tasks'],
+    summary: 'Get tags for a task',
+    security: [{ bearerAuth: [] }],
+    request: { params: TaskIdParams },
+    responses: {
+      200: {
+        description: 'List of tags',
+        content: { 'application/json': { schema: z.array(TagSchema) } },
+      },
+      404: {
+        description: 'Task not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const userId = c.get('userId');
+    const { id } = c.req.valid('param');
+
+    // Verify task exists and belongs to user
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+
+    if (!task) {
+      return c.json({ error: 'Task not found' }, 404);
+    }
+
+    // Get tags for this task
+    const result = await db
+      .select({
+        id: tags.id,
+        title: tags.title,
+        color: tags.color,
+        position: tags.position,
+        createdAt: tags.createdAt,
+      })
+      .from(taskTags)
+      .innerJoin(tags, eq(taskTags.tagId, tags.id))
+      .where(and(eq(taskTags.taskId, id), eq(taskTags.userId, userId)));
+
+    const formatted = result.map((t) => ({
+      id: t.id,
+      title: t.title,
+      color: t.color,
+      position: t.position,
+      createdAt: t.createdAt.toISOString(),
+    }));
+
+    return c.json(formatted, 200);
+  },
+);
+
+// POST /tasks/:id/tags/:tagId
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/{id}/tags/{tagId}',
+    tags: ['Tasks'],
+    summary: 'Add a tag to a task',
+    security: [{ bearerAuth: [] }],
+    request: { params: TaskTagParams },
+    responses: {
+      200: {
+        description: 'Tag added',
+        content: { 'application/json': { schema: SuccessSchema } },
+      },
+      403: {
+        description: 'Forbidden',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+      404: {
+        description: 'Task or tag not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+      409: {
+        description: 'Tag already assigned',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    if (!requireWriteScope(c)) {
+      return c.json(
+        { error: 'Forbidden - API key does not have write permission' },
+        403,
+      );
+    }
+
+    const userId = c.get('userId');
+    const { id, tagId } = c.req.valid('param');
+
+    // Verify task exists and belongs to user
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+
+    if (!task) {
+      return c.json({ error: 'Task not found' }, 404);
+    }
+
+    // Verify tag exists and belongs to user
+    const [tag] = await db
+      .select()
+      .from(tags)
+      .where(and(eq(tags.id, tagId), eq(tags.userId, userId)));
+
+    if (!tag) {
+      return c.json({ error: 'Tag not found' }, 404);
+    }
+
+    // Check if already assigned
+    const [existing] = await db
+      .select()
+      .from(taskTags)
+      .where(
+        and(
+          eq(taskTags.taskId, id),
+          eq(taskTags.tagId, tagId),
+          eq(taskTags.userId, userId),
+        ),
+      );
+
+    if (existing) {
+      return c.json({ error: 'Tag already assigned to this task' }, 409);
+    }
+
+    // Create the association
+    await db.insert(taskTags).values({
+      userId,
+      taskId: id,
+      tagId,
+    });
+
+    return c.json({ success: true, message: 'Tag added to task' }, 200);
+  },
+);
+
+// DELETE /tasks/:id/tags/:tagId
+app.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/{id}/tags/{tagId}',
+    tags: ['Tasks'],
+    summary: 'Remove a tag from a task',
+    security: [{ bearerAuth: [] }],
+    request: { params: TaskTagParams },
+    responses: {
+      200: {
+        description: 'Tag removed',
+        content: { 'application/json': { schema: SuccessSchema } },
+      },
+      403: {
+        description: 'Forbidden',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+      404: {
+        description: 'Task-tag association not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    if (!requireWriteScope(c)) {
+      return c.json(
+        { error: 'Forbidden - API key does not have write permission' },
+        403,
+      );
+    }
+
+    const userId = c.get('userId');
+    const { id, tagId } = c.req.valid('param');
+
+    const result = await db
+      .delete(taskTags)
+      .where(
+        and(
+          eq(taskTags.taskId, id),
+          eq(taskTags.tagId, tagId),
+          eq(taskTags.userId, userId),
+        ),
+      )
+      .returning();
+
+    if (result.length === 0) {
+      return c.json({ error: 'Task-tag association not found' }, 404);
+    }
+
+    return c.json({ success: true, message: 'Tag removed from task' }, 200);
   },
 );
 
