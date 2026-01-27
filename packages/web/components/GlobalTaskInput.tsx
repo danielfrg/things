@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProjectProgressIcon } from '@/components/ui/project-progress-icon';
+import { ProseEditor } from '@/components/ui/prose-editor';
 import { Switch } from '@/components/ui/switch';
 import { generateId } from '@/db/schema';
 import {
@@ -72,7 +73,6 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const notesInputRef = useRef<HTMLTextAreaElement>(null);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const projectButtonRef = useRef<HTMLButtonElement>(null);
   const projectPopoverRef = useOverlay({
@@ -262,12 +262,11 @@ export function GlobalTaskInput({ open, onClose }: GlobalTaskInputProps) {
           </DialogHeader>
 
           <div className="px-6 pb-4">
-            <textarea
-              ref={notesInputRef}
-              placeholder="Add description..."
+            <ProseEditor
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full mt-3 bg-transparent text-foreground text-base placeholder:text-muted-foreground outline-none resize-none min-h-[100px]"
+              onChange={setNotes}
+              placeholder="Add description..."
+              className="mt-3 min-h-[100px]"
             />
           </div>
 

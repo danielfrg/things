@@ -1,8 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { signOut, useSession } from '@/lib/auth-client';
-import { cn } from '@/lib/utils';
 
 export function AccountSection() {
   const { data: session } = useSession();
@@ -18,7 +18,7 @@ export function AccountSection() {
   return (
     <section className="mb-12">
       <SectionHeader title="Account" />
-      <Card>
+      <Card className="py-0 gap-0">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -62,25 +62,6 @@ export function SectionHeader({
       {description && (
         <p className="text-sm text-gray-500 mt-1">{description}</p>
       )}
-    </div>
-  );
-}
-
-export function Card({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg',
-        className,
-      )}
-    >
-      {children}
     </div>
   );
 }

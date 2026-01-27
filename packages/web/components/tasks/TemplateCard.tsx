@@ -12,6 +12,16 @@ import {
   RepeatIcon,
   Trash2Icon,
 } from '@/components/icons';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MovePicker } from '@/components/ui/move-picker';
@@ -117,6 +127,8 @@ export function TemplateCard({
     cardRef,
     dataAttribute: 'data-template-detail-card',
   });
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const projectsResource = useProjects();
   const areasResource = useAreas();
@@ -271,18 +283,13 @@ export function TemplateCard({
   }, [template.status, template.id, updateRule]);
 
   const handleDelete = useCallback(() => {
-    if (
-      !confirm('Delete this repeating template? Spawned tasks will remain.')
-    ) {
-      return;
-    }
-
     if (onDelete) {
       onDelete(template.id);
     } else {
       deleteRule.mutate(template.id);
     }
     handleClose();
+    setShowDeleteDialog(false);
   }, [onDelete, template.id, deleteRule, handleClose]);
 
   const isPaused = template.status === 'paused';
@@ -481,7 +488,7 @@ export function TemplateCard({
       <Button
         variant="ghost"
         size="icon-xs"
-        onClick={handleDelete}
+        onClick={() => setShowDeleteDialog(true)}
         className="text-hint hover:text-destructive hover:bg-destructive/10"
       >
         <Trash2Icon className="w-3.5 h-3.5" />
@@ -490,41 +497,61 @@ export function TemplateCard({
   );
 
   return (
-    <ItemDetailLayout
-      expanded={expanded}
-      cardRef={cardRef}
-      dataAttribute="data-template-detail-card"
-      onDoubleClick={handleDoubleClick}
-      header={headerContent}
-      toolbar={toolbarContent}
-      toolbarPrefix={
-        formattedOccurrences.length > 0 && (
-          <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground pl-2">
-            <span>Next: {formattedOccurrences.join(', ')}</span>
-          </div>
-        )
-      }
-      footer={footerContent}
-    >
-      {/* Notes Section */}
-      <div className="relative min-h-[26px]">
-        <ProseEditor
-          value={form.notes}
-          onChange={form.setNotes}
-          onBlur={form.handleNotesBlur}
-          placeholder="Notes"
-          isEditing={form.isEditingNotes}
-          onStartEditing={() => form.setIsEditingNotes(true)}
-        />
-      </div>
+    <>
+      <ItemDetailLayout
+        expanded={expanded}
+        cardRef={cardRef}
+        dataAttribute="data-template-detail-card"
+        onDoubleClick={handleDoubleClick}
+        header={headerContent}
+        toolbar={toolbarContent}
+        toolbarPrefix={
+          formattedOccurrences.length > 0 && (
+            <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground pl-2">
+              <span>Next: {formattedOccurrences.join(', ')}</span>
+            </div>
+          )
+        }
+        footer={footerContent}
+      >
+        {/* Notes Section */}
+        <div className="relative min-h-[26px]">
+          <ProseEditor
+            value={form.notes}
+            onChange={form.setNotes}
+            onBlur={form.handleNotesBlur}
+            placeholder="Notes"
+            isEditing={form.isEditingNotes}
+            onStartEditing={() => form.setIsEditingNotes(true)}
+          />
+        </div>
 
-      {/* Checklist Section */}
-      <ChecklistEditor
-        items={checklist}
-        variant="inline"
-        mode="controlled"
-        onChange={handleChecklistChange}
-      />
-    </ItemDetailLayout>
+        {/* Checklist Section */}
+        <ChecklistEditor
+          items={checklist}
+          variant="inline"
+          mode="controlled"
+          onChange={handleChecklistChange}
+        />
+      </ItemDetailLayout>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete this repeating template? Spawned tasks will remain.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

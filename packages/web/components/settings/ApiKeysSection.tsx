@@ -1,8 +1,19 @@
 import { format, formatDistanceToNow } from 'date-fns';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { KeyIcon, Trash2Icon } from '@/components/icons';
-import { Card, SectionHeader } from '@/components/settings/AccountSection';
+import { SectionHeader } from '@/components/settings/AccountSection';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -29,6 +40,7 @@ export function ApiKeysSection() {
   const [showModal, setShowModal] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
 
   const keys = useMemo(() => {
     return [...apiKeys].sort(
@@ -46,9 +58,10 @@ export function ApiKeysSection() {
     refetch();
   };
 
-  const handleDeleteKey = (id: string) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
-    deleteApiKey.mutate(id);
+  const handleDeleteKey = () => {
+    if (!deleteKeyId) return;
+    deleteApiKey.mutate(deleteKeyId);
+    setDeleteKeyId(null);
   };
 
   const handleCopyKey = (key: string) => {
@@ -88,7 +101,7 @@ export function ApiKeysSection() {
 
         {/* API Keys List or Empty State */}
         {keys.length > 0 ? (
-          <Card>
+          <Card className="py-0 gap-0">
             {/* Header with count and action */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -143,7 +156,7 @@ export function ApiKeysSection() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => handleDeleteKey(key.id)}
+                  onClick={() => setDeleteKeyId(key.id)}
                   title="Delete API key"
                 >
                   <Trash2Icon className="w-4 h-4" />
@@ -152,7 +165,7 @@ export function ApiKeysSection() {
             ))}
           </Card>
         ) : (
-          <Card>
+          <Card className="py-0 gap-0">
             <div className="flex items-center justify-between px-5 py-5">
               <p className="text-sm text-gray-500">No API keys created</p>
               <Button
@@ -173,6 +186,28 @@ export function ApiKeysSection() {
         onOpenChange={setShowModal}
         onCreate={handleCreateKey}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteKeyId}
+        onOpenChange={(open) => !open && setDeleteKeyId(null)}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this API key? Any applications
+              using this key will no longer be able to access your data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDeleteKey}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -190,6 +225,8 @@ function CreateApiKeyModal({
   const [scope, setScope] = useState<'read' | 'read-write'>('read-write');
   const inputRef = useRef<HTMLInputElement>(null);
   const nameId = useId();
+  const scopeFullId = useId();
+  const scopeReadId = useId();
 
   useEffect(() => {
     if (open) {
@@ -239,12 +276,12 @@ function CreateApiKeyModal({
               }
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="read-write" id="scope-full" />
-                <Label htmlFor="scope-full">Full access</Label>
+                <RadioGroupItem value="read-write" id={scopeFullId} />
+                <Label htmlFor={scopeFullId}>Full access</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="read" id="scope-read" />
-                <Label htmlFor="scope-read">Read only</Label>
+                <RadioGroupItem value="read" id={scopeReadId} />
+                <Label htmlFor={scopeReadId}>Read only</Label>
               </div>
             </RadioGroup>
           </div>

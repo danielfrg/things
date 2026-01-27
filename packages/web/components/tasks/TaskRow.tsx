@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StarIcon } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -172,9 +173,13 @@ function TaskDisplay({
         </span>
 
         {dayBadgeStr && (
-          <span className="text-[12px] px-1.5 py-0.5 rounded bg-secondary text-foreground shrink-0">
+          <Badge
+            variant="secondary"
+            size="sm"
+            className="text-[12px] text-foreground"
+          >
             {dayBadgeStr}
-          </span>
+          </Badge>
         )}
 
         {showTodayStar && scheduledDateStr === 'Today' && !isCompleted && (

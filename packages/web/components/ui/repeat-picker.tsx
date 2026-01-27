@@ -1,9 +1,9 @@
 import { addDays, format, isValid, lastDayOfMonth } from 'date-fns';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as rrulePkg from 'rrule';
 import { RepeatIcon, XIcon } from '@/components/icons';
 import { cn, parseLocalDate } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 // Handle both ESM and CJS module formats
 const RRule = (rrulePkg as any).RRule ?? (rrulePkg as any).default?.RRule;
@@ -183,8 +183,6 @@ export function RepeatPicker({
   className,
 }: RepeatPickerProps) {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
 
   const parsed = useMemo(() => parseRRule(value), [value]);
 
@@ -268,84 +266,15 @@ export function RepeatPicker({
     [onClear],
   );
 
-  useEffect(() => {
-    if (!open) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        triggerRef.current &&
-        !triggerRef.current.contains(target) &&
-        popoverRef.current &&
-        !popoverRef.current.contains(target)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-      document.addEventListener('keydown', handleEscape);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [open]);
-
-  const getPopoverStyle = (): React.CSSProperties => {
-    const viewportWidth = window.innerWidth;
-    const isMobile = viewportWidth < 768;
-
-    // On mobile, center the popover
-    if (isMobile) {
-      return {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 50,
-      };
-    }
-
-    if (!triggerRef.current) return {};
-    const rect = triggerRef.current.getBoundingClientRect();
-    const popoverHeight = 320;
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
-
-    const showAbove = spaceBelow < popoverHeight && spaceAbove > spaceBelow;
-
-    return {
-      position: 'fixed',
-      top: showAbove ? 'auto' : `${rect.bottom + 4}px`,
-      bottom: showAbove ? `${viewportHeight - rect.top + 4}px` : 'auto',
-      left: `${rect.left}px`,
-      zIndex: 50,
-    };
-  };
-
   return (
-    <div className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
         disabled={disabled}
         className={cn(
           'inline-flex items-center gap-1 text-sm transition-colors',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
-        onClick={() => setOpen(!open)}
       >
         <RepeatIcon className="h-3.5 w-3.5 opacity-70" />
         <span className={cn(!value && 'text-muted-foreground')}>{label}</span>
@@ -360,214 +289,193 @@ export function RepeatPicker({
             <XIcon className="h-3 w-3" />
           </span>
         )}
-      </button>
+      </PopoverTrigger>
 
-      {open &&
-        createPortal(
-          <>
-            {/* Mobile backdrop - captures taps to close popover without affecting task */}
-            <div
-              data-popover
-              className="fixed inset-0 z-40 md:hidden"
-              onClick={() => setOpen(false)}
-              onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-            />
-            <div
-              ref={popoverRef}
-              data-popover
-              className="w-[280px] md:w-[280px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark overflow-hidden p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto z-50"
-              style={getPopoverStyle()}
+      <PopoverContent
+        className="w-[280px] max-md:w-[calc(100vw-32px)] p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto bg-popover-dark border-0 shadow-xl ring-0"
+        align="start"
+        sideOffset={4}
+      >
+        {/* Header with title */}
+        <div className="flex items-center justify-center relative max-md:mb-4">
+          <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Repeat</h3>
+        </div>
+
+        <div className="space-y-3 max-md:space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              className={cn(
+                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
+                mode === 'daily'
+                  ? 'bg-popover-dark-selected text-white'
+                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+              )}
+              onClick={() => {
+                setMode('daily');
+                const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+                const iso =
+                  startIso && startIso > tomorrowIso ? startIso : tomorrowIso;
+                setStartIso(iso);
+                setStartInput(formatInputDate(iso));
+              }}
             >
-            {/* Header with title and close button */}
-            <div className="flex items-center justify-center relative mb-3 max-md:mb-4">
-              <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">Repeat</h3>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-0"
-              >
-                <XIcon className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 max-md:space-y-4">
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  className={cn(
-                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
-                    mode === 'daily'
-                      ? 'bg-popover-dark-selected text-white'
-                      : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                  )}
-                  onClick={() => {
-                    setMode('daily');
-                    const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-                    const iso =
-                      startIso && startIso > tomorrowIso ? startIso : tomorrowIso;
-                    setStartIso(iso);
-                    setStartInput(formatInputDate(iso));
-                  }}
-                >
-                  Daily
-                </button>
-                <button
-                  type="button"
-                  className={cn(
-                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
-                    mode === 'weekly'
-                      ? 'bg-popover-dark-selected text-white'
-                      : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                  )}
-                  onClick={() => {
-                    setMode('weekly');
-                    const iso = startIso ?? format(new Date(), 'yyyy-MM-dd');
-                    setStartIso(iso);
-                    setStartInput(formatInputDate(iso));
-                  }}
-                >
-                  Weekly
-                </button>
-                <button
-                  type="button"
-                  className={cn(
-                    'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
-                    mode === 'monthly'
-                      ? 'bg-popover-dark-selected text-white'
-                      : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                  )}
-                  onClick={() => {
-                    setMode('monthly');
-                    const iso = startIso ?? format(new Date(), 'yyyy-MM-dd');
-                    setStartIso(iso);
-                    setStartInput(formatInputDate(iso));
-                    // Default to day 1 if not already set
-                    if (!monthDay) setMonthDay(1);
-                  }}
-                >
-                  Monthly
-                </button>
-              </div>
-
-              {mode === 'weekly' && (
-                <div>
-                  <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                    Day
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {WEEKDAYS.map((d) => (
-                      <button
-                        key={d.code}
-                        type="button"
-                        className={cn(
-                          'h-8 rounded-md text-xs font-medium transition-colors',
-                          weekday === d.code
-                            ? 'bg-popover-dark-selected text-white'
-                            : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                        )}
-                        onClick={() => setWeekday(d.code)}
-                      >
-                        {d.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              Daily
+            </button>
+            <button
+              type="button"
+              className={cn(
+                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
+                mode === 'weekly'
+                  ? 'bg-popover-dark-selected text-white'
+                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
               )}
-
-              {mode === 'monthly' && (
-                <div>
-                  <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                    Day of Month
-                  </div>
-                  <div className="grid grid-cols-8 gap-1">
-                    {MONTH_DAYS.map((d) => (
-                      <button
-                        key={String(d)}
-                        type="button"
-                        className={cn(
-                          'h-8 rounded-md text-xs font-medium transition-colors',
-                          monthDay === d
-                            ? 'bg-popover-dark-selected text-white'
-                            : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                          d === 'last' && 'col-span-2',
-                        )}
-                        onClick={() => setMonthDay(d)}
-                      >
-                        {d === 'last' ? 'Last' : d}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              onClick={() => {
+                setMode('weekly');
+                const iso = startIso ?? format(new Date(), 'yyyy-MM-dd');
+                setStartIso(iso);
+                setStartInput(formatInputDate(iso));
+              }}
+            >
+              Weekly
+            </button>
+            <button
+              type="button"
+              className={cn(
+                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors',
+                mode === 'monthly'
+                  ? 'bg-popover-dark-selected text-white'
+                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
               )}
-
-              {mode && (
-                <div>
-                  <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                    Starting
-                  </div>
-                  <input
-                    type="date"
-                    min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
-                    value={startIso ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setStartIso(val);
-                      setStartInput(formatInputDate(val));
-                    }}
-                    className="w-full h-9 rounded-lg bg-popover-dark-accent text-white px-3 text-sm outline-none placeholder:text-popover-dark-muted"
-                  />
-                  <p className="mt-1 text-xs text-popover-dark-muted">
-                    Start date must be tomorrow or later.
-                  </p>
-                </div>
-              )}
-
-              {nextDates.length > 0 && (
-                <div className="text-xs text-popover-dark-muted">
-                  Next: {nextDates.join(', ')}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  className={cn(
-                    'flex-1 h-9 rounded-lg text-sm font-medium transition-colors',
-                    canApply
-                      ? 'bg-popover-dark-selected text-white hover:bg-popover-dark-selected/90'
-                      : 'bg-popover-dark-accent text-popover-dark-muted cursor-not-allowed',
-                  )}
-                  disabled={!canApply}
-                  onClick={apply}
-                >
-                  Apply
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 h-9 rounded-lg bg-popover-dark-accent text-white text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-
-              {value && (
-                <button
-                  type="button"
-                  className="w-full h-9 rounded-lg bg-popover-dark-accent text-destructive text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors"
-                  onClick={() => {
-                    onClear();
-                    setOpen(false);
-                  }}
-                >
-                  Remove Repeat
-                </button>
-              )}
-            </div>
+              onClick={() => {
+                setMode('monthly');
+                const iso = startIso ?? format(new Date(), 'yyyy-MM-dd');
+                setStartIso(iso);
+                setStartInput(formatInputDate(iso));
+                // Default to day 1 if not already set
+                if (!monthDay) setMonthDay(1);
+              }}
+            >
+              Monthly
+            </button>
           </div>
-          </>,
-          document.body,
-        )}
-    </div>
+
+          {mode === 'weekly' && (
+            <div>
+              <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+                Day
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {WEEKDAYS.map((d) => (
+                  <button
+                    key={d.code}
+                    type="button"
+                    className={cn(
+                      'h-8 rounded-md text-xs font-medium transition-colors',
+                      weekday === d.code
+                        ? 'bg-popover-dark-selected text-white'
+                        : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+                    )}
+                    onClick={() => setWeekday(d.code)}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {mode === 'monthly' && (
+            <div>
+              <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+                Day of Month
+              </div>
+              <div className="grid grid-cols-8 gap-1">
+                {MONTH_DAYS.map((d) => (
+                  <button
+                    key={String(d)}
+                    type="button"
+                    className={cn(
+                      'h-8 rounded-md text-xs font-medium transition-colors',
+                      monthDay === d
+                        ? 'bg-popover-dark-selected text-white'
+                        : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+                      d === 'last' && 'col-span-2',
+                    )}
+                    onClick={() => setMonthDay(d)}
+                  >
+                    {d === 'last' ? 'Last' : d}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {mode && (
+            <div>
+              <div className="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+                Starting
+              </div>
+              <input
+                type="date"
+                min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
+                value={startIso ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setStartIso(val);
+                  setStartInput(formatInputDate(val));
+                }}
+                className="w-full h-9 rounded-lg bg-popover-dark-accent text-white px-3 text-sm outline-none placeholder:text-popover-dark-muted"
+              />
+              <p className="mt-1 text-xs text-popover-dark-muted">
+                Start date must be tomorrow or later.
+              </p>
+            </div>
+          )}
+
+          {nextDates.length > 0 && (
+            <div className="text-xs text-popover-dark-muted">
+              Next: {nextDates.join(', ')}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              className={cn(
+                'flex-1 h-9 rounded-lg text-sm font-medium transition-colors',
+                canApply
+                  ? 'bg-popover-dark-selected text-white hover:bg-popover-dark-selected/90'
+                  : 'bg-popover-dark-accent text-popover-dark-muted cursor-not-allowed',
+              )}
+              disabled={!canApply}
+              onClick={apply}
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              className="flex-1 h-9 rounded-lg bg-popover-dark-accent text-white text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+
+          {value && (
+            <button
+              type="button"
+              className="w-full h-9 rounded-lg bg-popover-dark-accent text-destructive text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors"
+              onClick={() => {
+                onClear();
+                setOpen(false);
+              }}
+            >
+              Remove Repeat
+            </button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -6,10 +6,8 @@ import {
   EveningIcon,
   SomedayIcon,
   StarIcon,
-  XIcon,
 } from '@/components/icons';
 import { CalendarGrid } from '@/components/ui/calendar-grid';
-import { useOverlay } from '@/lib/hooks/useOverlay';
 import { cn, parseLocalDate } from '@/lib/utils';
 
 interface CalendarPopoverProps {
@@ -24,6 +22,10 @@ interface CalendarPopoverProps {
   title?: string;
 }
 
+/**
+ * Calendar popover content - for use with createPortal or inside a Popover.
+ * Does NOT include Popover wrapper - use DatePicker for the full component.
+ */
 export function CalendarPopover({
   value,
   onChange,
@@ -35,11 +37,6 @@ export function CalendarPopover({
   onClose,
   title = 'When',
 }: CalendarPopoverProps) {
-  const overlayRef = useOverlay({
-    open: true,
-    onClose: onClose ?? (() => {}),
-  });
-
   const selectedDate = useMemo(() => {
     if (!value) return null;
     return parseLocalDate(value);
@@ -91,20 +88,12 @@ export function CalendarPopover({
   }, [selectedDate]);
 
   return (
-    <div
-      ref={overlayRef}
-      className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden"
-    >
-      {/* Header with title and close button */}
-      <div className="flex items-center justify-center relative mb-3 max-md:mb-4">
-        <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">{title}</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="hidden max-md:flex items-center justify-center w-8 h-8 rounded-full text-popover-dark-muted hover:text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors absolute right-0"
-        >
-          <XIcon className="h-5 w-5" />
-        </button>
+    <div className="w-[260px] max-md:w-[calc(100vw-32px)] rounded-xl bg-popover-dark p-2.5 max-md:p-4 overflow-hidden">
+      {/* Header with title */}
+      <div className="flex items-center justify-center relative max-md:mb-4">
+        <h3 className="text-sm max-md:text-base font-semibold text-popover-dark-foreground">
+          {title}
+        </h3>
       </div>
 
       {/* Quick Select Options */}
@@ -166,8 +155,8 @@ export function CalendarPopover({
       />
 
       {/* Bottom Options */}
-      <div className="mt-3 max-md:mt-4 space-y-0.5 max-md:space-y-1">
-        {showSomeday && (
+      {showSomeday && (
+        <div className="mt-3 max-md:mt-4 space-y-0.5 max-md:space-y-1">
           <button
             type="button"
             onClick={handleSomeday}
@@ -182,8 +171,8 @@ export function CalendarPopover({
             <span className="flex-1 text-left">Someday</span>
             {isSomeday && <CheckIcon className="h-4 w-4 max-md:h-5 max-md:w-5" />}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Clear Button */}
       {(value || isSomeday) && (

@@ -157,39 +157,3 @@ export function CalendarGrid({
     </div>
   );
 }
-
-/** Hook for calendar state management */
-export function useCalendarDays(viewDate: Date, hidePastDates = true) {
-  return useMemo(() => {
-    const firstDay = startOfMonth(viewDate);
-    const daysInMonth = getDaysInMonth(viewDate);
-    const startDayOfWeek = getDay(firstDay);
-    const today = startOfDay(new Date());
-
-    const days: (Date | null)[] = [];
-
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(viewDate.getFullYear(), viewDate.getMonth(), i));
-    }
-
-    if (!hidePastDates) return days;
-
-    const weeks: (Date | null)[][] = [];
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
-    }
-
-    const filteredWeeks = weeks.filter((week) =>
-      week.some((day) => {
-        if (!day) return false;
-        return !isBefore(startOfDay(day), today);
-      }),
-    );
-
-    return filteredWeeks.flat();
-  }, [viewDate, hidePastDates]);
-}
