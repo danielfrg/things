@@ -12,6 +12,8 @@
     "check": "biome check",
     "cli": "bun run packages/cli/index.ts",
     "cli:generate": "bun run --filter @things/cli generate",
+    "cli:build": "bun run packages/cli/script/build.ts",
+    "cli:build:single": "bun run packages/cli/script/build.ts --single",
     "db:studio": "bun run --filter @things/web db:studio",
     "db:clean": "bun run --filter @things/web db:clean",
     "db:seed": "bun run --filter @things/web db:seed",

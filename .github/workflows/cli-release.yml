@@ -1,0 +1,84 @@
+name: Build and Release CLI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Generate version
+        id: version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count main)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "version=v${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          echo "full=v${COMMIT_COUNT} - ${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          echo "Version: v${COMMIT_COUNT} - ${COMMIT_HASH}"
+
+      - name: Build CLI binaries
+        run: bun run cli:build
+        working-directory: .
+
+      - name: Create archives
+        run: |
+          cd packages/cli/dist
+          for dir in things-*/; do
+            name="${dir%/}"
+            tar -czvf "${name}.tar.gz" -C "$name" things
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-binaries
+          path: packages/cli/dist/*.tar.gz
+
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest CLI Build
+          body: |
+            ## Things CLI
+
+            **Version:** ${{ steps.version.outputs.full }}
+
+            ### Installation
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash
+            ```
+
+            Or with PATH modification:
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash -s -- --modify-path
+            ```
+
+            ### Manual Download
+
+            Download the appropriate binary for your platform below.
+          files: packages/cli/dist/*.tar.gz
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
