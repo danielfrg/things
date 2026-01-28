@@ -20,50 +20,28 @@ But it only runs in Apple devices, as I move into Linux I always dreamt of a
 Web version plus a CLI and API to build integrations.
 So I vibecoded this one.
 
-## Setup
+## Docker
 
 ```bash
-cp .env.example .env
-bun install
-bun run db:push
-bun run db:seed     # Optional
-bun run dev
+docker run -p 3000:3000 -v things-data:/data -e BASE_URL=https://mythings.local -e BETTER_AUTH_SECRET=<better-auth-secret> ghcr.io/danielfrg/things:main
 ```
 
-## Configuration
+## CLI
 
-Database path defaults to `./data/things.db`. Override with:
+The CLI allows you to interact with the Things REST API from the command line.
 
-```bash
-DATABASE_URL=./data/my-things.db
-```
-
-## CLI Setup
-
-The CLI allows you to interact with Things from the command line.
-
-### Install the CLI binary
+Install the CLI binary:
+- This installs to `~/.things/bin/things`. Be sure to add to your `PATH`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/danielfrg/things/main/install | bash
 ```
 
-This installs to `~/.things/bin/things`. To add to your PATH:
+Generate an API from the settings page and export these environment variables:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/danielfrg/things/main/install | bash -s -- --modify-path
-```
-
-### Configuration
-
-1. Start the web server (`bun run dev` or use Docker)
-2. Log in and go to Settings > API Keys
-3. Create a new API key with "Read & Write" scope
-4. Set the environment variables:
-
-```bash
-export THINGS_API_KEY=tk_...
-export THINGS_API_BASE_URL=http://localhost:3000/api  # Optional, defaults to this
+export THINGS_API_BASE_URL=http://things.local/api  # Default: http://localhost:3000
+export THINGS_API_KEY=sk_...
 ```
 
 ### Usage
@@ -77,17 +55,19 @@ things --help
 
 For AI agents, run `things --skill` to get full documentation.
 
-## Docker
+## Development
 
 ```bash
-docker build -t things .
-docker run -p 3000:3000 -v things-data:/data ghcr.io/danielfrg/things:main
+cp .env.example .env
+bun install
+bun run db:push
+bun run db:seed     # Optional
+bun run dev
 ```
 
 ## Contributions
 
-Welcome but since its a personal project I might not accept all PRs.
-AI contributions are welcome since i dont even know about this code. Whatever forever.
+Everything, human or AI, contributions are welcome since I dont even know about this code. Whatever forever.
 
 ## Disclaimer
 
