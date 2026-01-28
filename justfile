@@ -2,8 +2,14 @@ repomix-web:
     repomix packages/web --copy --ignore "packages/cli/**,**/drizzle/meta/**,**/generated/**,scripts/*"
     rm repomix-output.md 
 
+
 repomix-cli:
     repomix packages/cli --copy --ignore "packages/web/**"
+    rm repomix-output.md 
+
+
+repomix-all:
+    repomix --copy --ignore "**/drizzle/meta/**,**/generated/**"
     rm repomix-output.md 
 
 

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteV1AreasByIdData, DeleteV1AreasByIdErrors, DeleteV1AreasByIdResponses, DeleteV1HeadingsByIdData, DeleteV1HeadingsByIdErrors, DeleteV1HeadingsByIdResponses, DeleteV1ProjectsByIdData, DeleteV1ProjectsByIdErrors, DeleteV1ProjectsByIdResponses, DeleteV1RepeatingRulesByIdData, DeleteV1RepeatingRulesByIdErrors, DeleteV1RepeatingRulesByIdResponses, DeleteV1TagsByIdData, DeleteV1TagsByIdErrors, DeleteV1TagsByIdResponses, DeleteV1TasksByIdData, DeleteV1TasksByIdErrors, DeleteV1TasksByIdPermanentData, DeleteV1TasksByIdPermanentErrors, DeleteV1TasksByIdPermanentResponses, DeleteV1TasksByIdResponses, DeleteV1TasksByIdTagsByTagIdData, DeleteV1TasksByIdTagsByTagIdErrors, DeleteV1TasksByIdTagsByTagIdResponses, DeleteV1TasksByTaskIdChecklistByIdData, DeleteV1TasksByTaskIdChecklistByIdErrors, DeleteV1TasksByTaskIdChecklistByIdResponses, GetV1AreasByIdData, GetV1AreasByIdErrors, GetV1AreasByIdResponses, GetV1AreasData, GetV1AreasResponses, GetV1HeadingsByIdData, GetV1HeadingsByIdErrors, GetV1HeadingsByIdResponses, GetV1HeadingsData, GetV1HeadingsResponses, GetV1ProjectsByIdData, GetV1ProjectsByIdErrors, GetV1ProjectsByIdResponses, GetV1ProjectsData, GetV1ProjectsResponses, GetV1RepeatingRulesByIdData, GetV1RepeatingRulesByIdErrors, GetV1RepeatingRulesByIdResponses, GetV1RepeatingRulesData, GetV1RepeatingRulesResponses, GetV1TagsByIdData, GetV1TagsByIdErrors, GetV1TagsByIdResponses, GetV1TagsData, GetV1TagsResponses, GetV1TasksByIdData, GetV1TasksByIdErrors, GetV1TasksByIdResponses, GetV1TasksByIdTagsData, GetV1TasksByIdTagsErrors, GetV1TasksByIdTagsResponses, GetV1TasksByTaskIdChecklistByIdData, GetV1TasksByTaskIdChecklistByIdErrors, GetV1TasksByTaskIdChecklistByIdResponses, GetV1TasksByTaskIdChecklistData, GetV1TasksByTaskIdChecklistErrors, GetV1TasksByTaskIdChecklistResponses, GetV1TasksData, GetV1TasksResponses, PostV1AreasData, PostV1AreasErrors, PostV1AreasResponses, PostV1HeadingsData, PostV1HeadingsErrors, PostV1HeadingsResponses, PostV1ProjectsData, PostV1ProjectsErrors, PostV1ProjectsResponses, PostV1RepeatingRulesByIdPauseData, PostV1RepeatingRulesByIdPauseErrors, PostV1RepeatingRulesByIdPauseResponses, PostV1RepeatingRulesByIdResumeData, PostV1RepeatingRulesByIdResumeErrors, PostV1RepeatingRulesByIdResumeResponses, PostV1RepeatingRulesData, PostV1RepeatingRulesErrors, PostV1RepeatingRulesResponses, PostV1TagsData, PostV1TagsErrors, PostV1TagsResponses, PostV1TasksByIdCompleteData, PostV1TasksByIdCompleteErrors, PostV1TasksByIdCompleteResponses, PostV1TasksByIdRestoreData, PostV1TasksByIdRestoreErrors, PostV1TasksByIdRestoreResponses, PostV1TasksByIdTagsByTagIdData, PostV1TasksByIdTagsByTagIdErrors, PostV1TasksByIdTagsByTagIdResponses, PostV1TasksByTaskIdChecklistData, PostV1TasksByTaskIdChecklistErrors, PostV1TasksByTaskIdChecklistResponses, PostV1TasksData, PostV1TasksErrors, PostV1TasksResponses, PutV1AreasByIdData, PutV1AreasByIdErrors, PutV1AreasByIdResponses, PutV1HeadingsByIdData, PutV1HeadingsByIdErrors, PutV1HeadingsByIdResponses, PutV1ProjectsByIdData, PutV1ProjectsByIdErrors, PutV1ProjectsByIdResponses, PutV1RepeatingRulesByIdData, PutV1RepeatingRulesByIdErrors, PutV1RepeatingRulesByIdResponses, PutV1TagsByIdData, PutV1TagsByIdErrors, PutV1TagsByIdResponses, PutV1TasksByIdData, PutV1TasksByIdErrors, PutV1TasksByIdResponses, PutV1TasksByTaskIdChecklistByIdData, PutV1TasksByTaskIdChecklistByIdErrors, PutV1TasksByTaskIdChecklistByIdResponses } from './types.gen';
+import type { DeleteV1AreasByIdData, DeleteV1AreasByIdErrors, DeleteV1AreasByIdResponses, DeleteV1HeadingsByIdData, DeleteV1HeadingsByIdErrors, DeleteV1HeadingsByIdResponses, DeleteV1ProjectsByIdData, DeleteV1ProjectsByIdErrors, DeleteV1ProjectsByIdResponses, DeleteV1RepeatingRulesByIdData, DeleteV1RepeatingRulesByIdErrors, DeleteV1RepeatingRulesByIdResponses, DeleteV1TagsByIdData, DeleteV1TagsByIdErrors, DeleteV1TagsByIdResponses, DeleteV1TasksByIdData, DeleteV1TasksByIdErrors, DeleteV1TasksByIdPermanentData, DeleteV1TasksByIdPermanentErrors, DeleteV1TasksByIdPermanentResponses, DeleteV1TasksByIdResponses, DeleteV1TasksByIdTagsByTagIdData, DeleteV1TasksByIdTagsByTagIdErrors, DeleteV1TasksByIdTagsByTagIdResponses, DeleteV1TasksByTaskIdChecklistByIdData, DeleteV1TasksByTaskIdChecklistByIdErrors, DeleteV1TasksByTaskIdChecklistByIdResponses, GetV1AreasByIdData, GetV1AreasByIdErrors, GetV1AreasByIdResponses, GetV1AreasData, GetV1AreasResponses, GetV1HeadingsByIdData, GetV1HeadingsByIdErrors, GetV1HeadingsByIdResponses, GetV1HeadingsData, GetV1HeadingsResponses, GetV1ProjectsByIdData, GetV1ProjectsByIdErrors, GetV1ProjectsByIdResponses, GetV1ProjectsData, GetV1ProjectsResponses, GetV1RepeatingRulesByIdData, GetV1RepeatingRulesByIdErrors, GetV1RepeatingRulesByIdResponses, GetV1RepeatingRulesData, GetV1RepeatingRulesResponses, GetV1TagsByIdData, GetV1TagsByIdErrors, GetV1TagsByIdResponses, GetV1TagsData, GetV1TagsResponses, GetV1TasksByIdData, GetV1TasksByIdErrors, GetV1TasksByIdResponses, GetV1TasksByIdTagsData, GetV1TasksByIdTagsErrors, GetV1TasksByIdTagsResponses, GetV1TasksByTaskIdChecklistByIdData, GetV1TasksByTaskIdChecklistByIdErrors, GetV1TasksByTaskIdChecklistByIdResponses, GetV1TasksByTaskIdChecklistData, GetV1TasksByTaskIdChecklistErrors, GetV1TasksByTaskIdChecklistResponses, GetV1TasksData, GetV1TasksResponses, GetV1ViewsAnytimeData, GetV1ViewsAnytimeResponses, GetV1ViewsInboxData, GetV1ViewsInboxResponses, GetV1ViewsLogbookData, GetV1ViewsLogbookResponses, GetV1ViewsSomedayData, GetV1ViewsSomedayResponses, GetV1ViewsTodayData, GetV1ViewsTodayResponses, GetV1ViewsUpcomingData, GetV1ViewsUpcomingResponses, PostV1AreasData, PostV1AreasErrors, PostV1AreasResponses, PostV1HeadingsData, PostV1HeadingsErrors, PostV1HeadingsResponses, PostV1ProjectsData, PostV1ProjectsErrors, PostV1ProjectsResponses, PostV1RepeatingRulesByIdPauseData, PostV1RepeatingRulesByIdPauseErrors, PostV1RepeatingRulesByIdPauseResponses, PostV1RepeatingRulesByIdResumeData, PostV1RepeatingRulesByIdResumeErrors, PostV1RepeatingRulesByIdResumeResponses, PostV1RepeatingRulesData, PostV1RepeatingRulesErrors, PostV1RepeatingRulesResponses, PostV1TagsData, PostV1TagsErrors, PostV1TagsResponses, PostV1TasksByIdCompleteData, PostV1TasksByIdCompleteErrors, PostV1TasksByIdCompleteResponses, PostV1TasksByIdRestoreData, PostV1TasksByIdRestoreErrors, PostV1TasksByIdRestoreResponses, PostV1TasksByIdTagsByTagIdData, PostV1TasksByIdTagsByTagIdErrors, PostV1TasksByIdTagsByTagIdResponses, PostV1TasksByTaskIdChecklistData, PostV1TasksByTaskIdChecklistErrors, PostV1TasksByTaskIdChecklistResponses, PostV1TasksData, PostV1TasksErrors, PostV1TasksResponses, PutV1AreasByIdData, PutV1AreasByIdErrors, PutV1AreasByIdResponses, PutV1HeadingsByIdData, PutV1HeadingsByIdErrors, PutV1HeadingsByIdResponses, PutV1ProjectsByIdData, PutV1ProjectsByIdErrors, PutV1ProjectsByIdResponses, PutV1RepeatingRulesByIdData, PutV1RepeatingRulesByIdErrors, PutV1RepeatingRulesByIdResponses, PutV1TagsByIdData, PutV1TagsByIdErrors, PutV1TagsByIdResponses, PutV1TasksByIdData, PutV1TasksByIdErrors, PutV1TasksByIdResponses, PutV1TasksByTaskIdChecklistByIdData, PutV1TasksByTaskIdChecklistByIdErrors, PutV1TasksByTaskIdChecklistByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,6 +17,72 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
+
+/**
+ * Get tasks for Today view
+ *
+ * Returns tasks scheduled for today, overdue tasks, tasks with deadlines today/overdue, and tasks completed today. Grouped by project/area.
+ */
+export const getV1ViewsToday = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsTodayData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsTodayResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/today',
+    ...options
+});
+
+/**
+ * Get tasks for Inbox view
+ *
+ * Returns tasks with inbox status that have no project, area, or scheduled date.
+ */
+export const getV1ViewsInbox = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsInboxData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsInboxResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/inbox',
+    ...options
+});
+
+/**
+ * Get tasks for Upcoming view
+ *
+ * Returns tasks scheduled for the next 7 days grouped by day, plus a "later" group for tasks beyond that. Includes repeating rule templates.
+ */
+export const getV1ViewsUpcoming = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsUpcomingData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsUpcomingResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/upcoming',
+    ...options
+});
+
+/**
+ * Get tasks for Anytime view
+ *
+ * Returns tasks with anytime status, grouped by project/area.
+ */
+export const getV1ViewsAnytime = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsAnytimeData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsAnytimeResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/anytime',
+    ...options
+});
+
+/**
+ * Get tasks for Someday view
+ *
+ * Returns tasks with someday status, grouped by project/area.
+ */
+export const getV1ViewsSomeday = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsSomedayData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsSomedayResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/someday',
+    ...options
+});
+
+/**
+ * Get tasks for Logbook view
+ *
+ * Returns all completed tasks.
+ */
+export const getV1ViewsLogbook = <ThrowOnError extends boolean = false>(options?: Options<GetV1ViewsLogbookData, ThrowOnError>) => (options?.client ?? client).get<GetV1ViewsLogbookResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/views/logbook',
+    ...options
+});
 
 /**
  * List all tasks

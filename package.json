@@ -11,14 +11,14 @@
     "lint": "biome lint",
     "check": "biome check",
     "cli": "bun run packages/cli/index.ts",
-    "cli:generate": "bun run --filter @things/cli generate",
+    "cli:generate": "bun run --cwd packages/cli generate",
     "cli:build": "bun run packages/cli/script/build.ts",
     "cli:build:single": "bun run packages/cli/script/build.ts --single",
-    "db:studio": "bun run --filter @things/web db:studio",
-    "db:clean": "bun run --filter @things/web db:clean",
-    "db:seed": "bun run --filter @things/web db:seed",
-    "db:generate": "bun run --filter @things/web db:generate",
-    "db:push": "bun run --filter @things/web db:push"
+    "db:studio": "bun run --cwd packges/web db:studio",
+    "db:clean": "bun run --cwd packages/web db:clean",
+    "db:seed": "bun run --cwd packages/web db:seed",
+    "db:generate": "bun run --cwd packages/web db:generate",
+    "db:push": "bun run --cwd packages/web db:push"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

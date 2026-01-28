@@ -269,3 +269,75 @@ export const UpdateRepeatingRuleSchema = z
     tagsTemplate: z.string().nullable().optional(),
   })
   .openapi('UpdateRepeatingRule');
+
+// =============================================================================
+// Views
+// =============================================================================
+
+export const ViewTaskSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    notes: z.string().nullable(),
+    status: z.string(),
+    type: z.string(),
+    scheduledDate: z.string().nullable(),
+    deadline: z.string().nullable(),
+    isEvening: z.boolean(),
+    position: z.number(),
+    projectId: z.string().nullable(),
+    headingId: z.string().nullable(),
+    areaId: z.string().nullable(),
+    completedAt: z.string().nullable(),
+    trashedAt: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .openapi('ViewTask');
+
+export const ViewSectionSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    tasks: z.array(ViewTaskSchema),
+    projectId: z.string().optional(),
+    areaId: z.string().optional(),
+    isEvening: z.boolean().optional(),
+    isCompleted: z.boolean().optional(),
+  })
+  .openapi('ViewSection');
+
+export const ViewResponseSchema = z
+  .object({
+    sections: z.array(ViewSectionSchema),
+  })
+  .openapi('ViewResponse');
+
+export const ViewRepeatingRuleSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    notes: z.string().nullable(),
+    rrule: z.string(),
+    nextOccurrence: z.string(),
+    status: z.string(),
+    projectId: z.string().nullable(),
+    areaId: z.string().nullable(),
+  })
+  .openapi('ViewRepeatingRule');
+
+export const DayGroupSchema = z
+  .object({
+    id: z.string(),
+    date: z.string().nullable(),
+    label: z.string(),
+    tasks: z.array(ViewTaskSchema),
+    templates: z.array(ViewRepeatingRuleSchema),
+    isLater: z.boolean().optional(),
+  })
+  .openapi('DayGroup');
+
+export const UpcomingViewResponseSchema = z
+  .object({
+    days: z.array(DayGroupSchema),
+  })
+  .openapi('UpcomingViewResponse');

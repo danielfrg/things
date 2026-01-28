@@ -12,9 +12,11 @@
     "build:single": "bun run script/build.ts --single"
   },
   "dependencies": {
-    "@hey-api/client-fetch": "^0.9.0"
+    "@hey-api/client-fetch": "^0.9.0",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.90.8"
+    "@hey-api/openapi-ts": "^0.90.8",
+    "@types/yargs": "^17.0.35"
   }
 }

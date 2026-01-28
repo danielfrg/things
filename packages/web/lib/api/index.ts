@@ -8,6 +8,7 @@ import projectsRoutes from './routes/projects';
 import repeatingRulesRoutes from './routes/repeating-rules';
 import tagsRoutes from './routes/tags';
 import tasksRoutes from './routes/tasks';
+import viewsRoutes from './routes/views';
 
 export const api = new OpenAPIHono();
 
@@ -41,13 +42,23 @@ API keys can have one of two scopes:
     `.trim(),
   },
   tags: [
+    {
+      name: 'Views',
+      description: 'Pre-filtered task views (Today, Inbox, Upcoming, etc.)',
+    },
     { name: 'Tasks', description: 'Task management endpoints' },
     { name: 'Projects', description: 'Project management endpoints' },
     { name: 'Areas', description: 'Area management endpoints' },
     { name: 'Tags', description: 'Tag management endpoints' },
-    { name: 'Checklist Items', description: 'Checklist item management endpoints' },
+    {
+      name: 'Checklist Items',
+      description: 'Checklist item management endpoints',
+    },
     { name: 'Headings', description: 'Project heading management endpoints' },
-    { name: 'Repeating Rules', description: 'Repeating task rule management endpoints' },
+    {
+      name: 'Repeating Rules',
+      description: 'Repeating task rule management endpoints',
+    },
   ],
   servers: [{ url: '/api', description: 'API Server' }],
   security: [{ bearerAuth: [] }],
@@ -72,6 +83,7 @@ api.get(
 
 // Mount protected routes
 api.use('/v1/*', authMiddleware);
+api.route('/v1/views', viewsRoutes);
 api.route('/v1/tasks', tasksRoutes);
 api.route('/v1/tasks/:taskId/checklist', checklistItemsRoutes);
 api.route('/v1/projects', projectsRoutes);

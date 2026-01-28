@@ -4,6 +4,62 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}/api` | (string & {});
 };
 
+export type ViewResponse = {
+    sections: Array<ViewSection>;
+};
+
+export type ViewSection = {
+    id: string;
+    title: string;
+    tasks: Array<ViewTask>;
+    projectId?: string;
+    areaId?: string;
+    isEvening?: boolean;
+    isCompleted?: boolean;
+};
+
+export type ViewTask = {
+    id: string;
+    title: string;
+    notes: string;
+    status: string;
+    type: string;
+    scheduledDate: string;
+    deadline: string;
+    isEvening: boolean;
+    position: number;
+    projectId: string;
+    headingId: string;
+    areaId: string;
+    completedAt: string;
+    trashedAt: string;
+    createdAt: string;
+};
+
+export type UpcomingViewResponse = {
+    days: Array<DayGroup>;
+};
+
+export type DayGroup = {
+    id: string;
+    date: string;
+    label: string;
+    tasks: Array<ViewTask>;
+    templates: Array<ViewRepeatingRule>;
+    isLater?: boolean;
+};
+
+export type ViewRepeatingRule = {
+    id: string;
+    title: string;
+    notes: string;
+    rrule: string;
+    nextOccurrence: string;
+    status: string;
+    projectId: string;
+    areaId: string;
+};
+
 export type Task = {
     id: string;
     title: string;
@@ -206,6 +262,102 @@ export type UpdateRepeatingRule = {
     checklistTemplate?: string;
     tagsTemplate?: string;
 };
+
+export type GetV1ViewsTodayData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/today';
+};
+
+export type GetV1ViewsTodayResponses = {
+    /**
+     * Today view data
+     */
+    200: ViewResponse;
+};
+
+export type GetV1ViewsTodayResponse = GetV1ViewsTodayResponses[keyof GetV1ViewsTodayResponses];
+
+export type GetV1ViewsInboxData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/inbox';
+};
+
+export type GetV1ViewsInboxResponses = {
+    /**
+     * Inbox view data
+     */
+    200: ViewResponse;
+};
+
+export type GetV1ViewsInboxResponse = GetV1ViewsInboxResponses[keyof GetV1ViewsInboxResponses];
+
+export type GetV1ViewsUpcomingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/upcoming';
+};
+
+export type GetV1ViewsUpcomingResponses = {
+    /**
+     * Upcoming view data
+     */
+    200: UpcomingViewResponse;
+};
+
+export type GetV1ViewsUpcomingResponse = GetV1ViewsUpcomingResponses[keyof GetV1ViewsUpcomingResponses];
+
+export type GetV1ViewsAnytimeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/anytime';
+};
+
+export type GetV1ViewsAnytimeResponses = {
+    /**
+     * Anytime view data
+     */
+    200: ViewResponse;
+};
+
+export type GetV1ViewsAnytimeResponse = GetV1ViewsAnytimeResponses[keyof GetV1ViewsAnytimeResponses];
+
+export type GetV1ViewsSomedayData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/someday';
+};
+
+export type GetV1ViewsSomedayResponses = {
+    /**
+     * Someday view data
+     */
+    200: ViewResponse;
+};
+
+export type GetV1ViewsSomedayResponse = GetV1ViewsSomedayResponses[keyof GetV1ViewsSomedayResponses];
+
+export type GetV1ViewsLogbookData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/views/logbook';
+};
+
+export type GetV1ViewsLogbookResponses = {
+    /**
+     * Logbook view data
+     */
+    200: ViewResponse;
+};
+
+export type GetV1ViewsLogbookResponse = GetV1ViewsLogbookResponses[keyof GetV1ViewsLogbookResponses];
 
 export type GetV1TasksData = {
     body?: never;

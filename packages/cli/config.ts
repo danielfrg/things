@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 export class ConfigError extends Error {
   readonly _tag = 'ConfigError';
@@ -49,7 +50,29 @@ function loadEnvFileIntoProcess(path: string) {
   }
 }
 
-// Match the app's env pattern: prefer .env.local, then .env
+// Find repo root by looking for package.json with workspaces
+function findRepoRoot(): string {
+  let dir = dirname(import.meta.dirname);
+  while (dir !== '/') {
+    try {
+      const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+      if (pkg.workspaces) return dir;
+    } catch {
+      // Continue searching
+    }
+    dir = dirname(dir);
+  }
+  return process.cwd();
+}
+
+const repoRoot = findRepoRoot();
+
+// Load env files from repo root (where web app's .env lives)
+// Load .env.local first (overrides), then .env (base config)
+loadEnvFileIntoProcess(join(repoRoot, '.env.local'));
+loadEnvFileIntoProcess(join(repoRoot, '.env'));
+
+// Also check cwd for backwards compatibility
 loadEnvFileIntoProcess('.env.local');
 loadEnvFileIntoProcess('.env');
 
