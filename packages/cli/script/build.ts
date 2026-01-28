@@ -24,22 +24,39 @@ if (selected.length === 0) {
   process.exit(1);
 }
 
-function getVersion() {
+function getVersion(): string {
+  const prNumber = process.env.PR_NUMBER;
+
   try {
-    const count = new TextDecoder()
-      .decode(Bun.spawnSync(['git', 'rev-list', '--count', 'HEAD']).stdout)
-      .trim();
     const hash = new TextDecoder()
       .decode(Bun.spawnSync(['git', 'rev-parse', '--short', 'HEAD']).stdout)
       .trim();
-    return { version: `v${count}`, full: `v${count} - ${hash}`, count, hash };
+
+    if (prNumber) {
+      const result = Bun.spawnSync([
+        'git',
+        'rev-list',
+        '--count',
+        'origin/main..HEAD',
+      ]);
+      const commits =
+        result.exitCode === 0
+          ? new TextDecoder().decode(result.stdout).trim()
+          : '0';
+      return `pr-${prNumber}-${commits}-${hash}`;
+    }
+
+    const count = new TextDecoder()
+      .decode(Bun.spawnSync(['git', 'rev-list', '--count', 'HEAD']).stdout)
+      .trim();
+    return `v${count}-${hash}`;
   } catch {
-    return { version: 'dev', full: 'dev', count: '0', hash: 'unknown' };
+    return 'dev';
   }
 }
 
 const version = getVersion();
-console.log(`Building CLI version: ${version.full}`);
+console.log(`Building CLI version: ${version}`);
 
 await $`rm -rf dist`;
 
@@ -58,12 +75,11 @@ for (const target of selected) {
       outfile: `dist/${name}/things`,
     },
     define: {
-      THINGS_CLI_VERSION: JSON.stringify(version.full),
+      THINGS_CLI_VERSION: JSON.stringify(version),
     },
   });
 
-  // Write version file for reference
-  await Bun.write(`dist/${name}/version.txt`, `${version.full}\n`);
+  await Bun.write(`dist/${name}/version.txt`, `${version}\n`);
 
   console.log(`Built ${name}`);
 }

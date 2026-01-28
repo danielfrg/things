@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
 
+declare const THINGS_CLI_VERSION: string | undefined;
+
 import { getConfig } from './config';
 import { client } from './generated/client.gen';
 import {
@@ -293,6 +295,13 @@ async function main() {
   const [resource, action, maybeId, maybeSecondId] = process.argv.slice(2);
 
   if (!resource || resource === '--help' || resource === '-h') usage(0);
+
+  if (resource === '--version' || resource === '-v') {
+    const version =
+      typeof THINGS_CLI_VERSION !== 'undefined' ? THINGS_CLI_VERSION : 'dev';
+    process.stdout.write(`${version}\n`);
+    process.exit(0);
+  }
 
   const jsonOut = getFlag('--json');
   const config = getConfig();
