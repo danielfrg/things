@@ -40,25 +40,42 @@ DATABASE_URL=./data/my-things.db
 
 ## CLI Setup
 
-The CLI allows you to interact with Things from the command line. To use it:
+The CLI allows you to interact with Things from the command line.
 
-1. Start the web server (`bun run dev`)
+### Install the CLI binary
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/danielfrg/things/main/install | bash
+```
+
+This installs to `~/.things/bin/things`. To add to your PATH:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/danielfrg/things/main/install | bash -s -- --modify-path
+```
+
+### Configuration
+
+1. Start the web server (`bun run dev` or use Docker)
 2. Log in and go to Settings > API Keys
 3. Create a new API key with "Read & Write" scope
 4. Set the environment variables:
 
 ```bash
-export THINGS_API_KEY=sk_live_...
+export THINGS_API_KEY=tk_...
 export THINGS_API_BASE_URL=http://localhost:3000/api  # Optional, defaults to this
 ```
 
-5. Use the CLI:
+### Usage
 
 ```bash
-bun run cli add "Buy groceries"
-bun run cli list today
-bun run cli complete <task-id>
+things tasks list --json
+things tasks add --title "Buy groceries" --json
+things tasks complete <task-id>
+things --help
 ```
+
+For AI agents, run `things --skill` to get full documentation.
 
 ## Docker
 
