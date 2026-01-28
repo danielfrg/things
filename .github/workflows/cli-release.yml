@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -31,8 +34,20 @@ jobs:
         run: |
           COMMIT_COUNT=$(git rev-list --count HEAD)
           COMMIT_HASH=$(git rev-parse --short HEAD)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG_NAME="pr-${{ github.event.pull_request.number }}"
+            RELEASE_NAME="PR #${{ github.event.pull_request.number }} CLI Build"
+            IS_PRERELEASE="true"
+          else
+            TAG_NAME="latest"
+            RELEASE_NAME="Latest CLI Build"
+            IS_PRERELEASE="false"
+          fi
           echo "version=v${COMMIT_COUNT}" >> $GITHUB_OUTPUT
           echo "full=v${COMMIT_COUNT} - ${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
           echo "Version: v${COMMIT_COUNT} - ${COMMIT_HASH}"
 
       - name: Build CLI binaries
@@ -56,8 +71,8 @@ jobs:
       - name: Update latest release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: Latest CLI Build
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          name: ${{ steps.version.outputs.release_name }}
           body: |
             ## Things CLI
 
@@ -78,7 +93,7 @@ jobs:
 
             Download the appropriate binary for your platform below.
           files: packages/cli/dist/*.tar.gz
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ steps.version.outputs.is_prerelease == 'true' }}
+          make_latest: ${{ steps.version.outputs.tag_name == 'latest' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
