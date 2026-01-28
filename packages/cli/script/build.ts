@@ -33,17 +33,7 @@ function getVersion(): string {
       .trim();
 
     if (prNumber) {
-      const result = Bun.spawnSync([
-        'git',
-        'rev-list',
-        '--count',
-        'origin/main..HEAD',
-      ]);
-      const commits =
-        result.exitCode === 0
-          ? new TextDecoder().decode(result.stdout).trim()
-          : '0';
-      return `pr-${prNumber}-${commits}-${hash}`;
+      return `pr${prNumber}-${hash}`;
     }
 
     const count = new TextDecoder()
