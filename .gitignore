@@ -142,6 +142,3 @@ vite.config.ts.timestamp-*
 
 # SQLite database
 data/
-
-# Generated API client
-packages/cli/generated/

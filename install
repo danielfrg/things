@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP=things
+REPO="danielfrg/things"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+MUTED='\033[0;2m'
+NC='\033[0m'
+
+usage() {
+  cat <<EOF
+Things CLI Installer
+
+Usage: install [options]
+
+Options:
+    -h, --help          Display this help message
+    -v, --version       Install a specific version (e.g., latest, v30-abc1234)
+    --pr <number>       Install from a PR build (e.g., --pr 42)
+    --modify-path       Add install directory to PATH in shell config
+
+Examples:
+    curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash
+    curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash -s -- --modify-path
+    curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash -s -- --pr 42
+EOF
+}
+
+modify_path=false
+requested_version=""
+pr_number=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -v|--version)
+      if [[ -n "${2:-}" ]]; then
+        requested_version="$2"
+        shift 2
+      else
+        echo -e "${RED}Error: --version requires a version argument${NC}"
+        exit 1
+      fi
+      ;;
+    --pr)
+      if [[ -n "${2:-}" ]]; then
+        pr_number="$2"
+        shift 2
+      else
+        echo -e "${RED}Error: --pr requires a PR number${NC}"
+        exit 1
+      fi
+      ;;
+    --modify-path)
+      modify_path=true
+      shift
+      ;;
+    *)
+      echo -e "${RED}Unknown option: $1${NC}" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Convert PR number to version tag
+if [[ -n "$pr_number" ]]; then
+  requested_version="pr-${pr_number}"
+fi
+
+INSTALL_DIR="$HOME/.things/bin"
+mkdir -p "$INSTALL_DIR"
+
+# Detect OS
+raw_os=$(uname -s)
+case "$raw_os" in
+  Darwin*) os="darwin" ;;
+  Linux*) os="linux" ;;
+  *)
+    echo -e "${RED}Unsupported OS: $raw_os${NC}"
+    exit 1
+    ;;
+esac
+
+# Detect architecture
+arch=$(uname -m)
+case "$arch" in
+  aarch64|arm64) arch="arm64" ;;
+  x86_64|amd64) arch="x64" ;;
+  *)
+    echo -e "${RED}Unsupported architecture: $arch${NC}"
+    exit 1
+    ;;
+esac
+
+# On macOS, check if running under Rosetta
+if [[ "$os" == "darwin" && "$arch" == "x64" ]]; then
+  rosetta=$(sysctl -n sysctl.proc_translated 2>/dev/null || echo 0)
+  if [[ "$rosetta" == "1" ]]; then
+    arch="arm64"
+  fi
+fi
+
+target="${os}-${arch}"
+filename="${APP}-${target}.tar.gz"
+
+echo -e "${MUTED}Detected: ${NC}${target}"
+
+# Build download URL
+if [[ -z "$requested_version" ]]; then
+  url="https://github.com/${REPO}/releases/latest/download/${filename}"
+else
+  url="https://github.com/${REPO}/releases/download/${requested_version}/${filename}"
+fi
+
+# Download and install
+tmp_dir=$(mktemp -d)
+trap "rm -rf $tmp_dir" EXIT
+
+echo -e "${MUTED}Downloading from: ${NC}${url}"
+if ! curl -fsSL -o "$tmp_dir/$filename" "$url"; then
+  echo -e "${RED}Failed to download ${filename}${NC}"
+  echo -e "${MUTED}Check available releases at: https://github.com/${REPO}/releases${NC}"
+  exit 1
+fi
+
+echo -e "${MUTED}Extracting...${NC}"
+tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
+
+mv "$tmp_dir/things" "$INSTALL_DIR/things"
+chmod 755 "$INSTALL_DIR/things"
+
+echo -e "${GREEN}Installed to: ${INSTALL_DIR}/things${NC}"
+
+# Optionally add to PATH
+add_to_path() {
+  local config_file=$1
+  local command=$2
+
+  if grep -Fq "$INSTALL_DIR" "$config_file" 2>/dev/null; then
+    echo -e "${MUTED}PATH already configured in ${config_file}${NC}"
+    return
+  fi
+
+  if [[ -w "$config_file" ]]; then
+    echo -e "\n# things cli" >> "$config_file"
+    echo "$command" >> "$config_file"
+    echo -e "${GREEN}Added to PATH in ${config_file}${NC}"
+  else
+    echo -e "${MUTED}Could not write to ${config_file}${NC}"
+  fi
+}
+
+if [[ "$modify_path" == "true" ]]; then
+  current_shell=$(basename "$SHELL")
+  case "$current_shell" in
+    zsh)
+      config_file="${ZDOTDIR:-$HOME}/.zshrc"
+      [[ -f "$config_file" ]] && add_to_path "$config_file" "export PATH=\"$INSTALL_DIR:\$PATH\""
+      ;;
+    bash)
+      for f in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+        if [[ -f "$f" ]]; then
+          add_to_path "$f" "export PATH=\"$INSTALL_DIR:\$PATH\""
+          break
+        fi
+      done
+      ;;
+    fish)
+      config_file="$HOME/.config/fish/config.fish"
+      [[ -f "$config_file" ]] && add_to_path "$config_file" "fish_add_path $INSTALL_DIR"
+      ;;
+    *)
+      echo -e "${MUTED}Add to your shell config: export PATH=\"$INSTALL_DIR:\$PATH\"${NC}"
+      ;;
+  esac
+fi
+
+echo ""
+echo -e "${MUTED}Run the CLI:${NC}"
+echo -e "  ${INSTALL_DIR}/things --help"
+if [[ "$modify_path" != "true" ]]; then
+  echo ""
+  echo -e "${MUTED}To add to PATH, re-run with --modify-path or add manually:${NC}"
+  echo -e "  export PATH=\"$INSTALL_DIR:\$PATH\""
+fi
