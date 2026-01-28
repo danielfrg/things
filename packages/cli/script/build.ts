@@ -27,7 +27,7 @@ if (selected.length === 0) {
 function getVersion() {
   try {
     const count = new TextDecoder()
-      .decode(Bun.spawnSync(['git', 'rev-list', '--count', 'main']).stdout)
+      .decode(Bun.spawnSync(['git', 'rev-list', '--count', 'HEAD']).stdout)
       .trim();
     const hash = new TextDecoder()
       .decode(Bun.spawnSync(['git', 'rev-parse', '--short', 'HEAD']).stdout)

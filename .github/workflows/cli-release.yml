@@ -29,7 +29,7 @@ jobs:
       - name: Generate version
         id: version
         run: |
-          COMMIT_COUNT=$(git rev-list --count main)
+          COMMIT_COUNT=$(git rev-list --count HEAD)
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "version=v${COMMIT_COUNT}" >> $GITHUB_OUTPUT
           echo "full=v${COMMIT_COUNT} - ${COMMIT_HASH}" >> $GITHUB_OUTPUT
