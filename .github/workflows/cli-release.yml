@@ -40,20 +40,21 @@ jobs:
             TAG_NAME="pr-${PR_NUM}"
             RELEASE_NAME="PR #${PR_NUM} CLI Build"
             IS_PRERELEASE="true"
+            VERSION="pr${PR_NUM}-${COMMIT_HASH}"
             INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${PR_BRANCH}/install | bash -s -- --pr ${PR_NUM}"
           else
             TAG_NAME="latest"
             RELEASE_NAME="Latest CLI Build"
             IS_PRERELEASE="false"
+            VERSION="v${COMMIT_COUNT}-${COMMIT_HASH}"
             INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash"
           fi
-          echo "version=v${COMMIT_COUNT}" >> $GITHUB_OUTPUT
-          echo "full=v${COMMIT_COUNT}-${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
           echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
           echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
           echo "install_cmd=${INSTALL_CMD}" >> $GITHUB_OUTPUT
-          echo "Version: v${COMMIT_COUNT}-${COMMIT_HASH}"
+          echo "Version: ${VERSION}"
 
       - name: Build CLI binaries
         run: bun run cli:build
@@ -82,7 +83,7 @@ jobs:
           body: |
             ## Things CLI
 
-            **Version:** ${{ steps.version.outputs.full }}
+            **Version:** ${{ steps.version.outputs.version }}
 
             ### Installation
 
