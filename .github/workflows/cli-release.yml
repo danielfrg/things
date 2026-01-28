@@ -35,20 +35,24 @@ jobs:
           COMMIT_COUNT=$(git rev-list --count HEAD)
           COMMIT_HASH=$(git rev-parse --short HEAD)
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TAG_NAME="pr-${{ github.event.pull_request.number }}"
-            RELEASE_NAME="PR #${{ github.event.pull_request.number }} CLI Build"
+            PR_NUM="${{ github.event.pull_request.number }}"
+            TAG_NAME="pr-${PR_NUM}"
+            RELEASE_NAME="PR #${PR_NUM} CLI Build"
             IS_PRERELEASE="true"
+            INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash -s -- --pr ${PR_NUM}"
           else
             TAG_NAME="latest"
             RELEASE_NAME="Latest CLI Build"
             IS_PRERELEASE="false"
+            INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash"
           fi
           echo "version=v${COMMIT_COUNT}" >> $GITHUB_OUTPUT
-          echo "full=v${COMMIT_COUNT} - ${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          echo "full=v${COMMIT_COUNT}-${COMMIT_HASH}" >> $GITHUB_OUTPUT
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
           echo "release_name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
           echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
-          echo "Version: v${COMMIT_COUNT} - ${COMMIT_HASH}"
+          echo "install_cmd=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+          echo "Version: v${COMMIT_COUNT}-${COMMIT_HASH}"
 
       - name: Build CLI binaries
         run: bun run cli:build
@@ -82,12 +86,7 @@ jobs:
             ### Installation
 
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash
-            ```
-
-            Or with PATH modification:
-            ```bash
-            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash -s -- --modify-path
+            ${{ steps.version.outputs.install_cmd }}
             ```
 
             ### Manual Download

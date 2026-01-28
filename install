@@ -17,17 +17,20 @@ Usage: install [options]
 
 Options:
     -h, --help          Display this help message
-    -v, --version       Install a specific version
+    -v, --version       Install a specific version (e.g., latest, v30-abc1234)
+    --pr <number>       Install from a PR build (e.g., --pr 42)
     --modify-path       Add install directory to PATH in shell config
 
 Examples:
     curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash
     curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash -s -- --modify-path
+    curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install | bash -s -- --pr 42
 EOF
 }
 
 modify_path=false
 requested_version=""
+pr_number=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,6 +47,15 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ;;
+    --pr)
+      if [[ -n "${2:-}" ]]; then
+        pr_number="$2"
+        shift 2
+      else
+        echo -e "${RED}Error: --pr requires a PR number${NC}"
+        exit 1
+      fi
+      ;;
     --modify-path)
       modify_path=true
       shift
@@ -54,6 +66,11 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Convert PR number to version tag
+if [[ -n "$pr_number" ]]; then
+  requested_version="pr-${pr_number}"
+fi
 
 INSTALL_DIR="$HOME/.things/bin"
 mkdir -p "$INSTALL_DIR"
