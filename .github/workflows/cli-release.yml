@@ -36,10 +36,11 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             PR_NUM="${{ github.event.pull_request.number }}"
+            PR_BRANCH="${{ github.head_ref }}"
             TAG_NAME="pr-${PR_NUM}"
             RELEASE_NAME="PR #${PR_NUM} CLI Build"
             IS_PRERELEASE="true"
-            INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install | bash -s -- --pr ${PR_NUM}"
+            INSTALL_CMD="curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${PR_BRANCH}/install | bash -s -- --pr ${PR_NUM}"
           else
             TAG_NAME="latest"
             RELEASE_NAME="Latest CLI Build"
