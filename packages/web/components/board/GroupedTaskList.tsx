@@ -27,7 +27,8 @@ export interface TaskMoveInfo {
 interface GroupedTaskListProps {
   initial: TaskGroupsData;
   onComplete: (taskId: string, completed: boolean) => void;
-  onSelect: (taskId: string | null) => void;
+  onSelect: (taskId: string, event: React.MouseEvent) => void;
+  onClearSelection: () => void;
   onExpand: (taskId: string) => void;
   onReorder: (taskIds: string[]) => void;
   onMoveTask: (info: TaskMoveInfo) => void;
@@ -41,7 +42,7 @@ interface GroupedTaskListProps {
   ) => void;
   onTagAdd: (taskId: string, tagId: string) => void;
   onTagRemove: (taskId: string, tagId: string) => void;
-  selectedTaskId: string | null;
+  selectedIds: Set<string>;
   expandedTaskId: string | null;
   scheduleDatePickerTaskId?: string | null;
   onScheduleDatePickerClose?: () => void;
@@ -68,6 +69,7 @@ export function GroupedTaskList({
   initial,
   onComplete,
   onSelect,
+  onClearSelection,
   onExpand,
   onReorder,
   onMoveTask,
@@ -77,7 +79,7 @@ export function GroupedTaskList({
   onProjectChange,
   onTagAdd,
   onTagRemove,
-  selectedTaskId,
+  selectedIds,
   expandedTaskId,
   scheduleDatePickerTaskId,
   onScheduleDatePickerClose,
@@ -340,7 +342,7 @@ export function GroupedTaskList({
         ) {
           return;
         }
-        onSelect(null);
+        onClearSelection();
       }}
     >
       <div className="py-2">
@@ -357,7 +359,7 @@ export function GroupedTaskList({
             onProjectChange={onProjectChange}
             onTagAdd={onTagAdd}
             onTagRemove={onTagRemove}
-            selectedTaskId={selectedTaskId}
+            selectedIds={selectedIds}
             expandedTaskId={expandedTaskId}
             scheduleDatePickerTaskId={scheduleDatePickerTaskId}
             onScheduleDatePickerClose={onScheduleDatePickerClose}

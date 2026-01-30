@@ -2,11 +2,13 @@ import { format } from 'date-fns';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  EveningIcon,
   FlagIcon,
   InfoIcon,
   ListChecksIcon,
   RepeatIcon,
   RestoreIcon,
+  StarIcon,
   Trash2Icon,
   XIcon,
 } from '@/components/icons';
@@ -50,6 +52,7 @@ import { TaskMetadata } from './TaskMetadata';
 import { TaskProjectBadge } from './TaskProjectBadge';
 import { TaskShadow } from './TaskRow';
 import { TaskTitle } from './TaskTitle';
+import { formatTaskDate } from './taskUtils';
 
 interface TaskCardProps {
   task: TaskWithRelations;
@@ -57,7 +60,7 @@ interface TaskCardProps {
   selected: boolean;
   scheduleDatePickerOpen?: boolean;
   onScheduleDatePickerClose?: () => void;
-  onSelect: (taskId: string | null) => void;
+  onSelect: (taskId: string, event: React.MouseEvent) => void;
   onExpand: (taskId: string) => void;
   onComplete: (taskId: string, completed: boolean) => void;
   checklistItems: ChecklistItemRecord[];
@@ -353,11 +356,16 @@ export function TaskCard({
         !expanded && selected && 'bg-task-selected',
         !expanded && !selected && 'hover:bg-secondary/50',
       )}
-      onClick={() => !expanded && onSelect(task.id)}
+      onMouseDown={(e) => {
+        // Use mousedown for more reliable modifier key detection
+        if (!expanded && e.button === 0) {
+          onSelect(task.id, e);
+        }
+      }}
       onKeyDown={(e) => {
         if (!expanded && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
-          onSelect(task.id);
+          onSelect(task.id, e as unknown as React.MouseEvent);
         }
       }}
     >
@@ -366,6 +374,20 @@ export function TaskCard({
         onChange={(checked) => onComplete(task.id, checked)}
         dashed={isSomeday}
       />
+
+      {/* Today star or Evening moon - shown when collapsed and task is scheduled for today */}
+      {!expanded &&
+        showTodayStar &&
+        formatTaskDate(task.scheduledDate) === 'Today' &&
+        !isCompleted &&
+        (task.isEvening ? (
+          <EveningIcon className="w-3.5 h-3.5 shrink-0 text-things-evening" />
+        ) : (
+          <StarIcon
+            className="w-3.5 h-3.5 shrink-0 text-things-yellow"
+            fill="currentColor"
+          />
+        ))}
 
       {expanded ? (
         <TaskTitle
@@ -381,18 +403,7 @@ export function TaskCard({
           className="flex-1"
         />
       ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          className="flex-1 min-w-0"
-          onClick={() => onSelect(task.id)}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onSelect(task.id);
-            }
-          }}
-        >
+        <div className="flex-1 min-w-0">
           <TaskTitle
             value={form.title}
             status={isCompleted ? 'completed' : 'default'}

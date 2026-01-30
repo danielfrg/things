@@ -92,7 +92,7 @@ code {
   --date-label: #74777c;
   
   /* Task inline details color (tags, checklist icons, etc) */
-  --task-inline: #c3c7cc;
+  --task-inline: #9a9ea3;
   
   /* Project progress circle color */
   --project-progress: #b1b5ba;
@@ -174,7 +174,7 @@ code {
   --date-label: #b4b5b6;
   
   /* Task inline details color (tags, checklist icons, etc) */
-  --task-inline: #6c6e70;
+  --task-inline: #7b7c7e;
   
   /* Project progress circle color */
   --project-progress: #828a97;

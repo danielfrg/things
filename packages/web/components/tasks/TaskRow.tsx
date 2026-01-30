@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { StarIcon } from '@/components/icons';
+import { EveningIcon, StarIcon } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { AreaRecord, ProjectRecord } from '@/db/validation';
@@ -29,7 +29,7 @@ import { formatTaskDate, getDayOfWeekBadge } from './taskUtils';
 interface TaskRowProps {
   task: TaskWithRelations;
   onComplete: (taskId: string, completed: boolean) => void;
-  onSelect?: (taskId: string) => void;
+  onSelect?: (taskId: string, event: React.MouseEvent) => void;
   onExpand?: (taskId: string) => void;
   hideToday?: boolean;
   hideScheduledDate?: boolean;
@@ -70,7 +70,7 @@ interface TaskDisplayProps {
   showTodayStar?: boolean;
   showProjectInfo?: boolean;
   onComplete?: (taskId: string, completed: boolean) => void;
-  onSelect?: (taskId: string) => void;
+  onSelect?: (taskId: string, event: React.MouseEvent) => void;
   onExpand?: (taskId: string) => void;
   selected?: boolean;
   expanded?: boolean;
@@ -158,7 +158,11 @@ function TaskDisplay({
       <Button
         ref={innerRef}
         variant="ghost"
-        onClick={() => onSelect?.(task.id)}
+        onMouseDown={(e) => {
+          if (e.button === 0) {
+            onSelect?.(task.id, e);
+          }
+        }}
         onDoubleClick={() => onExpand?.(task.id)}
         className={getInnerClass()}
         style={{ ...previewStyle, ...selectedStyle }}
@@ -179,12 +183,17 @@ function TaskDisplay({
           </Badge>
         )}
 
-        {showTodayStar && scheduledDateStr === 'Today' && !isCompleted && (
-          <StarIcon
-            className="w-3.5 h-3.5 shrink-0 text-things-yellow"
-            fill="currentColor"
-          />
-        )}
+        {showTodayStar &&
+          scheduledDateStr === 'Today' &&
+          !isCompleted &&
+          (task.isEvening ? (
+            <EveningIcon className="w-3.5 h-3.5 shrink-0 text-things-evening" />
+          ) : (
+            <StarIcon
+              className="w-3.5 h-3.5 shrink-0 text-things-yellow"
+              fill="currentColor"
+            />
+          ))}
 
         <div className="flex-1 min-w-0">
           <TaskTitle

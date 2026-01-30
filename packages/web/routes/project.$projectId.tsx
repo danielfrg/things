@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { isToday } from 'date-fns';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BatchActionBar } from '@/components/BatchActionBar';
 import {
   GroupedTaskList,
   type TaskGroupsData,
@@ -50,13 +51,14 @@ import {
   useUpdateProject,
   useUpdateTask,
 } from '@/lib/contexts/DataContext';
+import { useBatchOperations } from '@/lib/hooks/useBatchOperations';
 import { useHotkey } from '@/lib/hooks/useHotkey';
+import { useMultiSelect } from '@/lib/hooks/useMultiSelect';
 import {
   type NavItem,
   useListKeyboardNav,
 } from '@/lib/hooks/useTaskKeyboardNav';
 import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
-import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/project/$projectId')({
   component: ProjectView,
@@ -123,7 +125,6 @@ function ProjectView() {
   const [projectNotes, setProjectNotes] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
 
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = useState<
     string | null
@@ -137,13 +138,7 @@ function ProjectView() {
     null,
   );
 
-  // Handle initial task selection from command palette
-  useEffect(() => {
-    if (search.task) {
-      setSelectedTaskId(search.task);
-      setExpandedTaskId(search.task);
-    }
-  }, [search.task]);
+  const batchOps = useBatchOperations();
 
   const projectTemplates = useMemo(
     () =>
@@ -307,6 +302,30 @@ function ProjectView() {
     return boardData.sections.flatMap((s) => s.tasks);
   }, [boardData]);
 
+  // Multi-select support
+  const {
+    selectedIds,
+    lastSelectedId,
+    handleSelect: baseHandleSelect,
+    clearSelection,
+    selectAll,
+    isMultiSelecting,
+  } = useMultiSelect({ items: allTasksFlat });
+
+  // Handle initial task selection from command palette
+  useEffect(() => {
+    if (search.task) {
+      baseHandleSelect(search.task, {
+        shiftKey: false,
+        metaKey: false,
+        ctrlKey: false,
+      } as React.MouseEvent);
+      setExpandedTaskId(search.task);
+    }
+  }, [search.task, baseHandleSelect]);
+
+  const selectedTaskId = isMultiSelecting ? null : lastSelectedId;
+
   // Build nav items including templates at the end
   const navItems = useMemo(() => {
     const items: NavItem[] = allTasksFlat.map((task) => ({
@@ -328,10 +347,24 @@ function ProjectView() {
     items: navItems,
     selectedId,
     expandedId,
-    onSelectTask: setSelectedTaskId,
+    onSelectTask: (taskId) => {
+      if (taskId) {
+        baseHandleSelect(taskId, {
+          shiftKey: false,
+          metaKey: false,
+          ctrlKey: false,
+        } as React.MouseEvent);
+      } else {
+        clearSelection();
+      }
+    },
     onSelectTemplate: setSelectedTemplateId,
     onExpandTask: (taskId) => {
-      setSelectedTaskId(taskId);
+      baseHandleSelect(taskId, {
+        shiftKey: false,
+        metaKey: false,
+        ctrlKey: false,
+      } as React.MouseEvent);
       setExpandedTaskId(taskId);
     },
     onExpandTemplate: (templateId) => {
@@ -340,10 +373,13 @@ function ProjectView() {
     },
   });
 
+  // Cmd+A to select all
+  useHotkey('a', selectAll, { meta: true });
+
   useHotkey(
     's',
     () => {
-      if (selectedTaskId && !expandedTaskId) {
+      if (selectedTaskId && !expandedTaskId && !isMultiSelecting) {
         setScheduleDatePickerTaskId(selectedTaskId);
       }
     },
@@ -356,22 +392,42 @@ function ProjectView() {
     }
   }, [project]);
 
-  const handleTaskSelect = useCallback((taskId: string | null) => {
-    setSelectedTaskId(taskId);
-    setScheduleDatePickerTaskId(null);
-    if (taskId) setSelectedTemplateId(null);
-  }, []);
+  const handleTaskSelect = useCallback(
+    (taskId: string, event: React.MouseEvent) => {
+      baseHandleSelect(taskId, event);
+      setScheduleDatePickerTaskId(null);
+      setSelectedTemplateId(null);
+    },
+    [baseHandleSelect],
+  );
 
-  const handleTemplateSelect = useCallback((templateId: string | null) => {
-    setSelectedTemplateId(templateId);
+  const handleClearSelection = useCallback(() => {
+    clearSelection();
     setScheduleDatePickerTaskId(null);
-    if (templateId) setSelectedTaskId(null);
-  }, []);
+  }, [clearSelection]);
 
-  const handleTaskExpand = useCallback((taskId: string) => {
-    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
-    setScheduleDatePickerTaskId(null);
-  }, []);
+  const handleTemplateSelect = useCallback(
+    (templateId: string | null) => {
+      setSelectedTemplateId(templateId);
+      setScheduleDatePickerTaskId(null);
+      if (templateId) clearSelection();
+    },
+    [clearSelection],
+  );
+
+  const handleTaskExpand = useCallback(
+    (taskId: string) => {
+      clearSelection();
+      setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+      setScheduleDatePickerTaskId(null);
+      baseHandleSelect(taskId, {
+        shiftKey: false,
+        metaKey: false,
+        ctrlKey: false,
+      } as React.MouseEvent);
+    },
+    [clearSelection, baseHandleSelect],
+  );
 
   const handleTaskUpdate = useCallback(
     (taskId: string, updates: Partial<TaskRecord>) => {
@@ -383,11 +439,33 @@ function ProjectView() {
   const handleTaskDelete = useCallback(
     (taskId: string) => {
       ops.trash(taskId);
-      setSelectedTaskId(null);
+      clearSelection();
       setExpandedTaskId(null);
     },
-    [ops],
+    [ops, clearSelection],
   );
+
+  // Batch operation handlers
+  const handleBatchDateChange = useCallback(
+    (date: string | null, isEvening?: boolean) => {
+      batchOps.batchSetDate(Array.from(selectedIds), date, isEvening);
+      clearSelection();
+    },
+    [batchOps, selectedIds, clearSelection],
+  );
+
+  const handleBatchMove = useCallback(
+    (projectId: string | null, areaId?: string | null) => {
+      batchOps.batchMove(Array.from(selectedIds), projectId, areaId);
+      clearSelection();
+    },
+    [batchOps, selectedIds, clearSelection],
+  );
+
+  const handleBatchTrash = useCallback(() => {
+    batchOps.batchTrash(Array.from(selectedIds));
+    clearSelection();
+  }, [batchOps, selectedIds, clearSelection]);
 
   const handleTaskMove = useCallback(
     (info: TaskMoveInfo) => {
@@ -590,6 +668,7 @@ function ProjectView() {
               initial={boardData}
               onComplete={ops.complete}
               onSelect={handleTaskSelect}
+              onClearSelection={handleClearSelection}
               onExpand={handleTaskExpand}
               onReorder={ops.reorder}
               onMoveTask={handleTaskMove}
@@ -598,7 +677,7 @@ function ProjectView() {
               onProjectChange={ops.changeProject}
               onTagAdd={ops.addTag}
               onTagRemove={ops.removeTag}
-              selectedTaskId={selectedTaskId}
+              selectedIds={selectedIds}
               expandedTaskId={expandedTaskId}
               scheduleDatePickerTaskId={scheduleDatePickerTaskId}
               onScheduleDatePickerClose={() =>
@@ -647,6 +726,18 @@ function ProjectView() {
             </section>
           )}
         </div>
+      )}
+
+      {isMultiSelecting && (
+        <BatchActionBar
+          count={selectedIds.size}
+          onDateChange={handleBatchDateChange}
+          onMove={handleBatchMove}
+          onTrash={handleBatchTrash}
+          onClear={clearSelection}
+          projects={activeProjects}
+          areas={areas}
+        />
       )}
     </ViewContainer>
   );

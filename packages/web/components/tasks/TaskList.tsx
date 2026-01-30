@@ -35,7 +35,7 @@ interface TaskListProps {
     index: number;
     rect: DOMRect;
   } | null;
-  onTaskSelect?: (taskId: string | null) => void;
+  onTaskSelect?: (taskId: string, event: React.MouseEvent) => void;
   onTaskExpand?: (taskId: string) => void;
   onTaskComplete: (taskId: string, completed: boolean) => void;
   onTaskReorder?: (taskIds: string[]) => void;
@@ -74,6 +74,7 @@ interface TaskListProps {
   projectId?: string;
   isEvening?: boolean;
   selectedTaskId?: string | null;
+  selectedIds?: Set<string>;
   expandedTaskId?: string | null;
   scheduleDatePickerTaskId?: string | null;
   onScheduleDatePickerClose?: () => void;
@@ -488,7 +489,9 @@ export function TaskList(props: TaskListProps) {
         // Use props.taskTags (from useTaskTags hook) if available for reactivity,
         // otherwise fall back to embedded task.tags
         const taskTagIds = props.taskTags
-          ? props.taskTags.filter((tt) => tt.taskId === task.id).map((tt) => tt.tagId)
+          ? props.taskTags
+              .filter((tt) => tt.taskId === task.id)
+              .map((tt) => tt.tagId)
           : (task.tags?.map((t: TagRecord) => t.id) ?? []);
         const taskTags = (props.allTags ?? []).filter((tag) =>
           taskTagIds.includes(tag.id),
@@ -503,7 +506,7 @@ export function TaskList(props: TaskListProps) {
             <TaskRow
               key={taskId}
               task={task}
-              onSelect={(id) => props.onTaskSelect?.(id)}
+              onSelect={(id, event) => props.onTaskSelect?.(id, event)}
               onExpand={(id) => props.onTaskExpand?.(id)}
               onComplete={(id, completed) =>
                 props.onTaskComplete(id, completed)
@@ -517,7 +520,11 @@ export function TaskList(props: TaskListProps) {
               headingId={props.headingId}
               projectId={props.projectId}
               isEvening={props.isEvening}
-              selected={props.selectedTaskId === task.id}
+              selected={
+                props.selectedIds
+                  ? props.selectedIds.has(task.id)
+                  : props.selectedTaskId === task.id
+              }
               expanded={false}
               projects={props.projects}
               areas={props.areas}
@@ -530,8 +537,12 @@ export function TaskList(props: TaskListProps) {
             key={taskId}
             task={task}
             expanded={isExpanded}
-            selected={props.selectedTaskId === task.id}
-            onSelect={(id) => props.onTaskSelect?.(id)}
+            selected={
+              props.selectedIds
+                ? props.selectedIds.has(task.id)
+                : props.selectedTaskId === task.id
+            }
+            onSelect={(id, event) => props.onTaskSelect?.(id, event)}
             onExpand={(id) => props.onTaskExpand?.(id)}
             onComplete={(id, completed) => props.onTaskComplete(id, completed)}
             checklistItems={taskChecklistItems}

@@ -27,6 +27,7 @@ import type { TaskWithRelations } from '@/types';
 interface UpcomingDaySectionProps {
   group: DayGroup;
   selectedTaskId: string | null;
+  selectedIds?: Set<string>;
   expandedTaskId: string | null;
   selectedTemplateId: string | null;
   expandedTemplateId: string | null;
@@ -36,7 +37,7 @@ interface UpcomingDaySectionProps {
   checklistItems: ChecklistItemRecord[];
   tags: TagRecord[];
   taskTags?: TaskTagRecord[];
-  onTaskSelect: (taskId: string | null) => void;
+  onTaskSelect: (taskId: string, event: React.MouseEvent) => void;
   onTaskExpand: (taskId: string) => void;
   onTaskComplete: (taskId: string, completed: boolean) => void;
   onTaskUpdate: (taskId: string, updates: Partial<TaskRecord>) => void;
@@ -122,6 +123,7 @@ function EmptyDropZone({
 export function UpcomingDaySection({
   group,
   selectedTaskId,
+  selectedIds,
   expandedTaskId,
   selectedTemplateId,
   expandedTemplateId,
@@ -338,6 +340,7 @@ export function UpcomingDaySection({
               groupDate={group.id}
               hideScheduledDate={!group.isLater}
               selectedTaskId={selectedTaskId}
+              selectedIds={selectedIds}
             />
           )}
 

@@ -53,7 +53,7 @@ const idle = sectionDropTargetIdle;
 interface TaskListProps {
   section: TSection;
   onComplete: (taskId: string, completed: boolean) => void;
-  onSelect: (taskId: string | null) => void;
+  onSelect: (taskId: string, event: React.MouseEvent) => void;
   onExpand: (taskId: string) => void;
   onUpdate: (taskId: string, updates: Partial<TaskRecord>) => void;
   onDelete: (taskId: string) => void;
@@ -65,7 +65,7 @@ interface TaskListProps {
   ) => void;
   onTagAdd: (taskId: string, tagId: string) => void;
   onTagRemove: (taskId: string, tagId: string) => void;
-  selectedTaskId: string | null;
+  selectedIds: Set<string>;
   expandedTaskId: string | null;
   scheduleDatePickerTaskId?: string | null;
   onScheduleDatePickerClose?: () => void;
@@ -90,7 +90,7 @@ const TaskList = memo(function TaskList({
   onProjectChange,
   onTagAdd,
   onTagRemove,
-  selectedTaskId,
+  selectedIds,
   expandedTaskId,
   scheduleDatePickerTaskId,
   onScheduleDatePickerClose,
@@ -119,7 +119,7 @@ const TaskList = memo(function TaskList({
         key={task.id}
         task={task}
         expanded={task.id === expandedTaskId}
-        selected={task.id === selectedTaskId}
+        selected={selectedIds.has(task.id)}
         scheduleDatePickerOpen={task.id === scheduleDatePickerTaskId}
         onScheduleDatePickerClose={onScheduleDatePickerClose}
         onSelect={onSelect}
@@ -151,7 +151,7 @@ const TaskList = memo(function TaskList({
 interface TaskSectionProps {
   section: TSection;
   onComplete: (taskId: string, completed: boolean) => void;
-  onSelect: (taskId: string | null) => void;
+  onSelect: (taskId: string, event: React.MouseEvent) => void;
   onExpand: (taskId: string) => void;
   onUpdate: (taskId: string, updates: Partial<TaskRecord>) => void;
   onDelete: (taskId: string) => void;
@@ -163,7 +163,7 @@ interface TaskSectionProps {
   ) => void;
   onTagAdd: (taskId: string, tagId: string) => void;
   onTagRemove: (taskId: string, tagId: string) => void;
-  selectedTaskId: string | null;
+  selectedIds: Set<string>;
   expandedTaskId: string | null;
   scheduleDatePickerTaskId?: string | null;
   onScheduleDatePickerClose?: () => void;
@@ -194,7 +194,7 @@ export function TaskSection({
   onProjectChange,
   onTagAdd,
   onTagRemove,
-  selectedTaskId,
+  selectedIds,
   expandedTaskId,
   scheduleDatePickerTaskId,
   onScheduleDatePickerClose,
@@ -419,7 +419,7 @@ export function TaskSection({
           onProjectChange={onProjectChange}
           onTagAdd={onTagAdd}
           onTagRemove={onTagRemove}
-          selectedTaskId={selectedTaskId}
+          selectedIds={selectedIds}
           expandedTaskId={expandedTaskId}
           scheduleDatePickerTaskId={scheduleDatePickerTaskId}
           onScheduleDatePickerClose={onScheduleDatePickerClose}
