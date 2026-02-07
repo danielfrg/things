@@ -1,0 +1,34 @@
+{
+  "name": "@things/server",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run scripts/start.ts",
+    "generate": "bun run scripts/generate.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "bun run scripts/seed.ts",
+    "db:reset ": "bun run scripts/reset.ts"
+  },
+  "dependencies": {
+    "@hono/standard-validator": "^0.2.2",
+    "@hono/zod-validator": "catalog:",
+    "@noble/hashes": "^2.0.1",
+    "@scalar/hono-api-reference": "^0.9.32",
+    "better-auth": "catalog:",
+    "date-fns": "catalog:",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
+    "hono": "catalog:",
+    "hono-openapi": "catalog:",
+    "rrule": "^2.8.1",
+    "ulid": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "drizzle-kit": "^0.31.8"
+  }
+}

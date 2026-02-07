@@ -26,6 +26,21 @@ So I vibecoded this one.
 docker run -p 3000:3000 -v things-data:/data -e BASE_URL=https://mythings.local -e BETTER_AUTH_SECRET=<better-auth-secret> ghcr.io/danielfrg/things:main
 ```
 
+## Features
+
+### Keyboard Shortcuts
+
+The app supports several keyboard shortcuts for efficient task management:
+- **Ctrl+N** - Create new task
+- **Ctrl+S** - Open date picker for selected task
+- **Ctrl+D** - Open move picker for selected task
+- **Cmd+A** - Select all tasks (for batch operations)
+- **Arrow Up/Down** or **j/k** - Navigate between tasks
+- **Enter** - Expand selected task
+- **Escape** - Close expanded task or deselect
+
+See the Help page in the app for a complete list.
+
 ## CLI
 
 The CLI allows you to interact with the Things REST API from the command line.

@@ -1,40 +1,20 @@
-import { execSync } from 'node:child_process';
-import tailwindcss from '@tailwindcss/vite';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from "@tailwindcss/vite"
+import path from "path"
+import { defineConfig } from "vite"
+import solid from "vite-plugin-solid"
 
-function getVersion() {
-  try {
-    const count = execSync('git rev-list --count main', {
-      encoding: 'utf-8',
-    }).trim();
-    const hash = execSync('git rev-parse --short HEAD', {
-      encoding: 'utf-8',
-    }).trim();
-    return `v${count} - ${hash}`;
-  } catch {
-    return 'dev';
-  }
-}
-
-// https://vitejs.dev/config/
 export default defineConfig({
-  ssr: { external: ['drizzle-orm'] },
+  plugins: [tailwindcss(), solid()],
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || getVersion()),
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || "dev"),
   },
-  plugins: [
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
-    tailwindcss(),
-    tanstackStart({
-      srcDirectory: '.',
-      start: { entry: './start.tsx' },
-      server: { entry: './server.ts' },
-    }),
-    react(),
-  ],
-});
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  },
+})

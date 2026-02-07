@@ -1,40 +1,54 @@
-# Stage 1: Build
-FROM oven/bun:debian AS builder
+# Stage 1: Build web package
+FROM oven/bun:1.3 AS builder
+
 WORKDIR /app
 
 ARG APP_VERSION=dev
 
-# Copy package files first for layer caching
-COPY package.json bun.lock tsconfig.json ./
+# Copy package files first for better caching
+COPY package.json bun.lock ./
+COPY packages/server/package.json ./packages/server/
+COPY packages/sdk/package.json ./packages/sdk/
 COPY packages/web/package.json ./packages/web/
 
 # Install dependencies
 RUN bun install
 
 # Copy source code
-COPY packages/web/ ./packages/web/
+COPY . .
 
-# Build the app with version
 ENV APP_VERSION=$APP_VERSION
-RUN bun run --filter @things/web build
+RUN bun run build:web
 
-# Stage 2: Serve
-FROM oven/bun:debian AS runner
+# Stage 2: Production server
+FROM oven/bun:1.3-slim AS production
+
+# Install tini for proper signal handling
+RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy everything needed
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/web/node_modules ./packages/web/node_modules
-COPY --from=builder /app/packages/web/dist ./packages/web/dist
-COPY --from=builder /app/packages/web/drizzle ./packages/web/drizzle
-COPY --from=builder /app/packages/web/scripts ./packages/web/scripts
-COPY --from=builder /app/packages/web/production-server.ts ./packages/web/
-COPY --from=builder /app/packages/web/package.json ./packages/web/
-COPY --from=builder /app/package.json ./
+# Copy package files first for better caching
+COPY package.json bun.lock ./
+COPY packages/server/package.json ./packages/server/
+COPY packages/sdk/package.json ./packages/sdk/
+COPY packages/web/package.json ./packages/web/
 
-COPY docker-entrypoint.sh ./
+# Install dependencies
+RUN bun install
 
-# Create data directory
+# Copy server source code and config
+COPY --from=builder /app/packages/server/src ./packages/server/src
+COPY --from=builder /app/packages/server/scripts ./packages/server/scripts
+COPY --from=builder /app/packages/server/tsconfig.json ./packages/server/tsconfig.json
+
+# Copy built web assets to where server expects them
+COPY --from=builder /app/packages/web/dist ./packages/server/dist/static
+
+# Copy drizzle migrations
+COPY --from=builder /app/packages/server/drizzle ./packages/server/drizzle
+
+# Create data directory for SQLite
 RUN mkdir -p /data
 
 ENV NODE_ENV=production
@@ -42,7 +56,7 @@ ENV DATABASE_URL=/data/things.db
 ENV PORT=3000
 
 EXPOSE 3000
-
 VOLUME /data
 
-CMD ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["bun", "run", "--cwd", "packages/server", "scripts/start.ts"]

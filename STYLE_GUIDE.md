@@ -1,13 +1,14 @@
-## Style Guide
+# Style Guide
 
 - Keep things in one function unless composable or reusable
 - Avoid unnecessary destructuring. Instead of `const { a, b } = obj`, use `obj.a` and `obj.b` to preserve context
 - Avoid `try`/`catch` where possible
 - Avoid using the `any` type
 - Prefer single word variable names where possible
+- Keep all files lowercase, with words separated by dashes
 - Use Bun APIs when possible, like `Bun.file()`
 
-# Avoid let statements
+## Avoid let statements
 
 We don't like `let` statements, especially combined with if/else statements.
 Prefer `const`.
@@ -27,7 +28,7 @@ if (condition) foo = 1
 else foo = 2
 ```
 
-# Avoid else statements
+## Avoid else statements
 
 Prefer early returns or using an `iife` to avoid else statements.
 
@@ -49,7 +50,7 @@ function foo() {
 }
 ```
 
-# Prefer single word naming
+## Prefer single word naming
 
 Try your best to find a single word name for your variables, functions, etc.
 Only use multiple words if you cannot.
