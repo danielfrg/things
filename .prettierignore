@@ -28,5 +28,8 @@
 # Logs
 **/*.log
 
+# OpenAPI
+packages/sdk/openapi.json
+
 # Drizzle
 packages/server/drizzle/**

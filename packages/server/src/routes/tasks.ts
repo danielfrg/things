@@ -668,14 +668,14 @@ export function TaskRoutes() {
         const projectId = isProjectId(existingTask.listId) ? existingTask.listId : null
         if (projectId) {
           const [project] = await db
-            .select({ status: projects.status,  trashedAt: projects.trashedAt })
+            .select({ status: projects.status, trashedAt: projects.trashedAt })
             .from(projects)
             .where(eq(projects.id, projectId))
 
           if (project?.status === "completed") {
             return c.json({ error: "Cannot restore task - the project it belongs to has been completed" }, 400)
           }
-          if ( project?.trashedAt) {
+          if (project?.trashedAt) {
             return c.json({ error: "Cannot restore task - the project it belongs to has been deleted" }, 400)
           }
         }
@@ -751,14 +751,14 @@ export function TaskRoutes() {
         const projectId = isProjectId(existingTask.listId) ? existingTask.listId : null
         if (projectId) {
           const [project] = await db
-            .select({ status: projects.status,  trashedAt: projects.trashedAt })
+            .select({ status: projects.status, trashedAt: projects.trashedAt })
             .from(projects)
             .where(eq(projects.id, projectId))
 
           if (project?.status === "completed") {
             return c.json({ error: "Cannot restore task - the project it belongs to has been completed" }, 400)
           }
-          if ( project?.trashedAt) {
+          if (project?.trashedAt) {
             return c.json({ error: "Cannot restore task - the project it belongs to has been deleted" }, 400)
           }
         }
