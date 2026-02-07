@@ -42,6 +42,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
 
     let refetchTimeout: ReturnType<typeof setTimeout> | null = null
     let pendingRefetch = false
+    let isReordering = false
 
     const debouncedFetch = () => {
       if (refetchTimeout) {
@@ -104,16 +105,21 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
     })
 
     const unsubUpdate = event.on("task.updated", (task) => {
-      // Check if task is currently in any section
-      let isInSections = false
+      // Check if task is currently in any section and find which one
+      let currentSection: Section | undefined
+      let currentTask: TaskInfo | undefined
       for (const section of store.sections) {
-        if (section.tasks.some((t) => t.id === task.id)) {
-          isInSections = true
+        const found = section.tasks.find((t) => t.id === task.id)
+        if (found) {
+          currentSection = section
+          currentTask = found
           break
         }
       }
 
-      if (isInSections) {
+      const isInSections = !!currentSection
+
+      if (isInSections && currentTask) {
         if (!belongsInArea(task)) {
           // Task was moved out of area - remove it immediately
           setStore("sections", (sections) =>
@@ -123,15 +129,32 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
             })),
           )
         } else {
-          // Update in place
-          setStore("sections", (sections) =>
-            sections.map((section) => ({
-              ...section,
-              tasks: section.tasks
-                .map((t) => (t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t))
-                .sort((a, b) => a.position - b.position),
-            })),
-          )
+          // Check if the task should move to a different section
+          // This happens when isSomeday changes
+          const somedayChanged = currentTask.isSomeday !== task.isSomeday
+
+          if (somedayChanged) {
+            // Update in place first, then refetch for correct grouping
+            setStore("sections", (sections) =>
+              sections.map((section) => ({
+                ...section,
+                tasks: section.tasks.map((t) =>
+                  t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t,
+                ),
+              })),
+            )
+            debouncedFetch()
+          } else {
+            // Update in place within same section
+            setStore("sections", (sections) =>
+              sections.map((section) => ({
+                ...section,
+                tasks: section.tasks
+                  .map((t) => (t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t))
+                  .sort((a, b) => a.position - b.position),
+              })),
+            )
+          }
         }
       } else if (belongsInArea(task)) {
         // Task moved into area - refetch
@@ -171,6 +194,32 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       debouncedFetch()
     })
 
+    // Listen for task reordering in this area
+    const unsubReorder = event.on("tasks.reordered", ({ contextType, contextId, taskIds }) => {
+      // Only handle reorders for this area
+      if (contextType !== "area" || contextId !== props.areaId) return
+
+      // Skip if we initiated this reorder
+      if (isReordering) return
+
+      // Reorder tasks in sections that contain any of these tasks
+      setStore("sections", (sections) =>
+        sections.map((section) => {
+          const taskMap = new Map(section.tasks.map((t) => [t.id, t]))
+          const reordered = taskIds
+            .map((id, index) => {
+              const task = taskMap.get(id)
+              return task ? { ...task, position: index } : undefined
+            })
+            .filter((t): t is TaskInfo => t !== undefined)
+
+          // Only update if this section contains any of the reordered tasks
+          if (reordered.length === 0) return section
+          return { ...section, tasks: reordered }
+        }),
+      )
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
@@ -179,6 +228,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       unsubProjectUpdate()
       unsubProjectCreate()
       unsubProjectDelete()
+      unsubReorder()
       if (refetchTimeout) clearTimeout(refetchTimeout)
     })
 
@@ -267,7 +317,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
             scheduledDate: updates.scheduledDate,
             deadline: updates.deadline,
             listId: updates.listId,
-            headingId: updates.headingId ?? null,
+            headingId: updates.headingId,
             isEvening: updates.isEvening,
             isSomeday: updates.isSomeday,
             trashedAt: updates.trashedAt,
@@ -424,6 +474,9 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
     }
 
     const reorderTasks = async (taskIds: string[], sectionId?: string) => {
+      // Set flag to skip SSE position updates during reorder
+      isReordering = true
+
       // Optimistic update
       if (sectionId) {
         setStore("sections", (sections) =>
@@ -458,6 +511,8 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
         console.error("[AreaData] reorder error:", e)
         fetchArea()
         return false
+      } finally {
+        isReordering = false
       }
     }
 
@@ -524,7 +579,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
               scheduledDate: updates.scheduledDate,
               deadline: updates.deadline,
               listId: updates.listId,
-              headingId: updates.headingId ?? null,
+              headingId: updates.headingId,
               isEvening: updates.isEvening,
               isSomeday: updates.isSomeday,
             },

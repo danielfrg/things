@@ -799,12 +799,13 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
             // Found the section - set contextType if not already set
             if (!contextType) {
               contextType = viewKey
-              // For upcoming view, use the dateStr as contextId
-              if (viewKey === "upcoming") {
-                const section = sections[sectionIdx]
-                if (section?.dateStr) {
-                  contextId = section.dateStr
-                }
+            }
+
+            // For upcoming view, extract dateStr as contextId if not already set
+            if (viewKey === "upcoming" && !contextId) {
+              const section = sections[sectionIdx]
+              if (section?.dateStr) {
+                contextId = section.dateStr
               }
             }
 

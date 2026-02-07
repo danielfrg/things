@@ -9,7 +9,7 @@
     "build:web": "bun run --cwd packages/web build",
     "db:generate": "bun run --cwd packages/server db:generate",
     "db:migrate": "bun run --cwd packages/server db:migrate",
-    "db:clean": "bun run --cwd packages/server db:clean",
+    "db:reset": "bun run --cwd packages/server db:reset",
     "db:seed": "bun run --cwd packages/server db:seed",
     "db:studio": "bun run --cwd packages/server db:studio",
     "cli": "bun run packages/cli/index.ts",

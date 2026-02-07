@@ -238,6 +238,32 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       }
     })
 
+    // Listen for task reordering in this project
+    const unsubReorder = event.on("tasks.reordered", ({ contextType, contextId, taskIds }) => {
+      // Only handle reorders for this project
+      if (contextType !== "project" || contextId !== props.projectId) return
+
+      // Skip if we initiated this reorder
+      if (isReordering) return
+
+      // Reorder tasks in sections that contain any of these tasks
+      setStore("sections", (sections) =>
+        sections.map((section) => {
+          const taskMap = new Map(section.tasks.map((t) => [t.id, t]))
+          const reordered = taskIds
+            .map((id, index) => {
+              const task = taskMap.get(id)
+              return task ? { ...task, position: index } : undefined
+            })
+            .filter((t): t is TaskInfo => t !== undefined)
+
+          // Only update if this section contains any of the reordered tasks
+          if (reordered.length === 0) return section
+          return { ...section, tasks: reordered }
+        }),
+      )
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
@@ -246,6 +272,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       unsubHeadingUpdate()
       unsubHeadingCreate()
       unsubHeadingDelete()
+      unsubReorder()
       if (refetchTimeout) clearTimeout(refetchTimeout)
     })
 
@@ -334,7 +361,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
             scheduledDate: updates.scheduledDate,
             deadline: updates.deadline,
             listId: updates.listId,
-            headingId: updates.headingId ?? null,
+            headingId: updates.headingId,
             isEvening: updates.isEvening,
             isSomeday: updates.isSomeday,
             trashedAt: updates.trashedAt,

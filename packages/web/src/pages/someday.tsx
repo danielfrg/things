@@ -44,13 +44,11 @@ export function Someday() {
     }
 
     if (toSection.projectId) {
-      updates.projectId = toSection.projectId
+      updates.listId = toSection.projectId
     } else if (toSection.id === "section:no-project") {
-      updates.projectId = null
-      updates.areaId = null
+      updates.listId = null
     } else if (toSection.areaId) {
-      updates.projectId = null
-      updates.areaId = toSection.areaId
+      updates.listId = toSection.areaId
     }
 
     await data.moveTask(taskId, fromSectionId, toSectionId, newTaskIds, updates)
