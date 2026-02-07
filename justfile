@@ -1,15 +1,10 @@
 repomix-web:
-    repomix packages/web --copy --ignore "packages/cli/**,**/drizzle/meta/**,**/generated/**,scripts/*"
-    rm repomix-output.md 
-
-
-repomix-cli:
-    repomix packages/cli --copy --ignore "packages/web/**"
+    repomix --copy --ignore "packages/sdk/src/gen/**,packages/sdk/openapi.json,packages/web/public/**,packages/server/drizzle/**,packages/cli/**"
     rm repomix-output.md 
 
 
 repomix-all:
-    repomix --copy --ignore "**/drizzle/meta/**,**/generated/**"
+    repomix --copy --ignore "packages/sdk/src/gen/**,packages/sdk/openapi.json,packages/web/public/**,packages/server/drizzle/**"
     rm repomix-output.md 
 
 
@@ -18,4 +13,4 @@ image:
 
 
 docker-run:
-    docker run -it -p 3000:3000 -e BETTER_AUTH_SECRET=12345 -v $(pwd)/packages/web/data:/data things
+    docker run -it -p 3000:3000 -e BETTER_AUTH_SECRET=12345 -v $(pwd)/packages/server/data:/data things

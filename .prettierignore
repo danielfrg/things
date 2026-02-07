@@ -1,0 +1,32 @@
+# Build outputs
+**/dist
+**/build
+**/.output
+**/.vite
+**/.turbo
+
+# Dependencies
+**/node_modules
+**/bun.lockb
+
+# Generated files
+**/routeTree.gen.ts
+**/styles.css
+
+# UI components (from shadcn/ui, usually pre-formatted)
+**/components/ui
+
+# Environment
+**/.env
+**/.env.*
+!**/.env.example
+
+# Database
+**/*.db
+**/*.db-*
+
+# Logs
+**/*.log
+
+# Drizzle
+packages/server/drizzle/**

@@ -7,16 +7,16 @@
   },
   "scripts": {
     "start": "bun run index.ts",
-    "generate": "openapi-ts",
     "build": "bun run script/build.ts",
-    "build:single": "bun run script/build.ts --single"
+    "build:single": "bun run script/build.ts --single",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hey-api/client-fetch": "^0.9.0",
+    "@things/sdk": "workspace:*",
     "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.90.8",
+    "@types/bun": "catalog:",
     "@types/yargs": "^17.0.35"
   }
 }
