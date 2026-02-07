@@ -24,7 +24,9 @@ import { Upcoming } from "./pages/upcoming"
 
 import "./styles/index.css"
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+// In production, the API is served from the same origin as the frontend
+// In development, we may use VITE_API_URL to point to a different server
+const BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== "undefined" ? window.location.origin : "")
 
 // Protected route wrapper - persists across navigation
 function ProtectedApp(props: ParentProps) {
