@@ -13,4 +13,4 @@ image:
 
 
 docker-run:
-    docker run -it -p 3000:3000 -e BETTER_AUTH_SECRET=12345 -v $(pwd)/packages/server/data:/data things
+    docker run --init -it -p 3000:3000 -e BETTER_AUTH_SECRET=12345 -v $(pwd)/packages/server/data:/data things

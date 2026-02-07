@@ -23,6 +23,9 @@ RUN bun run build:web
 # Stage 2: Production server
 FROM oven/bun:1.3-slim AS production
 
+# Install tini for proper signal handling
+RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy package files first for better caching
@@ -55,4 +58,5 @@ ENV PORT=3000
 EXPOSE 3000
 VOLUME /data
 
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["bun", "run", "--cwd", "packages/server", "scripts/start.ts"]

@@ -10,3 +10,13 @@ console.log("Migrations complete.")
 const serverConfig = (await import("../src/index.ts")).default
 const server = Bun.serve(serverConfig)
 console.log(`Started server: http://${server.hostname}:${server.port}`)
+
+// Handle shutdown signals for graceful termination
+const shutdown = () => {
+  console.log("\nShutting down server...")
+  server.stop()
+  process.exit(0)
+}
+
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
