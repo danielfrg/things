@@ -4,7 +4,6 @@ import { CommandPalette } from "./components/command-palette"
 import { GlobalTaskInput } from "./components/global-task-input"
 import { AppLayout } from "./components/layout/app-layout"
 import { AppProvider, useApp } from "./context/app"
-import { DataProvider } from "./context/data"
 import { SidebarDataProvider } from "./context/sidebar"
 import { useHotkey } from "./lib/hooks/useHotkey"
 
@@ -27,13 +26,11 @@ function AppContent(props: ParentProps) {
 
 function App(props: ParentProps) {
   return (
-    <DataProvider>
-      <SidebarDataProvider>
-        <AppProvider>
-          <AppContent>{props.children}</AppContent>
-        </AppProvider>
-      </SidebarDataProvider>
-    </DataProvider>
+    <SidebarDataProvider>
+      <AppProvider>
+        <AppContent>{props.children}</AppContent>
+      </AppProvider>
+    </SidebarDataProvider>
   )
 }
 

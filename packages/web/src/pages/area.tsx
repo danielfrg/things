@@ -19,14 +19,12 @@ import { ProjectProgressIcon } from "@/components/ui/project-progress-icon"
 import { useApp } from "@/context/app"
 import { AreaDataProvider, useAreaData } from "@/context/area"
 import { useSidebarData } from "@/context/sidebar"
-import { createTagsManager } from "@/context/tags-manager"
 import { toast } from "@/lib/toast"
 
 function AreaContent() {
   const app = useApp()
   const data = useAreaData()
   const sidebar = useSidebarData()
-  const tags = createTagsManager()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
@@ -108,7 +106,7 @@ function AreaContent() {
   }
 
   const handleConvertToRepeat = async (taskId: string, rrule: string, startDate: string) => {
-    await tags.convertToRepeat(taskId, rrule, startDate)
+    await data.convertToRepeat(taskId, rrule, startDate)
     data.refetch()
   }
 
@@ -172,19 +170,19 @@ function AreaContent() {
                   onMove={handleMove}
                   onReorder={handleReorder}
                   showTodayStar
-                  taskTags={tags.taskTags}
-                  onTagAdd={tags.addTagToTask}
-                  onTagRemove={tags.removeTagFromTask}
-                  onFetchTags={tags.fetchTaskTags}
+                  taskTags={data.taskTags}
+                  onTagAdd={data.addTagToTask}
+                  onTagRemove={data.removeTagFromTask}
+                  onFetchTags={data.fetchTaskTags}
                   onConvertToRepeat={handleConvertToRepeat}
                   onTemplateUpdate={handleTemplateUpdate}
                   onTemplateDelete={handleTemplateDelete}
-                  checklistItems={tags.checklistItems}
-                  onFetchChecklistItems={tags.fetchChecklistItems}
-                  onCreateChecklistItem={tags.createChecklistItem}
-                  onUpdateChecklistItem={tags.updateChecklistItem}
-                  onDeleteChecklistItem={tags.deleteChecklistItem}
-                  onReorderChecklistItems={tags.reorderChecklistItems}
+                  checklistItems={data.checklistItems}
+                  onFetchChecklistItems={data.fetchChecklistItems}
+                  onCreateChecklistItem={data.createChecklistItem}
+                  onUpdateChecklistItem={data.updateChecklistItem}
+                  onDeleteChecklistItem={data.deleteChecklistItem}
+                  onReorderChecklistItems={data.reorderChecklistItems}
                   projects={sidebar.activeProjects}
                   areas={sidebar.sortedAreas}
                   initialExpandedTaskId={initialTaskId()}

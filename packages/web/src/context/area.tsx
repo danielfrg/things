@@ -5,6 +5,7 @@ import { createSimpleContext } from "./context"
 import type { TaskInfo, TemplateInfo } from "./data"
 import { useEvent } from "./event"
 import { useSDK } from "./sdk"
+import { useTaskRepository } from "./task-repository"
 
 type AreaInfo = {
   id: string
@@ -31,6 +32,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
   init: (props: { areaId: string }) => {
     const sdk = useSDK()
     const event = useEvent()
+    const repo = useTaskRepository()
 
     const [store, setStore] = createStore<AreaDataStore>({
       area: null,
@@ -72,20 +74,17 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       }
       setStore("error", undefined)
 
-      try {
-        const { data, error } = await sdk.client.getApiV1ViewsAreaById({
-          id: props.areaId,
-        })
-        if (error) {
-          throw new Error(`Failed to fetch area: ${error}`)
-        }
-        setStore("area", data?.area ?? null)
-        setStore("sections", reconcile((data?.sections as any) ?? []))
-        setStore("projects", reconcile((data?.projects as any) ?? []))
-      } catch (e) {
-        console.error("[AreaData] fetch error:", e)
-        setStore("error", String(e))
+      const { data, error } = await sdk.client.getApiV1ViewsAreaById({
+        id: props.areaId,
+      })
+      if (error) {
+        setStore("error", `Failed to fetch area: ${error}`)
+        if (showLoading) setStore("loading", false)
+        return
       }
+      setStore("area", data?.area ?? null)
+      setStore("sections", reconcile((data?.sections as Section[]) ?? []))
+      setStore("projects", reconcile((data?.projects as AreaProjectInfo[]) ?? []))
       if (showLoading) {
         setStore("loading", false)
       }
@@ -93,11 +92,11 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
 
     const belongsInArea = (task: TaskInfo): boolean => {
       if (task.trashedAt) return false
-      // Task belongs in area if its listId is this areaId (directly in area, not in a project)
       return task.listId === props.areaId
     }
 
-    // Listen for SSE task events
+    // ================== SSE EVENT HANDLERS ==================
+
     const unsubCreate = event.on("task.created", (task) => {
       if (belongsInArea(task)) {
         debouncedFetch()
@@ -105,59 +104,44 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
     })
 
     const unsubUpdate = event.on("task.updated", (task) => {
-      // Check if task is currently in any section and find which one
-      let currentSection: Section | undefined
       let currentTask: TaskInfo | undefined
       for (const section of store.sections) {
         const found = section.tasks.find((t) => t.id === task.id)
         if (found) {
-          currentSection = section
           currentTask = found
           break
         }
       }
 
-      const isInSections = !!currentSection
-
-      if (isInSections && currentTask) {
+      if (currentTask) {
         if (!belongsInArea(task)) {
-          // Task was moved out of area - remove it immediately
           setStore("sections", (sections) =>
             sections.map((section) => ({
               ...section,
               tasks: section.tasks.filter((t) => t.id !== task.id),
             })),
           )
+        } else if (currentTask.isSomeday !== task.isSomeday) {
+          setStore("sections", (sections) =>
+            sections.map((section) => ({
+              ...section,
+              tasks: section.tasks.map((t) =>
+                t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t,
+              ),
+            })),
+          )
+          debouncedFetch()
         } else {
-          // Check if the task should move to a different section
-          // This happens when isSomeday changes
-          const somedayChanged = currentTask.isSomeday !== task.isSomeday
-
-          if (somedayChanged) {
-            // Update in place first, then refetch for correct grouping
-            setStore("sections", (sections) =>
-              sections.map((section) => ({
-                ...section,
-                tasks: section.tasks.map((t) =>
-                  t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t,
-                ),
-              })),
-            )
-            debouncedFetch()
-          } else {
-            // Update in place within same section
-            setStore("sections", (sections) =>
-              sections.map((section) => ({
-                ...section,
-                tasks: section.tasks
-                  .map((t) => (t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t))
-                  .sort((a, b) => a.position - b.position),
-              })),
-            )
-          }
+          setStore("sections", (sections) =>
+            sections.map((section) => ({
+              ...section,
+              tasks: section.tasks
+                .map((t) => (t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t))
+                .sort((a, b) => a.position - b.position),
+            })),
+          )
         }
       } else if (belongsInArea(task)) {
-        // Task moved into area - refetch
         debouncedFetch()
       }
     })
@@ -171,38 +155,20 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       )
     })
 
-    // Listen for area updates
     const unsubAreaUpdate = event.on("area.updated", (area) => {
       if (area.id === props.areaId) {
-        setStore("area", {
-          id: area.id,
-          title: area.title,
-        })
+        setStore("area", { id: area.id, title: area.title })
       }
     })
 
-    // Listen for project updates (might affect area's project list)
-    const unsubProjectUpdate = event.on("project.updated", () => {
-      debouncedFetch()
-    })
+    const unsubProjectUpdate = event.on("project.updated", () => debouncedFetch())
+    const unsubProjectCreate = event.on("project.created", () => debouncedFetch())
+    const unsubProjectDelete = event.on("project.deleted", () => debouncedFetch())
 
-    const unsubProjectCreate = event.on("project.created", () => {
-      debouncedFetch()
-    })
-
-    const unsubProjectDelete = event.on("project.deleted", () => {
-      debouncedFetch()
-    })
-
-    // Listen for task reordering in this area
     const unsubReorder = event.on("tasks.reordered", ({ contextType, contextId, taskIds }) => {
-      // Only handle reorders for this area
       if (contextType !== "area" || contextId !== props.areaId) return
-
-      // Skip if we initiated this reorder
       if (isReordering) return
 
-      // Reorder tasks in sections that contain any of these tasks
       setStore("sections", (sections) =>
         sections.map((section) => {
           const taskMap = new Map(section.tasks.map((t) => [t.id, t]))
@@ -213,7 +179,6 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
             })
             .filter((t): t is TaskInfo => t !== undefined)
 
-          // Only update if this section contains any of the reordered tasks
           if (reordered.length === 0) return section
           return { ...section, tasks: reordered }
         }),
@@ -238,246 +203,128 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       }
     })
 
+    // ================== AREA-SPECIFIC MUTATIONS ==================
+
     const updateTask = async (id: string, updates: Partial<TaskInfo>) => {
       setStore("error", undefined)
 
       // Optimistic update for isSomeday changes - move task between sections
       if (updates.isSomeday !== undefined) {
         setStore("sections", (sections) => {
-          // Find the task and its current section
           let task: TaskInfo | undefined
-          let fromSectionIndex = -1
+          let fromIdx = -1
 
           for (let i = 0; i < sections.length; i++) {
             const found = sections[i].tasks.find((t) => t.id === id)
             if (found) {
               task = { ...found, ...updates }
-              fromSectionIndex = i
+              fromIdx = i
               break
             }
           }
 
-          if (!task || fromSectionIndex === -1) return sections
+          if (!task || fromIdx === -1) return sections
 
-          // Remove task from current section
           const withoutTask = sections.map((section, i) => {
-            if (i !== fromSectionIndex) return section
+            if (i !== fromIdx) return section
             return { ...section, tasks: section.tasks.filter((t) => t.id !== id) }
           })
 
           if (updates.isSomeday) {
-            // Moving to someday - find or create someday section
-            const somedayIndex = withoutTask.findIndex((s) => s.isBacklog)
-            if (somedayIndex >= 0) {
-              // Add to existing someday section
+            const somedayIdx = withoutTask.findIndex((s) => s.isBacklog)
+            if (somedayIdx >= 0) {
               return withoutTask.map((section, i) => {
-                if (i !== somedayIndex) return section
+                if (i !== somedayIdx) return section
                 return { ...section, tasks: [...section.tasks, task!] }
               })
-            } else {
-              // Create new someday section
-              const newSomedaySection: Section = {
-                id: "section:someday",
-                title: "Someday",
-                tasks: [task],
-                areaId: props.areaId,
-                isBacklog: true,
-              }
-              return [...withoutTask, newSomedaySection]
             }
-          } else {
-            // Moving from someday to unheaded section
-            const unheadedIndex = withoutTask.findIndex((s) => s.id === "section:unheaded")
-            if (unheadedIndex >= 0) {
-              return withoutTask.map((section, i) => {
-                if (i !== unheadedIndex) return section
-                return { ...section, tasks: [...section.tasks, task!] }
-              })
-            } else {
-              // Create unheaded section if it doesn't exist
-              const newUnheadedSection: Section = {
-                id: "section:unheaded",
-                title: "",
-                tasks: [task],
-                areaId: props.areaId,
-              }
-              return [newUnheadedSection, ...withoutTask]
-            }
+            return [
+              ...withoutTask,
+              { id: "section:someday", title: "Someday", tasks: [task], areaId: props.areaId, isBacklog: true },
+            ]
           }
+
+          const unheadedIdx = withoutTask.findIndex((s) => s.id === "section:unheaded")
+          if (unheadedIdx >= 0) {
+            return withoutTask.map((section, i) => {
+              if (i !== unheadedIdx) return section
+              return { ...section, tasks: [...section.tasks, task!] }
+            })
+          }
+          return [{ id: "section:unheaded", title: "", tasks: [task], areaId: props.areaId }, ...withoutTask]
         })
       }
 
-      try {
-        const { data, error } = await sdk.client.putApiV1TasksById({
-          id,
-          updateTask: {
-            title: updates.title,
-            notes: updates.notes,
-            status: updates.status as any,
-            scheduledDate: updates.scheduledDate,
-            deadline: updates.deadline,
-            listId: updates.listId,
-            headingId: updates.headingId,
-            isEvening: updates.isEvening,
-            isSomeday: updates.isSomeday,
-            trashedAt: updates.trashedAt,
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to update task: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] update error:", e)
-        setStore("error", String(e))
-        fetchArea() // Revert on error
-        return null
+      const result = await repo.updateTask(id, updates)
+      if (!result) {
+        fetchArea()
       }
+      return result
     }
 
     const updateArea = async (updates: Partial<AreaInfo>) => {
       setStore("error", undefined)
-
-      // Optimistic update
       setStore("area", (a) => (a ? { ...a, ...updates } : a))
 
-      try {
-        const { data, error } = await sdk.client.putApiV1AreasById({
-          id: props.areaId,
-          updateArea: {
-            title: updates.title,
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to update area: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] update area error:", e)
-        setStore("error", String(e))
-        fetchArea() // Revert on error
+      const { data, error } = await sdk.client.putApiV1AreasById({
+        id: props.areaId,
+        updateArea: { title: updates.title },
+      })
+      if (error) {
+        setStore("error", `Failed to update area: ${error}`)
+        fetchArea()
         return null
       }
+      return data
     }
 
     const completeTask = async (id: string, completed: boolean) => {
-      setStore("error", undefined)
-
-      // Optimistic update
+      // Optimistic update in local sections
       setStore("sections", (sections) =>
         sections.map((section) => ({
           ...section,
           tasks: section.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  completedAt: completed ? new Date().toISOString() : null,
-                }
-              : t,
+            t.id === id ? { ...t, completedAt: completed ? new Date().toISOString() : null } : t,
           ),
         })),
       )
 
-      try {
-        const { data, error } = await sdk.client.postApiV1TasksByIdComplete({
-          id,
-          completeTask: {
-            completed,
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to complete task: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] complete error:", e)
-        setStore("error", String(e))
-        fetchArea() // Revert on error
-        return null
-      }
+      const result = await repo.completeTask(id, completed)
+      if (!result) fetchArea()
+      return result
     }
 
     const cancelTask = async (id: string) => {
-      setStore("error", undefined)
-
-      // Optimistic update
       setStore("sections", (sections) =>
         sections.map((section) => ({
           ...section,
           tasks: section.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  status: "cancelled",
-                  completedAt: new Date().toISOString(),
-                }
-              : t,
+            t.id === id ? { ...t, status: "cancelled", completedAt: new Date().toISOString() } : t,
           ),
         })),
       )
 
-      try {
-        const { data, error } = await sdk.client.putApiV1TasksById({
-          id,
-          updateTask: {
-            status: "cancelled",
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to cancel task: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] cancel error:", e)
-        setStore("error", String(e))
-        fetchArea() // Revert on error
-        return null
-      }
+      const result = await repo.cancelTask(id)
+      if (!result) fetchArea()
+      return result
     }
 
     const uncancelTask = async (id: string) => {
-      setStore("error", undefined)
-
-      // Optimistic update
       setStore("sections", (sections) =>
         sections.map((section) => ({
           ...section,
-          tasks: section.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  status: "active",
-                  completedAt: null,
-                }
-              : t,
-          ),
+          tasks: section.tasks.map((t) => (t.id === id ? { ...t, status: "active", completedAt: null } : t)),
         })),
       )
 
-      try {
-        const { data, error } = await sdk.client.putApiV1TasksById({
-          id,
-          updateTask: {
-            status: "active",
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to uncancel task: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] uncancel error:", e)
-        setStore("error", String(e))
-        fetchArea() // Revert on error
-        return null
-      }
+      const result = await repo.uncancelTask(id)
+      if (!result) fetchArea()
+      return result
     }
 
     const reorderTasks = async (taskIds: string[], sectionId?: string) => {
-      // Set flag to skip SSE position updates during reorder
       isReordering = true
 
-      // Optimistic update
       if (sectionId) {
         setStore("sections", (sections) =>
           sections.map((section) => {
@@ -494,26 +341,16 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
         )
       }
 
-      try {
-        const { error } = await sdk.client.postApiV1TasksReorder({
-          reorderTasks: {
-            ids: taskIds,
-            contextType: "area",
-            contextId: props.areaId,
-          },
-        })
-        if (error) {
-          fetchArea() // Revert on error
-          return false
-        }
-        return true
-      } catch (e) {
-        console.error("[AreaData] reorder error:", e)
+      const { error } = await sdk.client.postApiV1TasksReorder({
+        reorderTasks: { ids: taskIds, contextType: "area", contextId: props.areaId },
+      })
+      isReordering = false
+
+      if (error) {
         fetchArea()
         return false
-      } finally {
-        isReordering = false
       }
+      return true
     }
 
     const moveTask = async (
@@ -523,7 +360,6 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       newTaskIds: string[],
       updates: Partial<TaskInfo>,
     ) => {
-      // Optimistic update
       setStore("sections", (sections) => {
         let task: TaskInfo | undefined
 
@@ -531,27 +367,24 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
           if (section.id !== fromSectionId) return section
           const found = section.tasks.find((t) => t.id === taskId)
           if (found) task = { ...found, ...updates }
-          return {
-            ...section,
-            tasks: section.tasks.filter((t) => t.id !== taskId),
-          }
+          return { ...section, tasks: section.tasks.filter((t) => t.id !== taskId) }
         })
 
         if (!task) return sections
 
-        // Check if target section exists
         const targetExists = withoutTask.some((s) => s.id === toSectionId)
 
-        // If moving to someday section that doesn't exist yet, create it
         if (!targetExists && (toSectionId === "section:someday" || updates.isSomeday)) {
-          const newSomedaySection: Section = {
-            id: "section:someday",
-            title: "Someday",
-            tasks: [{ ...task, position: 0 }],
-            areaId: props.areaId,
-            isBacklog: true,
-          }
-          return [...withoutTask, newSomedaySection]
+          return [
+            ...withoutTask,
+            {
+              id: "section:someday",
+              title: "Someday",
+              tasks: [{ ...task, position: 0 }],
+              areaId: props.areaId,
+              isBacklog: true,
+            },
+          ]
         }
 
         return withoutTask.map((section) => {
@@ -568,76 +401,54 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
         })
       })
 
-      try {
-        await Promise.all([
-          sdk.client.putApiV1TasksById({
-            id: taskId,
-            updateTask: {
-              title: updates.title,
-              notes: updates.notes,
-              status: updates.status as any,
-              scheduledDate: updates.scheduledDate,
-              deadline: updates.deadline,
-              listId: updates.listId,
-              headingId: updates.headingId,
-              isEvening: updates.isEvening,
-              isSomeday: updates.isSomeday,
-            },
-          }),
-          sdk.client.postApiV1TasksReorder({
-            reorderTasks: { ids: newTaskIds, contextType: "area", contextId: props.areaId },
-          }),
-        ])
-        return true
-      } catch (e) {
-        console.error("[AreaData] move error:", e)
+      const [updateResult, reorderResult] = await Promise.all([
+        sdk.client.putApiV1TasksById({
+          id: taskId,
+          updateTask: {
+            title: updates.title,
+            notes: updates.notes,
+            status: updates.status as "active" | "completed" | "trashed" | null | undefined,
+            scheduledDate: updates.scheduledDate,
+            deadline: updates.deadline,
+            listId: updates.listId,
+            headingId: updates.headingId,
+            isEvening: updates.isEvening,
+            isSomeday: updates.isSomeday,
+          },
+        }),
+        sdk.client.postApiV1TasksReorder({
+          reorderTasks: { ids: newTaskIds, contextType: "area", contextId: props.areaId },
+        }),
+      ])
+
+      if (updateResult.error || reorderResult.error) {
         fetchArea()
         return false
       }
+      return true
     }
 
     const deleteArea = async (): Promise<{ success: boolean; error?: string }> => {
       setStore("error", undefined)
 
-      try {
-        const { error } = await sdk.client.deleteApiV1AreasById({
-          id: props.areaId,
-        })
-        if (error) {
-          // Extract error message from response
-          const errorMessage =
-            typeof error === "object" && error !== null && "error" in error
-              ? (error as { error: string }).error
-              : "Failed to delete area"
-          return { success: false, error: errorMessage }
-        }
-        return { success: true }
-      } catch (e) {
-        console.error("[AreaData] delete area error:", e)
-        setStore("error", String(e))
-        return { success: false, error: String(e) }
+      const { error } = await sdk.client.deleteApiV1AreasById({ id: props.areaId })
+      if (error) {
+        const msg =
+          typeof error === "object" && error !== null && "error" in error
+            ? (error as { error: string }).error
+            : "Failed to delete area"
+        return { success: false, error: msg }
       }
+      return { success: true }
     }
 
     const getContentCount = async (): Promise<{ projectCount: number; taskCount: number }> => {
-      try {
-        const { data, error } = await sdk.client.getApiV1AreasByIdContentCount({
-          id: props.areaId,
-        })
-        if (error || !data) {
-          return { projectCount: 0, taskCount: 0 }
-        }
-        return { projectCount: data.projectCount, taskCount: data.taskCount }
-      } catch (e) {
-        console.error("[AreaData] get content count error:", e)
-        return { projectCount: 0, taskCount: 0 }
-      }
+      const { data, error } = await sdk.client.getApiV1AreasByIdContentCount({ id: props.areaId })
+      if (error || !data) return { projectCount: 0, taskCount: 0 }
+      return { projectCount: data.projectCount, taskCount: data.taskCount }
     }
 
     const updateTemplate = async (id: string, updates: Partial<TemplateInfo>) => {
-      setStore("error", undefined)
-
-      // Optimistic update
       setStore("sections", (sections) =>
         sections.map((section) => ({
           ...section,
@@ -645,35 +456,12 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
         })),
       )
 
-      try {
-        const { data, error } = await sdk.client.putApiV1RepeatingRulesById({
-          id,
-          updateRepeatingRule: {
-            title: updates.title,
-            notes: updates.notes,
-            rrule: updates.rrule,
-            nextOccurrence: updates.nextOccurrence,
-            status: updates.status as "active" | "paused" | undefined,
-            listId: updates.listId,
-            headingId: updates.headingId,
-          },
-        })
-        if (error) {
-          throw new Error(`Failed to update template: ${error}`)
-        }
-        return data
-      } catch (e) {
-        console.error("[AreaData] update template error:", e)
-        setStore("error", String(e))
-        fetchArea()
-        return null
-      }
+      const result = await repo.updateTemplate(id, updates)
+      if (!result) fetchArea()
+      return result
     }
 
     const deleteTemplate = async (id: string) => {
-      setStore("error", undefined)
-
-      // Optimistic update - remove from sections
       setStore("sections", (sections) =>
         sections.map((section) => ({
           ...section,
@@ -681,20 +469,9 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
         })),
       )
 
-      try {
-        const { error } = await sdk.client.deleteApiV1RepeatingRulesById({
-          id,
-        })
-        if (error) {
-          throw new Error(`Failed to delete template: ${error}`)
-        }
-        return true
-      } catch (e) {
-        console.error("[AreaData] delete template error:", e)
-        setStore("error", String(e))
-        fetchArea()
-        return false
-      }
+      const result = await repo.deleteTemplate(id)
+      if (!result) fetchArea()
+      return result
     }
 
     return {
@@ -713,17 +490,41 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       get error() {
         return store.error
       },
+
+      // Task mutations (delegate to repo for API calls)
       updateTask,
-      updateArea,
-      deleteArea,
-      getContentCount,
       completeTask,
       cancelTask,
       uncancelTask,
       reorderTasks,
       moveTask,
+
+      // Area-specific operations
+      updateArea,
+      deleteArea,
+      getContentCount,
+
+      // Template operations (delegate to repo)
       updateTemplate,
       deleteTemplate,
+
+      // Tag & checklist operations (fully delegated to repo)
+      get taskTags() {
+        return repo.taskTags
+      },
+      get checklistItems() {
+        return repo.checklistItems
+      },
+      fetchTaskTags: repo.fetchTaskTags,
+      addTagToTask: repo.addTagToTask,
+      removeTagFromTask: repo.removeTagFromTask,
+      fetchChecklistItems: repo.fetchChecklistItems,
+      createChecklistItem: repo.createChecklistItem,
+      updateChecklistItem: repo.updateChecklistItem,
+      deleteChecklistItem: repo.deleteChecklistItem,
+      reorderChecklistItems: repo.reorderChecklistItems,
+      convertToRepeat: repo.convertToRepeat,
+
       refetch: fetchArea,
     }
   },
