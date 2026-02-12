@@ -1,8 +1,8 @@
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { A, useLocation, useNavigate } from "@solidjs/router"
 import { isToday } from "date-fns"
-import type { JSX } from "solid-js"
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
+import type { Accessor, JSX, ParentProps } from "solid-js"
+import { createContext, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js"
 import { createStore } from "solid-js/store"
 import { isTaskData } from "@/components/dnd/task-data"
 import {
@@ -24,6 +24,68 @@ import { useSDK } from "@/context/sdk"
 import { useSidebarData } from "@/context/sidebar"
 import { cn, formatLocalDate, isDateOverdue, parseLocalDate } from "@/lib/utils"
 
+const SIDEBAR_STORAGE_KEY = "sidebar:state"
+const MOBILE_BREAKPOINT = 768
+
+type SidebarContextValue = {
+  isMobile: Accessor<boolean>
+  open: Accessor<boolean>
+  openMobile: Accessor<boolean>
+  setOpen: (value: boolean) => void
+  setOpenMobile: (value: boolean) => void
+  toggle: () => void
+}
+
+const SidebarContext = createContext<SidebarContextValue>()
+
+export function useSidebarState() {
+  const context = useContext(SidebarContext)
+  if (!context) {
+    throw new Error("useSidebarState must be used within SidebarProvider")
+  }
+  return context
+}
+
+function PanelLeftIcon(props: { class?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class={props.class}
+      aria-hidden="true"
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M9 3v18" />
+    </svg>
+  )
+}
+
+export function SidebarTrigger(props: { class?: string }) {
+  const sidebar = useSidebarState()
+
+  return (
+    <Show when={sidebar.isMobile()}>
+      <button
+        type="button"
+        onClick={() => sidebar.setOpenMobile(true)}
+        class={cn(
+          "flex items-center justify-center gap-1.5 px-4 py-1 min-w-[100px] h-9 text-[13px] font-medium rounded-full",
+          "text-muted-foreground border border-transparent hover:border-border transition-colors",
+          props.class,
+        )}
+        aria-label="Open Sidebar"
+      >
+        <PanelLeftIcon class="w-4 h-4" />
+      </button>
+    </Show>
+  )
+}
+
 interface NavItemProps {
   to: string
   icon: () => JSX.Element
@@ -33,6 +95,7 @@ interface NavItemProps {
   secondary?: boolean
   dropType?: "inbox" | "today" | "someday" | "anytime" | "upcoming"
   onTaskDrop?: (taskId: string, dropType: string) => void
+  onClick?: () => void
 }
 
 type NavDropState = "idle" | "over"
@@ -43,7 +106,6 @@ function NavItem(props: NavItemProps) {
   const [dropState, setDropState] = createSignal<NavDropState>("idle")
   let ref: HTMLAnchorElement | undefined
 
-  // Setup drop target if dropType is provided
   createEffect(() => {
     if (!props.dropType || !ref) return
 
@@ -73,6 +135,7 @@ function NavItem(props: NavItemProps) {
     <A
       ref={ref}
       href={props.to}
+      onClick={props.onClick}
       class={cn(
         "group flex items-center gap-3 mx-2 px-2 py-1.5 rounded-md text-[13px] font-semibold transition-colors",
         "hover:bg-sidebar-accent",
@@ -100,13 +163,12 @@ function NavItem(props: NavItemProps) {
 function SidebarContent() {
   const navigate = useNavigate()
   const sdk = useSDK()
-  const sidebar = useSidebarData()
+  const sidebarData = useSidebarData()
   const event = useEvent()
+  const sidebar = useSidebarState()
 
-  // Subscribe to task events to update counts - store full TaskInfo for optimistic updates
   const [allTasks, setAllTasks] = createStore<TaskInfo[]>([])
 
-  // Fetch all tasks for counting
   const fetchTasksForCounts = async () => {
     if (!sdk.isReady) return
 
@@ -116,20 +178,18 @@ function SidebarContent() {
         console.error("[Sidebar] fetch tasks error:", error)
         return
       }
-      setAllTasks(data as any)
+      setAllTasks(data as TaskInfo[])
     } catch (e) {
       console.error("[Sidebar] fetch tasks error:", e)
     }
   }
 
-  // Fetch on mount and when API key changes
   createEffect(() => {
     if (sdk.isReady) {
       fetchTasksForCounts()
     }
   })
 
-  // Subscribe to task events
   createEffect(() => {
     const unsubCreate = event.on("task.created", () => fetchTasksForCounts())
     const unsubUpdate = event.on("task.updated", () => fetchTasksForCounts())
@@ -153,12 +213,10 @@ function SidebarContent() {
         if (task.trashedAt) return acc
         if (task.completedAt) return acc
 
-        // Inbox: status is null (unprocessed)
         if (task.status === null) {
           acc.inbox++
         }
 
-        // Today: not completed and has overdue/today scheduled or deadline
         const due =
           isDateOverdue(task.scheduledDate) ||
           isDateToday(task.scheduledDate) ||
@@ -172,7 +230,6 @@ function SidebarContent() {
     )
   })
 
-  // Compute project progress
   const projectProgress = createMemo(() => {
     const progressMap = new Map<string, number>()
     const taskCounts = new Map<string, { total: number; completed: number }>()
@@ -180,19 +237,16 @@ function SidebarContent() {
     for (const task of allTasks) {
       if (!task.listId || task.trashedAt) continue
 
-      const counts = taskCounts.get(task.listId) ?? {
-        total: 0,
-        completed: 0,
-      }
-      counts.total++
+      const c = taskCounts.get(task.listId) ?? { total: 0, completed: 0 }
+      c.total++
       if (task.completedAt) {
-        counts.completed++
+        c.completed++
       }
-      taskCounts.set(task.listId, counts)
+      taskCounts.set(task.listId, c)
     }
 
-    for (const [projectId, counts] of taskCounts) {
-      const progress = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0
+    for (const [projectId, c] of taskCounts) {
+      const progress = c.total > 0 ? Math.round((c.completed / c.total) * 100) : 0
       progressMap.set(projectId, progress)
     }
 
@@ -200,15 +254,15 @@ function SidebarContent() {
   })
 
   const handleReorderProjects = (projectIds: string[], areaId: string | null) => {
-    sidebar.reorderProjects(projectIds, areaId)
+    sidebarData.reorderProjects(projectIds, areaId)
   }
 
   const handleReorderAreas = (areaIds: string[]) => {
-    sidebar.reorderAreas(areaIds)
+    sidebarData.reorderAreas(areaIds)
   }
 
   const handleNewProject = async () => {
-    const position = sidebar.activeProjects.length + 1
+    const position = sidebarData.activeProjects.length + 1
 
     try {
       const { data, error } = await sdk.client.postApiV1Projects({
@@ -228,7 +282,7 @@ function SidebarContent() {
   }
 
   const handleNewArea = async () => {
-    const position = sidebar.sortedAreas.length + 1
+    const position = sidebarData.sortedAreas.length + 1
 
     try {
       await sdk.client.postApiV1Areas({
@@ -242,9 +296,7 @@ function SidebarContent() {
     }
   }
 
-  // Handle task drops onto navigation items
   const handleTaskDrop = async (taskId: string, dropType: string) => {
-    // Find the task in our store for optimistic update
     const task = allTasks.find((t) => t.id === taskId)
     if (!task) return
 
@@ -252,7 +304,6 @@ function SidebarContent() {
 
     switch (dropType) {
       case "inbox":
-        // Move to inbox: set status to null, clear organization
         updates.status = null
         updates.listId = null
         updates.scheduledDate = null
@@ -260,7 +311,6 @@ function SidebarContent() {
         updates.isSomeday = false
         break
       case "today": {
-        // Schedule for today - set status to active
         updates.status = "active"
         updates.scheduledDate = formatLocalDate(new Date())
         updates.isEvening = false
@@ -268,7 +318,6 @@ function SidebarContent() {
         break
       }
       case "upcoming": {
-        // Schedule for tomorrow - set status to active
         updates.status = "active"
         const tomorrow = new Date()
         tomorrow.setDate(tomorrow.getDate() + 1)
@@ -278,14 +327,12 @@ function SidebarContent() {
         break
       }
       case "anytime":
-        // Set status to active, clear scheduled date
         updates.status = "active"
         updates.scheduledDate = null
         updates.isEvening = false
         updates.isSomeday = false
         break
       case "someday":
-        // Set status to active, set isSomeday flag, clear scheduled date
         updates.status = "active"
         updates.isSomeday = true
         updates.scheduledDate = null
@@ -293,11 +340,9 @@ function SidebarContent() {
         break
     }
 
-    // Emit optimistic update immediately
     const optimisticTask: TaskInfo = { ...task, ...updates }
     event.emit("task.updated", optimisticTask)
 
-    // When clearing organization (inbox/anytime/someday), set listId to null
     let listIdToSend: string | null | undefined = undefined
     if (updates.listId === null) {
       listIdToSend = null
@@ -317,17 +362,13 @@ function SidebarContent() {
       })
     } catch (e) {
       console.error("[Sidebar] task drop error:", e)
-      // On error, the SSE will eventually correct the state
     }
   }
 
-  // Handle task drops onto projects
   const handleProjectTaskDrop = async (taskId: string, projectId: string, _areaId: string | undefined) => {
-    // Find the task in our store for optimistic update
     const task = allTasks.find((t) => t.id === taskId)
     if (!task) return
 
-    // Emit optimistic update immediately
     const optimisticTask: TaskInfo = {
       ...task,
       status: "active",
@@ -352,13 +393,10 @@ function SidebarContent() {
     }
   }
 
-  // Handle task drops onto areas (no specific project)
   const handleAreaTaskDrop = async (taskId: string, areaId: string) => {
-    // Find the task in our store for optimistic update
     const task = allTasks.find((t) => t.id === taskId)
     if (!task) return
 
-    // Emit optimistic update immediately
     const optimisticTask: TaskInfo = {
       ...task,
       status: "active",
@@ -387,13 +425,18 @@ function SidebarContent() {
     }
   }
 
-  return (
-    <aside class="w-64 bg-sidebar flex flex-col h-full border-r border-sidebar-border">
+  const closeMobileIfOpen = () => {
+    if (sidebar.isMobile() && sidebar.openMobile()) {
+      sidebar.setOpenMobile(false)
+    }
+  }
+
+  const SidebarInner = () => (
+    <>
       <div class="h-8 flex-shrink-0" />
 
       <div class="flex-1 min-h-0 overflow-auto">
         <div class="pb-2 pt-1">
-          {/* Navigation items */}
           <div class="space-y-0.5 mb-4">
             <NavItem
               to="/inbox"
@@ -403,6 +446,7 @@ function SidebarContent() {
               count={counts().inbox}
               dropType="inbox"
               onTaskDrop={handleTaskDrop}
+              onClick={closeMobileIfOpen}
             />
             <NavItem
               to="/today"
@@ -412,6 +456,7 @@ function SidebarContent() {
               count={counts().today}
               dropType="today"
               onTaskDrop={handleTaskDrop}
+              onClick={closeMobileIfOpen}
             />
             <NavItem
               to="/upcoming"
@@ -420,6 +465,7 @@ function SidebarContent() {
               label="Upcoming"
               dropType="upcoming"
               onTaskDrop={handleTaskDrop}
+              onClick={closeMobileIfOpen}
             />
             <NavItem
               to="/anytime"
@@ -428,6 +474,7 @@ function SidebarContent() {
               label="Anytime"
               dropType="anytime"
               onTaskDrop={handleTaskDrop}
+              onClick={closeMobileIfOpen}
             />
             <NavItem
               to="/someday"
@@ -436,21 +483,22 @@ function SidebarContent() {
               label="Someday"
               dropType="someday"
               onTaskDrop={handleTaskDrop}
+              onClick={closeMobileIfOpen}
             />
           </div>
 
-          {/* Projects and Areas */}
-          <Show when={!sidebar.loading}>
-            <Show when={sidebar.projectsWithoutArea.length > 0 || sidebar.areasWithProjects.length > 0}>
+          <Show when={!sidebarData.loading}>
+            <Show when={sidebarData.projectsWithoutArea.length > 0 || sidebarData.areasWithProjects.length > 0}>
               <div class="pt-3">
                 <DraggableSidebarList
-                  projectsWithoutArea={sidebar.projectsWithoutArea}
-                  areasWithProjects={sidebar.areasWithProjects}
+                  projectsWithoutArea={sidebarData.projectsWithoutArea}
+                  areasWithProjects={sidebarData.areasWithProjects}
                   projectProgress={projectProgress}
                   onReorderProjects={handleReorderProjects}
                   onReorderAreas={handleReorderAreas}
                   onTaskDrop={handleProjectTaskDrop}
                   onAreaTaskDrop={handleAreaTaskDrop}
+                  onLinkClick={closeMobileIfOpen}
                 />
               </div>
             </Show>
@@ -475,6 +523,7 @@ function SidebarContent() {
 
           <A
             href="/logbook"
+            onClick={closeMobileIfOpen}
             class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
             aria-label="Logbook"
           >
@@ -483,6 +532,7 @@ function SidebarContent() {
 
           <A
             href="/trash"
+            onClick={closeMobileIfOpen}
             class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
             aria-label="Trash"
           >
@@ -491,6 +541,7 @@ function SidebarContent() {
 
           <A
             href="/settings"
+            onClick={closeMobileIfOpen}
             class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
             aria-label="Settings"
           >
@@ -498,8 +549,147 @@ function SidebarContent() {
           </A>
         </div>
       </div>
-    </aside>
+    </>
   )
+
+  return (
+    <Show
+      when={sidebar.isMobile()}
+      fallback={
+        <>
+          {/* Spacer div that changes width based on open state */}
+          <div
+            class={cn(
+              "relative h-full bg-transparent transition-[width] duration-200 ease-linear flex-shrink-0",
+              sidebar.open() ? "w-64" : "w-0",
+            )}
+          />
+
+          {/* Fixed sidebar that slides in/out */}
+          <aside
+            class={cn(
+              "fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-sidebar-border",
+              "flex flex-col transition-[left] duration-200 ease-linear z-10",
+              sidebar.open() ? "left-0" : "-left-64",
+            )}
+          >
+            <SidebarInner />
+
+            {/* Hover rail on right edge to collapse */}
+            <button
+              type="button"
+              class="absolute right-0 top-0 h-full w-1 z-20 hover:bg-sidebar-accent/50 transition-colors cursor-w-resize"
+              onClick={() => sidebar.setOpen(false)}
+              aria-label="Collapse Sidebar"
+            />
+          </aside>
+
+          {/* Hover rail on left edge to expand */}
+          <Show when={!sidebar.open()}>
+            <button
+              type="button"
+              class="fixed left-0 top-0 h-full w-2 z-20 hover:bg-sidebar-accent/50 transition-colors cursor-e-resize"
+              onClick={() => sidebar.setOpen(true)}
+              aria-label="Expand Sidebar"
+            />
+          </Show>
+        </>
+      }
+    >
+      {/* Mobile: Overlay sidebar */}
+      <>
+        <Show when={sidebar.openMobile()}>
+          <button
+            type="button"
+            class="fixed inset-0 z-40 bg-black/80 animate-in fade-in-0 duration-200 cursor-default"
+            onClick={() => sidebar.setOpenMobile(false)}
+            aria-label="Close Sidebar"
+          />
+        </Show>
+
+        <aside
+          class={cn(
+            "fixed left-0 top-0 h-full w-full bg-sidebar z-50",
+            "flex flex-col transition-transform duration-200 ease-out",
+            sidebar.openMobile() ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
+          <SidebarInner />
+        </aside>
+      </>
+    </Show>
+  )
+}
+
+export function SidebarProvider(props: ParentProps) {
+  const [isMobile, setIsMobile] = createSignal(false)
+  const [open, setOpen] = createSignal(true)
+  const [openMobile, setOpenMobile] = createSignal(false)
+
+  onMount(() => {
+    try {
+      const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY)
+      if (saved === "false") {
+        setOpen(false)
+      }
+    } catch {
+      // localStorage not available
+    }
+  })
+
+  // Mobile detection
+  createEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT
+      setIsMobile(mobile)
+      if (!mobile && openMobile()) {
+        setOpenMobile(false)
+      }
+    }
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    onCleanup(() => window.removeEventListener("resize", checkMobile))
+  })
+
+  // Persist state
+  createEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(open()))
+    } catch {
+      // localStorage not available
+    }
+  })
+
+  // Keyboard shortcut (Cmd/Ctrl+B)
+  createEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        toggle()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    onCleanup(() => window.removeEventListener("keydown", handleKeyDown))
+  })
+
+  const toggle = () => {
+    if (isMobile()) {
+      setOpenMobile((prev) => !prev)
+    } else {
+      setOpen((prev) => !prev)
+    }
+  }
+
+  const value: SidebarContextValue = {
+    isMobile,
+    open,
+    openMobile,
+    setOpen,
+    setOpenMobile,
+    toggle,
+  }
+
+  return <SidebarContext.Provider value={value}>{props.children}</SidebarContext.Provider>
 }
 
 export function Sidebar() {

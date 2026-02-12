@@ -80,6 +80,7 @@ function ProjectItem(props: {
   areaId: string | undefined
   progress: number
   onTaskDrop?: (taskId: string, projectId: string, areaId: string | undefined) => void
+  onLinkClick?: () => void
 }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -210,6 +211,7 @@ function ProjectItem(props: {
       e.preventDefault()
       return
     }
+    props.onLinkClick?.()
     navigate(`/project/${props.project.id}`)
   }
 
@@ -349,10 +351,11 @@ function AreaPreview(props: { area: AreaInfo }) {
 }
 
 // Area header component
-function AreaHeader(props: { area: AreaInfo }) {
+function AreaHeader(props: { area: AreaInfo; onLinkClick?: () => void }) {
   const navigate = useNavigate()
 
   const handleClick = () => {
+    props.onLinkClick?.()
     navigate(`/area/${props.area.id}`)
   }
 
@@ -375,6 +378,7 @@ function AreaItem(props: {
   projectProgress: Accessor<Map<string, number>>
   onTaskDrop?: (taskId: string, projectId: string, areaId: string | undefined) => void
   onAreaTaskDrop?: (taskId: string, areaId: string) => void
+  onLinkClick?: () => void
 }) {
   const location = useLocation()
   let outerRef: HTMLDivElement | undefined
@@ -516,7 +520,7 @@ function AreaItem(props: {
               state().type === "task-over" && "bg-sidebar-accent ring-2 ring-things-blue ring-inset",
             )}
           >
-            <AreaHeader area={props.area} />
+            <AreaHeader area={props.area} onLinkClick={props.onLinkClick} />
           </div>
           <div>
             <Show when={props.projects.length > 0} fallback={<EmptyDropZone areaId={props.area.id} />}>
@@ -527,6 +531,7 @@ function AreaItem(props: {
                     areaId={props.area.id}
                     progress={props.projectProgress().get(project.id) ?? 0}
                     onTaskDrop={props.onTaskDrop}
+                    onLinkClick={props.onLinkClick}
                   />
                 )}
               </For>
@@ -557,6 +562,7 @@ export function DraggableSidebarList(props: {
   onReorderAreas: (areaIds: string[]) => void
   onTaskDrop?: (taskId: string, projectId: string, areaId: string | undefined) => void
   onAreaTaskDrop?: (taskId: string, areaId: string) => void
+  onLinkClick?: () => void
 }) {
   // Monitor for all drag operations and handle the drops
   createEffect(() => {
@@ -681,6 +687,7 @@ export function DraggableSidebarList(props: {
                 areaId={undefined}
                 progress={props.projectProgress().get(project.id) ?? 0}
                 onTaskDrop={props.onTaskDrop}
+                onLinkClick={props.onLinkClick}
               />
             )}
           </For>
@@ -696,6 +703,7 @@ export function DraggableSidebarList(props: {
             projectProgress={props.projectProgress}
             onTaskDrop={props.onTaskDrop}
             onAreaTaskDrop={props.onAreaTaskDrop}
+            onLinkClick={props.onLinkClick}
           />
         )}
       </For>

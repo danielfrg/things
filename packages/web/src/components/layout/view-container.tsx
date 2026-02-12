@@ -15,7 +15,12 @@ type ViewContainerProps = ParentProps<{
 
 export function ViewContainer(props: ViewContainerProps) {
   return (
-    <div class="flex flex-col h-full bg-background overflow-hidden">
+    <div class="flex flex-col h-full bg-background overflow-hidden relative">
+      {/* Mobile floating sync status */}
+      <div class="md:hidden fixed top-3 right-3 z-30">
+        <SyncStatus />
+      </div>
+
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <header class="flex items-center justify-between px-0 md:px-20 pt-8 pb-4">
@@ -55,9 +60,9 @@ export function ViewContainer(props: ViewContainerProps) {
       </div>
 
       {/* Bottom toolbar */}
-      <div class="flex-shrink-0 border-t border-sidebar-border bg-background px-6 md:px-18 h-[52px] flex items-center justify-center relative">
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-background h-[52px] flex items-center justify-center relative">
         {props.toolbar}
-        <div class="absolute right-4 md:right-6">
+        <div class="hidden md:block absolute right-6">
           <SyncStatus />
         </div>
       </div>

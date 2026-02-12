@@ -14,6 +14,8 @@ import {
   SunIcon,
   Trash2Icon,
 } from "@/components/icons"
+import { SidebarTrigger } from "@/components/layout/sidebar"
+import { SyncStatus } from "@/components/sync-status"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -803,7 +805,12 @@ function ApiKeysSection() {
 
 export function Settings() {
   return (
-    <div class="flex flex-col h-full bg-background overflow-hidden">
+    <div class="flex flex-col h-full bg-background overflow-hidden relative">
+      {/* Mobile floating sync status */}
+      <div class="md:hidden fixed top-3 right-3 z-30">
+        <SyncStatus />
+      </div>
+
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <div class="max-w-[800px] mx-auto px-6 py-8">
           {/* Page Title */}
@@ -827,6 +834,18 @@ export function Settings() {
           <p class="text-xs text-muted-foreground text-center">
             Version: {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev"}
           </p>
+        </div>
+      </div>
+
+      {/* Bottom toolbar */}
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-background h-[52px] flex items-center relative">
+        {/* Mobile: centered sidebar trigger */}
+        <div class="flex md:hidden items-center justify-center w-full px-4">
+          <SidebarTrigger />
+        </div>
+        {/* Desktop: floating sync status */}
+        <div class="hidden md:block absolute right-6">
+          <SyncStatus />
         </div>
       </div>
     </div>

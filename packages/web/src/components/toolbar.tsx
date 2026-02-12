@@ -1,5 +1,6 @@
 import type { ParentProps } from "solid-js"
 import { ArchiveIcon, PlusIcon, SearchIcon, SeparatorHorizontalIcon } from "@/components/icons"
+import { SidebarTrigger } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { useApp } from "@/context/app"
 import { cn } from "@/lib/utils"
@@ -73,5 +74,10 @@ export function LogCompletedButton(props: LogCompletedButtonProps) {
 }
 
 export function ViewToolbar(props: ParentProps) {
-  return <div class="flex items-center gap-2">{props.children}</div>
+  return (
+    <div class="flex items-center gap-2">
+      <SidebarTrigger />
+      {props.children}
+    </div>
+  )
 }

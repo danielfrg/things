@@ -78,7 +78,17 @@ export function CommandPalette(props: CommandPaletteProps) {
 
   // Get task route based on its properties
   const getTaskRoute = (task: TaskInfo) => {
-    if (task.listId) return `/project/${task.listId}`
+    if (task.listId) {
+      const isProject = sidebar.activeProjects.some((p) => p.id === task.listId)
+      if (isProject) {
+        return `/project/${task.listId}`
+      }
+      const isArea = sidebar.sortedAreas.some((a) => a.id === task.listId)
+      if (isArea) {
+        return `/area/${task.listId}`
+      }
+      return `/project/${task.listId}`
+    }
     if (task.scheduledDate) {
       const date = parseLocalDate(task.scheduledDate)
       const today = new Date()
