@@ -1,7 +1,6 @@
 export * from "./checklist-editor"
 export * from "./grouped-task-list"
 export * from "./item-detail-layout"
-export * from "./task"
 export * from "./task-card"
 export * from "./task-card-list"
 export * from "./task-list"

@@ -9,7 +9,6 @@ import { SDKProvider } from "./context/sdk"
 import { TaskRepositoryProvider } from "./context/task-repository"
 import { Anytime } from "./pages/anytime"
 import { Area } from "./pages/area"
-import { Board } from "./pages/board"
 import { CliAuth } from "./pages/cli-auth"
 import { Help } from "./pages/help"
 import { Inbox } from "./pages/inbox"
@@ -102,7 +101,6 @@ render(
       <Router>
         <Route path="/login" component={PublicLogin} />
         <Route path="/cli-auth" component={CliAuthWrapper} />
-        <Route path="/board" component={Board} />
         <Route path="/" component={ProtectedApp}>
           <Route path="/" component={() => <Navigate href="/today" />} />
           <Route path="/inbox" component={Inbox} />

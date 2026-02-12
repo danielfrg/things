@@ -6,9 +6,6 @@ import { createSimpleContext } from "./context"
 import { useEvent } from "./event"
 import { useSDK } from "./sdk"
 
-// Re-export types for convenience
-export type { ChecklistItemInfo, TaskInfo, TaskTagInfo, TemplateInfo } from "./data"
-
 import type { ChecklistItemInfo, TaskInfo, TaskTagInfo, TemplateInfo } from "./data"
 
 /**

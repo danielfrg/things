@@ -63,52 +63,6 @@ export function idSchema(entity: EntityType) {
 }
 
 // =============================================================================
-// Parent Type Derivation (Legacy - kept for compatibility)
-// =============================================================================
-// The old parentId system used a single field for area/project/heading.
-// The new listId + headingId system is cleaner but we keep these for compatibility.
-
-export type ParentType = "none" | "area" | "project" | "heading"
-
-/**
- * Derive the parent type from a parentId
- * @deprecated Use getListType() for listId, check headingId directly
- * @example getParentType("prj_01ARZ...") => "project"
- * @example getParentType(null) => "none"
- */
-export function getParentType(parentId: string | null | undefined): ParentType {
-  if (!parentId) return "none"
-  if (parentId.startsWith(`${prefixes.area}_`)) return "area"
-  if (parentId.startsWith(`${prefixes.project}_`)) return "project"
-  if (parentId.startsWith(`${prefixes.heading}_`)) return "heading"
-  throw new Error(`Invalid parent ID prefix: ${parentId}`)
-}
-
-/**
- * Validate that a parentId has a valid prefix (area, project, or heading)
- * @deprecated Use isValidListId() for listId validation
- */
-export function isValidParentId(parentId: string): boolean {
-  return (
-    parentId.startsWith(`${prefixes.area}_`) ||
-    parentId.startsWith(`${prefixes.project}_`) ||
-    parentId.startsWith(`${prefixes.heading}_`)
-  )
-}
-
-/**
- * Zod schema for parentId - must be a valid area, project, or heading ID
- * @deprecated Use listIdSchema for the new listId field
- */
-export const parentIdSchema = z
-  .string()
-  .refine(isValidParentId, {
-    message: "parentId must be a valid area (are_), project (prj_), or heading (hdg_) ID",
-  })
-  .nullable()
-  .optional()
-
-// =============================================================================
 // List Type System
 // =============================================================================
 // The new "List" abstraction: both Projects and Areas are "Lists" that hold tasks.
