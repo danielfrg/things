@@ -15,7 +15,8 @@
     "cli": "bun run packages/cli/index.ts",
     "cli:build": "bun run packages/cli/script/build.ts",
     "typecheck": "bun turbo typecheck",
-    "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,css,md}\""
+    "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "reset": "rm -rf node_modules packages/*/node_modules packages/*/.turbo .turbo bun.lock packages/*/dist"
   },
   "workspaces": {
     "packages": [

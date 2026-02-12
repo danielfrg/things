@@ -67,7 +67,7 @@ function PublicLogin() {
         </div>
       }
     >
-      <Show when={!auth.isAuthenticated} fallback={<Navigate href="/inbox" />}>
+      <Show when={!auth.isAuthenticated} fallback={<Navigate href="/today" />}>
         <Login />
       </Show>
     </Show>
@@ -104,7 +104,7 @@ render(
         <Route path="/cli-auth" component={CliAuthWrapper} />
         <Route path="/board" component={Board} />
         <Route path="/" component={ProtectedApp}>
-          <Route path="/" component={() => <Navigate href="/inbox" />} />
+          <Route path="/" component={() => <Navigate href="/today" />} />
           <Route path="/inbox" component={Inbox} />
           <Route path="/today" component={Today} />
           <Route path="/upcoming" component={Upcoming} />

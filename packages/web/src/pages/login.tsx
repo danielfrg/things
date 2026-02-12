@@ -19,7 +19,7 @@ export function Login() {
       mode() === "signin" ? await auth.signIn(email(), password()) : await auth.signUp(email(), password(), name())
 
     if (success) {
-      navigate("/inbox")
+      navigate("/today")
     }
   }
 
