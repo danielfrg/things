@@ -199,8 +199,9 @@ export function TaskCard(props: TaskCardProps) {
   createEffect(() => {
     const isExpanded = props.expanded
     if (wasExpanded && !isExpanded) {
-      // Card just collapsed - commit any pending sticky changes
-      stickyChanges.commit()
+      // Card just collapsed - delay commit so the collapse animation
+      // isn't interrupted by store updates replacing the task object
+      setTimeout(() => stickyChanges.commit(), 300)
     }
     wasExpanded = isExpanded
   })
@@ -470,7 +471,7 @@ export function TaskCard(props: TaskCardProps) {
                   : "text-foreground",
               )}
             >
-              {props.task.title}
+              {effectiveTask().title}
             </span>
             {/* Project/Area subtitle - shown in logbook/trash view */}
             <Show when={(props.showCompletedDate || props.isTrashView) && getProjectOrAreaName()}>
@@ -483,10 +484,10 @@ export function TaskCard(props: TaskCardProps) {
           ref={(el) => {
             titleRef = el
           }}
-          value={props.task.title}
+          value={effectiveTask().title}
           onChange={(title) => {
             if (title.trim()) {
-              props.onUpdate(props.task.id, { title })
+              stickyChanges.setPendingChanges({ title })
             }
           }}
           onEnter={() => props.onExpand(props.task.id)}
