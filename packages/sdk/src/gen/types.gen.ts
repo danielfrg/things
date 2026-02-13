@@ -9,7 +9,6 @@ export type ViewTask = {
   title: string
   notes: string | null
   status: string | null
-  type: string
   isSomeday: boolean
   scheduledDate: string | null
   deadline: string | null
@@ -101,7 +100,6 @@ export type Task = {
   title: string
   notes: string | null
   status: "active" | "completed" | "cancelled" | "trashed" | null
-  type: "task" | "project"
   isSomeday: boolean
   scheduledDate: string | null
   deadline: string | null

@@ -84,9 +84,6 @@
               }
             ]
           },
-          "type": {
-            "type": "string"
-          },
           "isSomeday": {
             "type": "boolean"
           },
@@ -181,7 +178,6 @@
           "title",
           "notes",
           "status",
-          "type",
           "isSomeday",
           "scheduledDate",
           "deadline",
@@ -544,13 +540,6 @@
               }
             ]
           },
-          "type": {
-            "type": "string",
-            "enum": [
-              "task",
-              "project"
-            ]
-          },
           "isSomeday": {
             "type": "boolean"
           },
@@ -665,7 +654,6 @@
           "title",
           "notes",
           "status",
-          "type",
           "isSomeday",
           "scheduledDate",
           "deadline",

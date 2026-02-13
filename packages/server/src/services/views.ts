@@ -1,5 +1,5 @@
 import { addDays, format, isBefore, isSameDay, isToday, startOfDay } from "date-fns"
-import { and, eq, isNotNull, isNull, or } from "drizzle-orm"
+import { and, desc, eq, inArray, isNotNull, isNull, or } from "drizzle-orm"
 import { db } from "@/db"
 import { type Area, areas, headings, type Project, projects, type Task, tags, tasks, taskTags } from "@/db/schema"
 import { getListType, isProjectId } from "@/lib/id"
@@ -74,18 +74,6 @@ export interface UpcomingViewResponse {
 // =============================================================================
 // Hierarchy Helpers
 // =============================================================================
-// Build a map of projectId -> areaId for efficient area lookups
-async function buildProjectAreaMap(userId: string): Promise<Map<string, string | null>> {
-  const allProjects = await db
-    .select({ id: projects.id, areaId: projects.areaId })
-    .from(projects)
-    .where(eq(projects.userId, userId))
-  const map = new Map<string, string | null>()
-  for (const p of allProjects) {
-    map.set(p.id, p.areaId)
-  }
-  return map
-}
 // Get projectId from task - direct from listId if it's a project
 function getProjectId(task: Task): string | null {
   if (!task.listId) return null
@@ -151,11 +139,10 @@ async function fetchTagsForTasks(userId: string, taskIds: string[]): Promise<Map
     })
     .from(taskTags)
     .innerJoin(tags, eq(taskTags.tagId, tags.id))
-    .where(and(eq(taskTags.userId, userId), isNull(taskTags.trashedAt)))
+    .where(and(eq(taskTags.userId, userId), isNull(taskTags.trashedAt), inArray(taskTags.taskId, taskIds)))
 
   const map = new Map<string, ViewTaskTag[]>()
   for (const row of result) {
-    if (!taskIds.includes(row.taskId)) continue
     const existing = map.get(row.taskId) ?? []
     existing.push({ id: row.tagId, title: row.tagTitle })
     map.set(row.taskId, existing)
@@ -193,31 +180,37 @@ export async function getTodayView(userId: string): Promise<ViewResponse> {
     return isToday(parseLocalDate(dateStr))
   }
 
-  // Fetch all relevant data
-  const [allTasks, allProjects, allAreas, todayPositions, projectAreaMap] = await Promise.all([
-    db.select().from(tasks).where(eq(tasks.userId, userId)),
+  // Fetch relevant data - filter out trashed, template, and logged tasks at DB level
+  const [allTasks, allProjects, allAreas, todayPositions] = await Promise.all([
+    db
+      .select()
+      .from(tasks)
+      .where(
+        and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false), eq(tasks.isLogged, false)),
+      ),
     db.select().from(projects).where(eq(projects.userId, userId)),
     db.select().from(areas).where(eq(areas.userId, userId)),
     getPositionMap(userId, "today", null),
-    buildProjectAreaMap(userId),
   ])
+
+  // Build project-area map from already-fetched projects (no extra query)
+  const projectAreaMap = new Map<string, string | null>()
+  for (const p of allProjects) {
+    projectAreaMap.set(p.id, p.areaId)
+  }
 
   // Filter tasks for today view (including completed/cancelled today)
   const todayTasks = allTasks.filter((task: Task) => {
-    if (task.trashedAt) return false
-    if (task.isTemplate) return false
     const scheduledOverdue = isDateOverdue(task.scheduledDate)
     const scheduledToday = isDateToday(task.scheduledDate)
     const deadlineOverdue = isDateOverdue(task.deadline)
     const deadlineToday = isDateToday(task.deadline)
     const isScheduledForToday = scheduledOverdue || scheduledToday || deadlineOverdue || deadlineToday
-    // Logged tasks don't appear in Today view (only in logbook)
-    if (task.isLogged) return false
-    // Completed tasks only show if completed today (and not logged)
+    // Completed tasks only show if completed today
     if (task.completedAt && !task.status?.match(/cancelled/)) {
       return isToday(task.completedAt)
     }
-    // Cancelled tasks show if they were scheduled for today OR cancelled today (and not logged)
+    // Cancelled tasks show if they were scheduled for today OR cancelled today
     if (task.status === "cancelled") {
       const cancelledToday = task.completedAt ? isToday(task.completedAt) : false
       return isScheduledForToday || cancelledToday
@@ -378,13 +371,20 @@ function getDayLabel(date: Date): string {
 export async function getUpcomingView(userId: string): Promise<UpcomingViewResponse> {
   const today = startOfDay(new Date())
 
-  const allTasks = await db
-    .select()
-    .from(tasks)
-    .where(and(eq(tasks.userId, userId), isNull(tasks.trashedAt)))
-  // Separate regular tasks from templates
-  const regularTasks = allTasks.filter((t: Task) => !t.isTemplate)
-  const templates = allTasks.filter((t: Task) => t.isTemplate && t.status === "active")
+  // Fetch regular tasks and templates in parallel with separate filtered queries
+  const [regularTasks, templates] = await Promise.all([
+    db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false))),
+    db
+      .select()
+      .from(tasks)
+      .where(
+        and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, true), eq(tasks.status, "active")),
+      ),
+  ])
+
   // Filter upcoming tasks (after today) - include completed tasks scheduled for future dates
   const upcomingTasks = regularTasks.filter((task: Task) => {
     if (!task.scheduledDate && !task.deadline) return false
@@ -397,12 +397,20 @@ export async function getUpcomingView(userId: string): Promise<UpcomingViewRespo
   })
   const days: DayGroup[] = []
   const sevenDaysFromNow = addDays(today, 7)
+
+  // Batch fetch position maps for all 7 days in parallel
+  const dateStrs = Array.from({ length: 7 }, (_, i) => format(addDays(today, i + 1), "yyyy-MM-dd"))
+  const positionMaps = await Promise.all(dateStrs.map((d) => getPositionMap(userId, "upcoming", d)))
+  const positionsByDate = new Map<string, Map<string, number>>()
+  for (let i = 0; i < dateStrs.length; i++) {
+    positionsByDate.set(dateStrs[i]!, positionMaps[i]!)
+  }
+
   // Next 7 days
   for (let i = 1; i <= 7; i++) {
     const date = addDays(today, i)
     const dateStr = format(date, "yyyy-MM-dd")
-    // Get positions for this specific date
-    const datePositions = await getPositionMap(userId, "upcoming", dateStr)
+    const datePositions = positionsByDate.get(dateStr) ?? new Map<string, number>()
     const dayTasks = upcomingTasks.filter((t: Task) => {
       const scheduledDate = t.scheduledDate ? startOfDay(parseLocalDate(t.scheduledDate)) : null
       const deadline = t.deadline ? startOfDay(parseLocalDate(t.deadline)) : null
@@ -473,7 +481,7 @@ export async function getUpcomingView(userId: string): Promise<UpcomingViewRespo
 export async function getAnytimeView(userId: string): Promise<ViewResponse> {
   // Anytime = active tasks without scheduled date, not someday
   // Also include cancelled tasks that belong to anytime view (cancelled today)
-  const [allTasks, allProjects, allAreas, anytimePositions, projectAreaMap] = await Promise.all([
+  const [allTasks, allProjects, allAreas, anytimePositions] = await Promise.all([
     db
       .select()
       .from(tasks)
@@ -490,8 +498,12 @@ export async function getAnytimeView(userId: string): Promise<ViewResponse> {
     db.select().from(projects).where(eq(projects.userId, userId)),
     db.select().from(areas).where(eq(areas.userId, userId)),
     getPositionMap(userId, "anytime", null),
-    buildProjectAreaMap(userId),
   ])
+
+  const projectAreaMap = new Map<string, string | null>()
+  for (const p of allProjects) {
+    projectAreaMap.set(p.id, p.areaId)
+  }
 
   // Filter cancelled tasks to only include those cancelled today (and not logged)
   const filteredTasks = allTasks.filter((t: Task) => {
@@ -511,7 +523,7 @@ export async function getAnytimeView(userId: string): Promise<ViewResponse> {
 export async function getSomedayView(userId: string): Promise<ViewResponse> {
   // Someday = active tasks with isSomeday=true that don't have a scheduledDate
   // Also include cancelled tasks that belong to someday view (cancelled today)
-  const [allTasks, allProjects, allAreas, somedayPositions, projectAreaMap] = await Promise.all([
+  const [allTasks, allProjects, allAreas, somedayPositions] = await Promise.all([
     db
       .select()
       .from(tasks)
@@ -528,8 +540,12 @@ export async function getSomedayView(userId: string): Promise<ViewResponse> {
     db.select().from(projects).where(eq(projects.userId, userId)),
     db.select().from(areas).where(eq(areas.userId, userId)),
     getPositionMap(userId, "someday", null),
-    buildProjectAreaMap(userId),
   ])
+
+  const projectAreaMap = new Map<string, string | null>()
+  for (const p of allProjects) {
+    projectAreaMap.set(p.id, p.areaId)
+  }
 
   // Filter cancelled tasks to only include those cancelled today (and not logged)
   const filteredTasks = allTasks.filter((t: Task) => {
@@ -653,22 +669,11 @@ export async function getLogbookView(userId: string): Promise<ViewResponse> {
     .select()
     .from(tasks)
     .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.trashedAt),
-        eq(tasks.isTemplate, false),
-        // Only show tasks that have been explicitly logged
-        eq(tasks.isLogged, true),
-      ),
+      and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false), eq(tasks.isLogged, true)),
     )
-  // Sort by completedAt descending (most recently completed first)
-  const sorted = [...result].sort((a, b) => {
-    const aTime = a.completedAt?.getTime() ?? 0
-    const bTime = b.completedAt?.getTime() ?? 0
-    return bTime - aTime
-  })
+    .orderBy(desc(tasks.completedAt))
 
-  const formattedTasks = sorted.map((t, index) => formatTask(t, index))
+  const formattedTasks = result.map((t, index) => formatTask(t, index))
 
   // Add tags
   const taskIds = formattedTasks.map((t) => t.id)
@@ -701,14 +706,9 @@ export async function getTrashView(userId: string): Promise<ViewResponse> {
         or(eq(tasks.status, "trashed"), isNotNull(tasks.trashedAt)),
       ),
     )
-  // Sort by trashedAt descending (most recently trashed first)
-  const sorted = [...result].sort((a, b) => {
-    const aTime = a.trashedAt?.getTime() ?? 0
-    const bTime = b.trashedAt?.getTime() ?? 0
-    return bTime - aTime
-  })
+    .orderBy(desc(tasks.trashedAt))
 
-  const formattedTasks = sorted.map((t, index) => formatTask(t, index))
+  const formattedTasks = result.map((t, index) => formatTask(t, index))
 
   // Add tags
   const taskIds = formattedTasks.map((t) => t.id)
@@ -741,7 +741,7 @@ export interface ProjectViewResponse {
   sections: ViewSection[]
 }
 export async function getProjectView(userId: string, projectId: string): Promise<ProjectViewResponse> {
-  const [projectResults, allTasks, allHeadings, projectPositions, projectTemplates] = await Promise.all([
+  const [projectResults, projectTasks, allHeadings, projectPositions, projectTemplates] = await Promise.all([
     db
       .select()
       .from(projects)
@@ -749,7 +749,14 @@ export async function getProjectView(userId: string, projectId: string): Promise
     db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false))),
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.listId, projectId),
+          isNull(tasks.trashedAt),
+          eq(tasks.isTemplate, false),
+        ),
+      ),
     db
       .select()
       .from(headings)
@@ -766,8 +773,6 @@ export async function getProjectView(userId: string, projectId: string): Promise
   if (!project) {
     return { project: null, sections: [] }
   }
-  // Filter tasks that belong to this project (listId = projectId)
-  const projectTasks = allTasks.filter((t) => t.listId === projectId)
   // Separate headings
   const backlogHeading = allHeadings.find((h) => h.isBacklog)
   const regularHeadings = allHeadings.filter((h) => !h.isBacklog).sort((a, b) => a.position - b.position)
@@ -892,7 +897,7 @@ export interface AreaViewResponse {
   }>
 }
 export async function getAreaView(userId: string, areaId: string): Promise<AreaViewResponse> {
-  const [areaResults, allTasks, areaProjects, areaPositions, areaTemplates] = await Promise.all([
+  const [areaResults, areaTaskRows, areaProjects, areaPositions, areaTemplates] = await Promise.all([
     db
       .select()
       .from(areas)
@@ -900,7 +905,9 @@ export async function getAreaView(userId: string, areaId: string): Promise<AreaV
     db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.userId, userId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false))),
+      .where(
+        and(eq(tasks.userId, userId), eq(tasks.listId, areaId), isNull(tasks.trashedAt), eq(tasks.isTemplate, false)),
+      ),
     db
       .select()
       .from(projects)
@@ -924,10 +931,9 @@ export async function getAreaView(userId: string, areaId: string): Promise<AreaV
   if (!area) {
     return { area: null, sections: [], projects: [] }
   }
-  // Tasks directly in the area (listId = areaId, not someday) - include cancelled today
+  // Tasks directly in the area (not someday) - include cancelled today
   const areaTasks = sortTasksByPosition(
-    allTasks.filter((t) => {
-      if (t.listId !== areaId) return false
+    areaTaskRows.filter((t: Task) => {
       if (t.isLogged) return false
       if (t.status === "cancelled") {
         return t.completedAt ? isToday(t.completedAt) : false
@@ -936,11 +942,9 @@ export async function getAreaView(userId: string, areaId: string): Promise<AreaV
     }),
     areaPositions,
   )
-  // Someday tasks in the area (listId = areaId)
+  // Someday tasks in the area
   const somedayTasks = sortTasksByPosition(
-    allTasks.filter((t) => {
-      return t.listId === areaId && t.isSomeday
-    }),
+    areaTaskRows.filter((t: Task) => t.isSomeday),
     areaPositions,
   )
   const sections: ViewSection[] = []
@@ -979,18 +983,40 @@ export async function getAreaView(userId: string, areaId: string): Promise<AreaV
       isRepeated: true,
     })
   }
-  // Projects with task counts and progress
+  // Projects with task counts and progress - fetch tasks for these projects in one query
+  const projectIds = areaProjects.map((p) => p.id)
+  const projectTaskRows =
+    projectIds.length > 0
+      ? await db
+          .select({ listId: tasks.listId, status: tasks.status })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.userId, userId),
+              inArray(tasks.listId, projectIds),
+              isNull(tasks.trashedAt),
+              eq(tasks.isTemplate, false),
+            ),
+          )
+      : []
+  // Group counts by project
+  const projectCounts = new Map<string, { total: number; completed: number }>()
+  for (const row of projectTaskRows) {
+    if (!row.listId) continue
+    const c = projectCounts.get(row.listId) ?? { total: 0, completed: 0 }
+    c.total++
+    if (row.status === "completed") c.completed++
+    projectCounts.set(row.listId, c)
+  }
   const projectsWithStats = areaProjects
     .sort((a, b) => a.position - b.position)
     .map((project) => {
-      const projectTasks = allTasks.filter((t) => t.listId === project.id)
-      const activeProjTasks = projectTasks.filter((t) => t.status !== "completed")
-      const completedTasks = projectTasks.filter((t) => t.status === "completed")
-      const progress = projectTasks.length > 0 ? Math.round((completedTasks.length / projectTasks.length) * 100) : 0
+      const c = projectCounts.get(project.id) ?? { total: 0, completed: 0 }
+      const progress = c.total > 0 ? Math.round((c.completed / c.total) * 100) : 0
       return {
         id: project.id,
         title: project.title,
-        taskCount: activeProjTasks.length,
+        taskCount: c.total - c.completed,
         progress,
       }
     })

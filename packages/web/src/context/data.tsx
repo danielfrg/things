@@ -11,7 +11,6 @@ export type TaskInfo = {
   title: string
   notes: string | null
   status: string | null
-  type: string
   isSomeday: boolean
   scheduledDate: string | null
   deadline: string | null

@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, lte } from "drizzle-orm"
+import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm"
 import * as rrulePkg from "rrule"
 import { db } from "@/db"
 
@@ -146,36 +146,37 @@ export function describeRRule(rruleStr: string): string {
 
 export async function listTemplates(userId: string): Promise<TemplateWithTags[]> {
   const templates = await db.query.tasks.findMany({
-    where: and(eq(tasks.userId, userId), eq(tasks.isTemplate, true), isNull(tasks.trashedAt), isNull(tasks.trashedAt)),
+    where: and(eq(tasks.userId, userId), eq(tasks.isTemplate, true), isNull(tasks.trashedAt)),
     orderBy: asc(tasks.createdAt),
   })
 
-  return await Promise.all(
-    templates.map(async (template: Task) => {
-      // Get tags for this template
-      const templateTags = await db
-        .select({
-          id: tags.id,
-          title: tags.title,
-        })
-        .from(taskTags)
-        .innerJoin(tags, eq(taskTags.tagId, tags.id))
-        .where(and(eq(taskTags.taskId, template.id), isNull(taskTags.trashedAt)))
+  if (templates.length === 0) return []
 
-      return { ...template, tags: templateTags }
-    }),
-  )
+  // Batch fetch all tags for all templates in one query
+  const templateIds = templates.map((t) => t.id)
+  const allTags = await db
+    .select({
+      taskId: taskTags.taskId,
+      id: tags.id,
+      title: tags.title,
+    })
+    .from(taskTags)
+    .innerJoin(tags, eq(taskTags.tagId, tags.id))
+    .where(and(inArray(taskTags.taskId, templateIds), isNull(taskTags.trashedAt)))
+
+  const tagMap = new Map<string, Array<{ id: string; title: string }>>()
+  for (const row of allTags) {
+    const existing = tagMap.get(row.taskId) ?? []
+    existing.push({ id: row.id, title: row.title })
+    tagMap.set(row.taskId, existing)
+  }
+
+  return templates.map((template) => ({ ...template, tags: tagMap.get(template.id) ?? [] }))
 }
 
 export async function getTemplateById(id: string, userId: string): Promise<TemplateWithTags | null> {
   const template = await db.query.tasks.findFirst({
-    where: and(
-      eq(tasks.id, id),
-      eq(tasks.userId, userId),
-      eq(tasks.isTemplate, true),
-      isNull(tasks.trashedAt),
-      isNull(tasks.trashedAt),
-    ),
+    where: and(eq(tasks.id, id), eq(tasks.userId, userId), eq(tasks.isTemplate, true), isNull(tasks.trashedAt)),
   })
 
   if (!template) return null
@@ -199,7 +200,6 @@ export async function getDueTemplates(today: string, userId: string): Promise<Ta
       eq(tasks.userId, userId),
       eq(tasks.isTemplate, true),
       eq(tasks.status, "active"),
-      isNull(tasks.trashedAt),
       isNull(tasks.trashedAt),
       lte(tasks.nextOccurrence, today),
     ),
@@ -235,10 +235,10 @@ export async function createTemplate(input: CreateTemplateInput): Promise<string
 
   const templateId = inserted.id
 
-  // Create checklist items if provided
+  // Create checklist items if provided (batch insert)
   if (input.checklistItems?.length) {
-    for (const [index, item] of input.checklistItems.entries()) {
-      await db.insert(checklistItems).values({
+    await db.insert(checklistItems).values(
+      input.checklistItems.map((item, index) => ({
         id: createId("checklistItem"),
         userId: input.userId,
         taskId: templateId,
@@ -247,22 +247,22 @@ export async function createTemplate(input: CreateTemplateInput): Promise<string
         position: index + 1,
         createdAt: now,
         updatedAt: now,
-      })
-    }
+      })),
+    )
   }
 
-  // Create tag associations if provided
+  // Create tag associations if provided (batch insert)
   if (input.tagIds?.length) {
-    for (const tagId of input.tagIds) {
-      await db.insert(taskTags).values({
+    await db.insert(taskTags).values(
+      input.tagIds.map((tagId) => ({
         id: createId("taskTag"),
         userId: input.userId,
         taskId: templateId,
         tagId,
         createdAt: now,
         updatedAt: now,
-      })
-    }
+      })),
+    )
   }
 
   return templateId
@@ -362,7 +362,6 @@ export async function spawnTemplate(templateId: string, userId: string): Promise
       eq(tasks.isTemplate, true),
       eq(tasks.status, "active"),
       isNull(tasks.trashedAt),
-      isNull(tasks.trashedAt),
     ),
   })
 
@@ -430,17 +429,19 @@ export async function spawnTemplate(templateId: string, userId: string): Promise
     orderBy: asc(checklistItems.position),
   })
 
-  for (const item of templateChecklistItems) {
-    await db.insert(checklistItems).values({
-      id: createId("checklistItem"),
-      userId,
-      taskId,
-      title: item.title,
-      completed: false,
-      position: item.position,
-      createdAt: now,
-      updatedAt: now,
-    })
+  if (templateChecklistItems.length > 0) {
+    await db.insert(checklistItems).values(
+      templateChecklistItems.map((item) => ({
+        id: createId("checklistItem"),
+        userId,
+        taskId,
+        title: item.title,
+        completed: false,
+        position: item.position,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    )
   }
 
   // Copy tags from template
@@ -448,15 +449,17 @@ export async function spawnTemplate(templateId: string, userId: string): Promise
     where: and(eq(taskTags.taskId, templateId), eq(taskTags.userId, userId), isNull(taskTags.trashedAt)),
   })
 
-  for (const tagRelation of templateTagRelations) {
-    await db.insert(taskTags).values({
-      id: createId("taskTag"),
-      userId,
-      taskId,
-      tagId: tagRelation.tagId,
-      createdAt: now,
-      updatedAt: now,
-    })
+  if (templateTagRelations.length > 0) {
+    await db.insert(taskTags).values(
+      templateTagRelations.map((tagRelation) => ({
+        id: createId("taskTag"),
+        userId,
+        taskId,
+        tagId: tagRelation.tagId,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    )
   }
 
   await advanceTemplate(templateId, userId)
@@ -566,31 +569,35 @@ export async function updateTemplateFromTask(taskId: string): Promise<void> {
   await db.update(checklistItems).set({ trashedAt: new Date() }).where(eq(checklistItems.taskId, task.templateId))
 
   const now = new Date()
-  for (const [index, item] of taskChecklistItems.entries()) {
-    await db.insert(checklistItems).values({
-      id: createId("checklistItem"),
-      userId: task.userId,
-      taskId: task.templateId,
-      title: item.title,
-      completed: false,
-      position: index + 1,
-      createdAt: now,
-      updatedAt: now,
-    })
+  if (taskChecklistItems.length > 0) {
+    await db.insert(checklistItems).values(
+      taskChecklistItems.map((item, index) => ({
+        id: createId("checklistItem"),
+        userId: task.userId,
+        taskId: task.templateId!,
+        title: item.title,
+        completed: false,
+        position: index + 1,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    )
   }
 
   // Delete existing template tags and recreate
-  await db.update(taskTags).set({ trashedAt: new Date() }).where(eq(taskTags.taskId, task.templateId))
+  await db.update(taskTags).set({ trashedAt: now }).where(eq(taskTags.taskId, task.templateId!))
 
-  for (const tagRelation of taskTagRelations) {
-    await db.insert(taskTags).values({
-      id: createId("taskTag"),
-      userId: task.userId,
-      taskId: task.templateId,
-      tagId: tagRelation.tagId,
-      createdAt: now,
-      updatedAt: now,
-    })
+  if (taskTagRelations.length > 0) {
+    await db.insert(taskTags).values(
+      taskTagRelations.map((tagRelation) => ({
+        id: createId("taskTag"),
+        userId: task.userId,
+        taskId: task.templateId!,
+        tagId: tagRelation.tagId,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    )
   }
 }
 

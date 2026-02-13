@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm"
+import { and, eq, or, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { taskOrderings, type Task } from "@/db/schema"
 import { createId, getListType } from "@/lib/id"
@@ -238,28 +238,45 @@ export async function removeTaskOrdering(
 export async function ensureTaskOrderings(userId: string, task: Task): Promise<void> {
   const contexts = getTaskContexts(task)
 
-  for (const context of contexts) {
-    const existingPos = await getTaskPosition(userId, task.id, context.type, context.id)
-
-    if (existingPos === null) {
-      // No existing position - insert at top
-      const minPos = await getMinPosition(userId, context.type, context.id)
-      await setTaskPosition(userId, task.id, context.type, context.id, minPos - 1)
-    }
-  }
-
-  // Remove orderings for contexts the task no longer belongs to
-  const existingOrderings = await db
+  // Fetch all existing orderings for this task in one query
+  const existing = await db
     .select()
     .from(taskOrderings)
     .where(and(eq(taskOrderings.userId, userId), eq(taskOrderings.taskId, task.id)))
 
-  for (const ordering of existingOrderings) {
-    const stillRelevant = contexts.some((c) => c.type === ordering.contextType && c.id === ordering.contextId)
+  const existingSet = new Set(existing.map((o) => `${o.contextType}:${o.contextId ?? ""}`))
+  const missing = contexts.filter((c) => !existingSet.has(`${c.type}:${c.id ?? ""}`))
 
-    if (!stillRelevant) {
-      await removeTaskOrdering(userId, task.id, ordering.contextType as ContextType, ordering.contextId)
-    }
+  // Batch fetch min positions for all missing contexts in parallel
+  if (missing.length > 0) {
+    const minPositions = await Promise.all(missing.map((c) => getMinPosition(userId, c.type, c.id)))
+    // Batch insert new orderings
+    await db.insert(taskOrderings).values(
+      missing.map((c, i) => ({
+        id: createId("taskOrdering"),
+        userId,
+        taskId: task.id,
+        contextType: c.type,
+        contextId: c.id,
+        position: (minPositions[i] ?? 0) - 1,
+      })),
+    )
+  }
+
+  // Batch delete stale orderings in one query
+  const relevantSet = new Set(contexts.map((c) => `${c.type}:${c.id ?? ""}`))
+  const stale = existing.filter((o) => !relevantSet.has(`${o.contextType}:${o.contextId ?? ""}`))
+
+  if (stale.length > 0) {
+    const conditions = stale.map((o) =>
+      and(
+        eq(taskOrderings.contextType, o.contextType),
+        o.contextId ? eq(taskOrderings.contextId, o.contextId) : sql`${taskOrderings.contextId} IS NULL`,
+      ),
+    )
+    await db
+      .delete(taskOrderings)
+      .where(and(eq(taskOrderings.userId, userId), eq(taskOrderings.taskId, task.id), or(...conditions)))
   }
 }
 
@@ -273,10 +290,8 @@ export async function reorderTasksInContext(
   contextType: ContextType,
   contextId: string | null,
 ): Promise<void> {
-  // Update each task's position based on array index
-  for (let i = 0; i < taskIds.length; i++) {
-    await setTaskPosition(userId, taskIds[i]!, contextType, contextId, i)
-  }
+  // Update all task positions in parallel
+  await Promise.all(taskIds.map((id, i) => setTaskPosition(userId, id, contextType, contextId, i)))
 }
 
 /**

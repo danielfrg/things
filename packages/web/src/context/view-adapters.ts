@@ -20,6 +20,7 @@ import { useSDK } from "./sdk"
 
 export function useInboxView() {
   const repo = useTaskRepository()
+  repo.ensureView("inbox")
 
   return {
     get tasks() {
@@ -74,6 +75,7 @@ export function useInboxView() {
 
 export function useTodayView() {
   const repo = useTaskRepository()
+  repo.ensureView("today")
 
   return {
     get sections() {
@@ -117,6 +119,7 @@ export function useTodayView() {
 
 export function useUpcomingView() {
   const repo = useTaskRepository()
+  repo.ensureView("upcoming")
 
   return {
     get sections() {
@@ -162,6 +165,7 @@ export function useUpcomingView() {
 
 export function useAnytimeView() {
   const repo = useTaskRepository()
+  repo.ensureView("anytime")
 
   return {
     get sections() {
@@ -205,6 +209,7 @@ export function useAnytimeView() {
 
 export function useSomedayView() {
   const repo = useTaskRepository()
+  repo.ensureView("someday")
 
   return {
     get sections() {
@@ -248,6 +253,7 @@ export function useSomedayView() {
 
 export function useLogbookView() {
   const repo = useTaskRepository()
+  repo.ensureView("logbook")
   const sdk = useSDK()
 
   const logCompletedToday = async (): Promise<{ success: boolean; count: number }> => {

@@ -82,6 +82,9 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       error: undefined,
     })
 
+    // Track which views have been fetched at least once (for lazy loading)
+    const fetched = new Set<keyof TaskStore["viewSections"]>()
+
     // Debounce helper for SSE events
     const createDebouncer = (fn: () => void, delay = 300) => {
       let timeout: ReturnType<typeof setTimeout> | null = null
@@ -113,6 +116,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("inbox")
       if (showLoading) setStore("loading", "inbox", true)
       setStore("error", undefined)
 
@@ -142,6 +146,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("today")
       if (showLoading) setStore("loading", "today", true)
       setStore("error", undefined)
 
@@ -171,6 +176,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("upcoming")
       if (showLoading) setStore("loading", "upcoming", true)
       setStore("error", undefined)
 
@@ -220,6 +226,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("anytime")
       if (showLoading) setStore("loading", "anytime", true)
       setStore("error", undefined)
 
@@ -248,6 +255,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("someday")
       if (showLoading) setStore("loading", "someday", true)
       setStore("error", undefined)
 
@@ -276,6 +284,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         return
       }
 
+      fetched.add("logbook")
       if (showLoading) setStore("loading", "logbook", true)
       setStore("error", undefined)
 
@@ -305,9 +314,6 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
     const debouncedFetchAnytime = createDebouncer(() => fetchAnytime())
     const debouncedFetchSomeday = createDebouncer(() => fetchSomeday())
     const debouncedFetchLogbook = createDebouncer(() => fetchLogbook())
-
-    // Use debouncedFetchLogbook for logbook-related events if needed
-    void debouncedFetchLogbook
 
     // ================== VIEW FILTERS ==================
 
@@ -383,15 +389,32 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       // Add to normalized store
       setStore("tasks", task.id, task)
 
-      // Trigger appropriate view refetches
-      if (belongsInInbox(task)) debouncedFetchInbox()
-      if (belongsInToday(task)) debouncedFetchToday()
-      if (belongsInUpcoming(task)) debouncedFetchUpcoming()
-      if (belongsInAnytime(task)) debouncedFetchAnytime()
-      if (belongsInSomeday(task)) debouncedFetchSomeday()
+      // Trigger appropriate view refetches (only for loaded views)
+      if (belongsInInbox(task)) refetchIfLoaded("inbox")
+      if (belongsInToday(task)) refetchIfLoaded("today")
+      if (belongsInUpcoming(task)) refetchIfLoaded("upcoming")
+      if (belongsInAnytime(task)) refetchIfLoaded("anytime")
+      if (belongsInSomeday(task)) refetchIfLoaded("someday")
+    }
+
+    // Helper: only refetch a view if it has been loaded at least once
+    const refetchIfLoaded = (view: keyof TaskStore["viewSections"]) => {
+      if (!fetched.has(view)) return
+      const refetchers: Record<keyof TaskStore["viewSections"], () => void> = {
+        inbox: debouncedFetchInbox,
+        today: debouncedFetchToday,
+        upcoming: debouncedFetchUpcoming,
+        anytime: debouncedFetchAnytime,
+        someday: debouncedFetchSomeday,
+        logbook: debouncedFetchLogbook,
+      }
+      refetchers[view]()
     }
 
     const handleTaskUpdated = (task: TaskInfo) => {
+      // Capture previous state before overwriting
+      const previous = store.tasks[task.id]
+
       // Update normalized store, preserving existing tags
       setStore("tasks", task.id, (existing) => ({
         ...task,
@@ -410,21 +433,29 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         )
       }
 
-      // Update in all views that might contain this task
-      updateInSections("inbox")
-      updateInSections("today")
-      updateInSections("upcoming")
-      updateInSections("anytime")
-      updateInSections("someday")
-      updateInSections("logbook")
+      // Optimistic in-place update in loaded views
+      if (fetched.has("inbox")) updateInSections("inbox")
+      if (fetched.has("today")) updateInSections("today")
+      if (fetched.has("upcoming")) updateInSections("upcoming")
+      if (fetched.has("anytime")) updateInSections("anytime")
+      if (fetched.has("someday")) updateInSections("someday")
+      if (fetched.has("logbook")) updateInSections("logbook")
 
-      // If task moved between views, trigger refetches
-      // This handles cases where task should appear/disappear from views
-      debouncedFetchInbox()
-      debouncedFetchToday()
-      debouncedFetchUpcoming()
-      debouncedFetchAnytime()
-      debouncedFetchSomeday()
+      // Targeted refetch: only views the task belongs to now or previously belonged to
+      const views = ["inbox", "today", "upcoming", "anytime", "someday"] as const
+      const belongs: Record<string, (t: TaskInfo) => boolean> = {
+        inbox: belongsInInbox,
+        today: belongsInToday,
+        upcoming: belongsInUpcoming,
+        anytime: belongsInAnytime,
+        someday: belongsInSomeday,
+      }
+
+      for (const view of views) {
+        const now = belongs[view]!(task)
+        const before = previous ? belongs[view]!(previous) : false
+        if (now || before) refetchIfLoaded(view)
+      }
     }
 
     const handleTaskDeleted = ({ id }: { id: string }) => {
@@ -604,17 +635,32 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       unsubRuleDelete()
     })
 
-    // Initial fetch when API key is available
+    // Initial fetch - only load today (default route) and inbox (needed for sidebar badge)
+    // Other views are lazy-loaded on first access via ensureView()
     createEffect(() => {
       if (sdk.isReady) {
-        fetchInbox(true)
         fetchToday(true)
-        fetchUpcoming(true)
-        fetchAnytime(true)
-        fetchSomeday(true)
-        fetchLogbook(true)
+        fetchInbox(true)
       }
     })
+
+    // Lazy-load a view on first access
+    type ViewKey = keyof TaskStore["viewSections"]
+    const fetchers: Record<ViewKey, (showLoading?: boolean) => Promise<void>> = {
+      inbox: fetchInbox,
+      today: fetchToday,
+      upcoming: fetchUpcoming,
+      anytime: fetchAnytime,
+      someday: fetchSomeday,
+      logbook: fetchLogbook,
+    }
+
+    const ensureView = (view: ViewKey) => {
+      if (!fetched.has(view) && sdk.isReady) {
+        fetched.add(view)
+        fetchers[view](true)
+      }
+    }
 
     // ================== MUTATIONS ==================
 
@@ -656,12 +702,12 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
           setStore("tasks", id, current)
         }
         setStore("error", `Failed to update task: ${error}`)
-        // Refetch all views to restore correct state
-        fetchInbox()
-        fetchToday()
-        fetchUpcoming()
-        fetchAnytime()
-        fetchSomeday()
+        // Refetch affected loaded views to restore correct state
+        refetchIfLoaded("inbox")
+        refetchIfLoaded("today")
+        refetchIfLoaded("upcoming")
+        refetchIfLoaded("anytime")
+        refetchIfLoaded("someday")
         return null
       }
 
@@ -846,12 +892,12 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       })
 
       if (error) {
-        // Refetch affected views on error
-        fetchInbox()
-        fetchToday()
-        fetchUpcoming()
-        fetchAnytime()
-        fetchSomeday()
+        // Refetch affected loaded views on error
+        refetchIfLoaded("inbox")
+        refetchIfLoaded("today")
+        refetchIfLoaded("upcoming")
+        refetchIfLoaded("anytime")
+        refetchIfLoaded("someday")
         return false
       }
 
@@ -930,11 +976,11 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       })
 
       if (error) {
-        fetchInbox()
-        fetchToday()
-        fetchUpcoming()
-        fetchAnytime()
-        fetchSomeday()
+        refetchIfLoaded("inbox")
+        refetchIfLoaded("today")
+        refetchIfLoaded("upcoming")
+        refetchIfLoaded("anytime")
+        refetchIfLoaded("someday")
         return false
       }
 
@@ -1229,6 +1275,9 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       // Templates
       updateTemplate,
       deleteTemplate,
+
+      // Lazy loading
+      ensureView,
 
       // Refetch helpers
       refetchInbox: () => fetchInbox(),
