@@ -24,6 +24,44 @@ export interface OrderingContext {
   id: string | null // projectId, headingId, areaId, or date string for upcoming
 }
 
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1)
+}
+
+function isDateTodayOrOverdue(dateStr: string | null, todayStart: Date): boolean {
+  if (!dateStr) return false
+  return parseLocalDate(dateStr) <= todayStart
+}
+
+function isCompletedToday(task: Task, todayStart: Date): boolean {
+  if (!task.completedAt) return false
+  const completedStart = new Date(task.completedAt)
+  completedStart.setHours(0, 0, 0, 0)
+  return completedStart.getTime() === todayStart.getTime()
+}
+
+function belongsInToday(task: Task): boolean {
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  const dueTodayOrOverdue =
+    isDateTodayOrOverdue(task.scheduledDate, todayStart) || isDateTodayOrOverdue(task.deadline, todayStart)
+
+  // Completed tasks are shown in Today only if completed today.
+  if (task.completedAt && task.status !== "cancelled") {
+    return isCompletedToday(task, todayStart)
+  }
+
+  // Cancelled tasks are shown in Today if they are due today/overdue OR cancelled today.
+  if (task.status === "cancelled") {
+    return dueTodayOrOverdue || isCompletedToday(task, todayStart)
+  }
+
+  // Active/inbox tasks are shown in Today if due today/overdue.
+  return dueTodayOrOverdue
+}
+
 // =============================================================================
 // Context Determination
 // =============================================================================
@@ -47,15 +85,21 @@ export function getTaskContexts(task: Task): OrderingContext[] {
     return contexts
   }
 
-  // Completed tasks only appear in logbook
+  // Completed tasks appear in logbook and can also appear in Today (if completed today).
   if (task.status === "completed") {
     contexts.push({ type: "logbook", id: null })
+    if (belongsInToday(task)) {
+      contexts.push({ type: "today", id: null })
+    }
     return contexts
   }
 
   // Inbox tasks (null status)
   if (task.status === null) {
     contexts.push({ type: "inbox", id: null })
+    if (belongsInToday(task)) {
+      contexts.push({ type: "today", id: null })
+    }
     return contexts
   }
 
@@ -86,6 +130,16 @@ export function getTaskContexts(task: Task): OrderingContext[] {
         contexts.push({ type: "area", id: task.listId })
       }
     }
+
+    // Today view context for due/overdue tasks.
+    if (belongsInToday(task)) {
+      contexts.push({ type: "today", id: null })
+    }
+  }
+
+  // Cancelled tasks can still appear in Today when due/overdue or cancelled today.
+  if (task.status === "cancelled" && belongsInToday(task)) {
+    contexts.push({ type: "today", id: null })
   }
 
   return contexts
