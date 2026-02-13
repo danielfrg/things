@@ -5,7 +5,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./dates": "./src/dates.ts"
   },
   "scripts": {
     "build": "bun run scripts/generate.ts",

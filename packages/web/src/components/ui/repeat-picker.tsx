@@ -1,7 +1,7 @@
 import { addDays, format, isValid, lastDayOfMonth } from 'date-fns';
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 import { RepeatIcon } from '@/components/icons';
-import { cn } from '@/lib/utils';
+import { cn, parseLocalDate } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { toolbarButtonVariants } from './toolbar-button';
 
@@ -23,11 +23,6 @@ const MONTH_DAYS: MonthDay[] = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
   23, 24, 25, 26, 27, 28, 29, 30, 31, 'last',
 ];
-
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 function parseRRule(
   rrule: string | undefined,

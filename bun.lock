@@ -45,6 +45,7 @@
         "@hono/zod-validator": "catalog:",
         "@noble/hashes": "^2.0.1",
         "@scalar/hono-api-reference": "^0.9.32",
+        "@things/sdk": "workspace:*",
         "better-auth": "catalog:",
         "date-fns": "catalog:",
         "drizzle-orm": "^0.45.1",

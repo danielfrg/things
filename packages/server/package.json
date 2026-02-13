@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@hono/standard-validator": "^0.2.2",
+    "@things/sdk": "workspace:*",
     "@hono/zod-validator": "catalog:",
     "@noble/hashes": "^2.0.1",
     "@scalar/hono-api-reference": "^0.9.32",

@@ -1,3 +1,4 @@
+import { parseLocalDate } from "@things/sdk/dates"
 import { addDays, format, isBefore, isSameDay, isToday, startOfDay } from "date-fns"
 import { and, desc, eq, inArray, isNotNull, isNull, or } from "drizzle-orm"
 import { db } from "@/db"
@@ -92,13 +93,6 @@ function getAreaId(task: Task, projectAreaMap: Map<string, string | null>): stri
 // =============================================================================
 // Helpers
 // =============================================================================
-function parseLocalDate(dateStr: string): Date {
-  const parts = dateStr.split("-").map(Number)
-  const year = parts[0] ?? 0
-  const month = parts[1] ?? 1
-  const day = parts[2] ?? 1
-  return new Date(year, month - 1, day)
-}
 function formatTask(t: Task, position: number): ViewTask {
   return {
     id: t.id,

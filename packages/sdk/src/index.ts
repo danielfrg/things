@@ -1,4 +1,5 @@
 export * from "./gen/types.gen"
+export { parseLocalDate, formatLocalDate } from "./dates"
 
 import { createClient as genCreateClient } from "./gen/client/client.gen"
 import type { Config } from "./gen/client/types.gen"

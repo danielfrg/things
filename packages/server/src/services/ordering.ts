@@ -1,3 +1,4 @@
+import { parseLocalDate } from "@things/sdk/dates"
 import { and, eq, or, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { taskOrderings, type Task } from "@/db/schema"
@@ -22,11 +23,6 @@ export type ContextType =
 export interface OrderingContext {
   type: ContextType
   id: string | null // projectId, headingId, areaId, or date string for upcoming
-}
-
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1)
 }
 
 function isDateTodayOrOverdue(dateStr: string | null, todayStart: Date): boolean {
