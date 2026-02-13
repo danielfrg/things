@@ -411,10 +411,9 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       refetchers[view]()
     }
 
-    const handleTaskUpdated = (task: TaskInfo) => {
-      // Capture previous state before overwriting
-      const previous = store.tasks[task.id]
-
+    // In-place update only — no view refetch. Used for optimistic updates where
+    // the mutation API call is still in-flight and a refetch would race with it.
+    const applyTaskUpdate = (task: TaskInfo) => {
       // Update normalized store, preserving existing tags
       setStore("tasks", task.id, (existing) => ({
         ...task,
@@ -433,13 +432,20 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         )
       }
 
-      // Optimistic in-place update in loaded views
       if (fetched.has("inbox")) updateInSections("inbox")
       if (fetched.has("today")) updateInSections("today")
       if (fetched.has("upcoming")) updateInSections("upcoming")
       if (fetched.has("anytime")) updateInSections("anytime")
       if (fetched.has("someday")) updateInSections("someday")
       if (fetched.has("logbook")) updateInSections("logbook")
+    }
+
+    // Full update handler for SSE events — applies the in-place update then
+    // refetches affected views. Safe because by the time the SSE echo arrives,
+    // the server has already committed the mutation.
+    const handleTaskUpdated = (task: TaskInfo) => {
+      const previous = store.tasks[task.id]
+      applyTaskUpdate(task)
 
       // Targeted refetch: only views the task belongs to now or previously belonged to
       const views = ["inbox", "today", "upcoming", "anytime", "someday"] as const
@@ -687,8 +693,8 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         handleTaskDeleted({ id })
       } else if (current) {
         setStore("tasks", id, { ...current, ...updates })
-        // Also update in view sections
-        handleTaskUpdated({ ...current, ...updates })
+        // In-place update only — no refetch to avoid racing with the PUT
+        applyTaskUpdate({ ...current, ...updates })
       }
 
       const { data, error } = await sdk.client.putApiV1TasksById({
@@ -734,10 +740,10 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         completedAt: completed ? new Date().toISOString() : null,
       }
 
-      // Optimistic update
+      // Optimistic update — in-place only, no refetch to avoid racing with the POST
       if (current) {
         setStore("tasks", id, optimistic)
-        handleTaskUpdated(optimistic)
+        applyTaskUpdate(optimistic)
       }
 
       const { data, error } = await sdk.client.postApiV1TasksByIdComplete({
@@ -768,10 +774,10 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         completedAt: new Date().toISOString(),
       }
 
-      // Optimistic update
+      // Optimistic update — in-place only, no refetch to avoid racing with the PUT
       if (current) {
         setStore("tasks", id, optimistic)
-        handleTaskUpdated(optimistic)
+        applyTaskUpdate(optimistic)
       }
 
       const { data, error } = await sdk.client.putApiV1TasksById({
@@ -784,7 +790,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       if (error) {
         if (current) {
           setStore("tasks", id, current)
-          handleTaskUpdated(current)
+          applyTaskUpdate(current)
         }
         setStore("error", `Failed to cancel task: ${error}`)
         return null
@@ -803,10 +809,10 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         completedAt: null,
       }
 
-      // Optimistic update
+      // Optimistic update — in-place only, no refetch to avoid racing with the PUT
       if (current) {
         setStore("tasks", id, optimistic)
-        handleTaskUpdated(optimistic)
+        applyTaskUpdate(optimistic)
       }
 
       const { data, error } = await sdk.client.putApiV1TasksById({
@@ -819,7 +825,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       if (error) {
         if (current) {
           setStore("tasks", id, current)
-          handleTaskUpdated(current)
+          applyTaskUpdate(current)
         }
         setStore("error", `Failed to uncancel task: ${error}`)
         return null
