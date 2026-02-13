@@ -1185,6 +1185,157 @@ async function seed() {
 
   console.log("Tasks created")
 
+  // =========================================================================
+  // Bulk logbook tasks (1000 completed & logged)
+  // =========================================================================
+  console.log("\nCreating 1000 logbook tasks...")
+  const completedPrefixes = [
+    "Review",
+    "Update",
+    "Fix",
+    "Write",
+    "Send",
+    "Prepare",
+    "Schedule",
+    "Research",
+    "Organize",
+    "Clean",
+    "Draft",
+    "Submit",
+    "Complete",
+    "Check",
+    "Plan",
+    "Design",
+    "Test",
+    "Refactor",
+    "Deploy",
+    "Document",
+  ]
+  const completedSuffixes = [
+    "report",
+    "meeting notes",
+    "presentation",
+    "email",
+    "invoice",
+    "documentation",
+    "PR feedback",
+    "test suite",
+    "config",
+    "spreadsheet",
+    "proposal",
+    "wireframes",
+    "budget",
+    "checklist",
+    "agenda",
+    "dashboard",
+    "analytics",
+    "backup",
+    "release notes",
+    "API endpoint",
+  ]
+  const projectIds = [
+    webAppProjectId,
+    mobileAppProjectId,
+    fitnessProjectId,
+    homeProjectId,
+    shoppingProjectId,
+    programmingCourseId,
+    freelanceProjectId,
+    bookWritingProjectId,
+    null,
+    null,
+    null,
+  ]
+
+  const logbookValues = Array.from({ length: 1000 }, (_, i) => {
+    const age = Math.floor(Math.random() * 90)
+    const completed = new Date(today)
+    completed.setDate(completed.getDate() - age)
+    const prefix = completedPrefixes[i % completedPrefixes.length]!
+    const suffix = completedSuffixes[i % completedSuffixes.length]!
+    const pid = projectIds[i % projectIds.length] ?? null
+
+    return {
+      id: createId("task"),
+      userId,
+      title: `${prefix} ${suffix} #${i + 1}`,
+      status: "completed" as const,
+      isSomeday: false,
+      isLogged: true,
+      completedAt: completed,
+      listId: pid,
+    }
+  })
+
+  // Insert in batches of 200 to avoid SQLite limits
+  for (let i = 0; i < logbookValues.length; i += 200) {
+    await db.insert(tasks).values(logbookValues.slice(i, i + 200))
+  }
+  console.log("Logbook tasks created")
+
+  // =========================================================================
+  // Bulk trash tasks (1000 trashed)
+  // =========================================================================
+  console.log("\nCreating 1000 trash tasks...")
+  const trashedPrefixes = [
+    "Old",
+    "Cancelled",
+    "Abandoned",
+    "Deprecated",
+    "Outdated",
+    "Archived",
+    "Superseded",
+    "Removed",
+    "Discarded",
+    "Dropped",
+  ]
+  const trashedSuffixes = [
+    "feature request",
+    "bug report",
+    "migration",
+    "prototype",
+    "experiment",
+    "spike",
+    "investigation",
+    "integration",
+    "setup",
+    "task",
+    "idea",
+    "concept",
+    "plan",
+    "draft",
+    "sketch",
+    "benchmark",
+    "audit",
+    "review",
+    "cleanup",
+    "refactor",
+  ]
+
+  const trashValues = Array.from({ length: 1000 }, (_, i) => {
+    const age = Math.floor(Math.random() * 60)
+    const trashed = new Date(today)
+    trashed.setDate(trashed.getDate() - age)
+    const prefix = trashedPrefixes[i % trashedPrefixes.length]!
+    const suffix = trashedSuffixes[i % trashedSuffixes.length]!
+    const pid = projectIds[i % projectIds.length] ?? null
+
+    return {
+      id: createId("task"),
+      userId,
+      title: `${prefix} ${suffix} #${i + 1}`,
+      status: "trashed" as const,
+      isSomeday: false,
+      trashedAt: trashed,
+      listId: pid,
+    }
+  })
+
+  for (let i = 0; i < trashValues.length; i += 200) {
+    await db.insert(tasks).values(trashValues.slice(i, i + 200))
+  }
+  console.log("Trash tasks created")
+
   console.log("\n========================================")
   console.log("Seed completed successfully!")
   console.log("========================================")
@@ -1196,7 +1347,9 @@ async function seed() {
   console.log("   - 3 areas (Work, Personal, Learning)")
   console.log("   - 8 projects (6 in areas, 2 without areas)")
   console.log("   - 5 tags")
-  console.log("   - 90+ tasks across multiple dates")
+  console.log("   - 90+ active tasks across multiple dates")
+  console.log("   - 1000 completed tasks in logbook")
+  console.log("   - 1000 trashed tasks")
   console.log("   - Tasks assigned to areas without projects")
   console.log("\nYou can now start the dev server with: bun run dev")
 }

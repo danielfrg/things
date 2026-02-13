@@ -1,7 +1,7 @@
 import { createSignal, Show } from "solid-js"
 import { Trash2Icon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
-import { TaskCardList } from "@/components/tasks/task-card-list"
+import { VirtualTaskCardList } from "@/components/tasks/virtual-task-card-list"
 import { SearchButton, ViewToolbar } from "@/components/toolbar"
 import {
   AlertDialog,
@@ -113,7 +113,7 @@ function TrashContent() {
             }
           >
             <div class="px-2 md:px-2">
-              <TaskCardList
+              <VirtualTaskCardList
                 tasks={data.tasks}
                 expandedTaskId={expandedTaskId}
                 onExpand={handleExpand}
