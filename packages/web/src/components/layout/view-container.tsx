@@ -23,7 +23,7 @@ export function ViewContainer(props: ViewContainerProps) {
 
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <header class="flex items-center justify-between px-0 md:px-20 pt-8 pb-4">
+        <header class="flex flex-col justify-between px-0 md:px-20 pt-12 pb-8">
           <div class="flex items-center gap-3 px-4 md:px-2 flex-1 min-w-0 group/header">
             <Show when={props.icon}>
               <div class="shrink-0">{props.icon}</div>
@@ -48,12 +48,11 @@ export function ViewContainer(props: ViewContainerProps) {
               </Show>
             </div>
           </div>
+          {/* Optional extra header content (e.g., project notes) */}
+          <Show when={props.headerExtra}>
+            <div class="mt-2 mb-2 mx-2 max-h-32 overflow-y-auto">{props.headerExtra}</div>
+          </Show>
         </header>
-
-        {/* Optional extra header content (e.g., project notes) */}
-        <Show when={props.headerExtra}>
-          <div class="px-4 md:px-22 pb-4">{props.headerExtra}</div>
-        </Show>
 
         {/* Main content */}
         <div class="px-0 md:px-18 pb-6">{props.children}</div>

@@ -14,6 +14,7 @@ type ProjectInfo = {
   notes: string | null
   status: string
   areaId: string | null
+  progress: number
 }
 
 type ProjectDataStore = {
@@ -185,13 +186,14 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
 
     const unsubProjectUpdate = event.on("project.updated", (project) => {
       if (project.id === props.projectId) {
-        setStore("project", {
+        setStore("project", (p) => ({
           id: project.id,
           title: project.title,
           notes: project.notes,
           status: project.status,
           areaId: project.areaId,
-        })
+          progress: p?.progress ?? 0,
+        }))
       }
     })
 
@@ -352,7 +354,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       )
 
       const result = await repo.completeTask(id, completed)
-      if (!result) fetchProject()
+      fetchProject()
       return result
     }
 
@@ -367,7 +369,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       )
 
       const result = await repo.cancelTask(id)
-      if (!result) fetchProject()
+      fetchProject()
       return result
     }
 
@@ -380,7 +382,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       )
 
       const result = await repo.uncancelTask(id)
-      if (!result) fetchProject()
+      fetchProject()
       return result
     }
 

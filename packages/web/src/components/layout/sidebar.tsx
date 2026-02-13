@@ -510,7 +510,7 @@ function SidebarContent() {
         <div class="flex items-center justify-between w-full">
           <DropdownMenu>
             <DropdownMenuTrigger
-              class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+              class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
               aria-label="Create"
             >
               <PlusIcon class="w-5 h-5" />
@@ -524,7 +524,7 @@ function SidebarContent() {
           <A
             href="/logbook"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Logbook"
           >
             <BookCheckIcon class="w-5 h-5" />
@@ -533,7 +533,7 @@ function SidebarContent() {
           <A
             href="/trash"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Trash"
           >
             <Trash2Icon class="w-5 h-5" />
@@ -542,7 +542,7 @@ function SidebarContent() {
           <A
             href="/settings"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Settings"
           >
             <Settings2Icon class="w-5 h-5" />

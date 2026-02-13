@@ -3,7 +3,6 @@ import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 import { RepeatIcon } from '@/components/icons';
 import { cn, parseLocalDate } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { toolbarButtonVariants } from './toolbar-button';
 
 type RepeatMode = 'daily' | 'weekly' | 'monthly';
 type Weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
@@ -184,38 +183,6 @@ export function RepeatPicker(props: RepeatPickerProps) {
     setStartIso(props.startDate ?? null);
   });
 
-  const label = createMemo(() => {
-    if (!props.value) return props.placeholder ?? 'Repeat';
-
-    const parsedValue = parseRRule(props.value);
-    const dateLabel = props.startDate
-      ? format(parseLocalDate(props.startDate), 'MM/dd/yy')
-      : '';
-
-    if (parsedValue?.mode && dateLabel) {
-      if (parsedValue.mode === 'daily') {
-        return `Daily · ${dateLabel}`;
-      }
-
-      if (parsedValue.mode === 'weekly') {
-        const weekdayLabel = WEEKDAYS.find(
-          (d) => d.code === (parsedValue.weekday ?? 'MO'),
-        )?.label;
-        return `Weekly (${weekdayLabel ?? 'Mon'}) · ${dateLabel}`;
-      }
-
-      if (parsedValue.mode === 'monthly') {
-        const dayLabel =
-          parsedValue.monthDay === 'last'
-            ? 'last day'
-            : `day ${parsedValue.monthDay}`;
-        return `Monthly (${dayLabel}) · ${dateLabel}`;
-      }
-    }
-
-    return dateLabel ? `Repeat · ${dateLabel}` : 'Repeat';
-  });
-
   const nextDates = createMemo(() => {
     const m = mode();
     const s = startIso();
@@ -243,23 +210,13 @@ export function RepeatPicker(props: RepeatPickerProps) {
       <PopoverTrigger
         disabled={props.disabled}
         class={cn(
-          'group',
-          toolbarButtonVariants(),
+          'inline-flex items-center justify-center h-6 w-6 rounded text-[12px] transition-colors',
+          'text-toolbar-icon border border-transparent hover:border-toolbar-border',
           'disabled:cursor-not-allowed disabled:opacity-50',
           props.class,
         )}
       >
-        <span class="opacity-70 group-hover:opacity-100 transition-opacity">
-          <RepeatIcon class="h-3.5 w-3.5" />
-        </span>
-        <span
-          class={cn(
-            'transition-colors',
-            !props.value && 'opacity-70 group-hover:opacity-100',
-          )}
-        >
-          {label()}
-        </span>
+        <RepeatIcon class="h-3.5 w-3.5" />
       </PopoverTrigger>
 
       <PopoverContent

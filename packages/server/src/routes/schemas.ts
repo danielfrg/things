@@ -414,6 +414,7 @@ export const ProjectViewResponseSchema = z
         notes: z.string().nullable(),
         status: z.string(),
         areaId: z.string().nullable(),
+        progress: z.number(),
       })
       .nullable(),
     sections: z.array(ViewSectionSchema),

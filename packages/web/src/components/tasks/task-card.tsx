@@ -549,149 +549,197 @@ export function TaskCard(props: TaskCardProps) {
     </div>
   )
 
-  // Toolbar content - date pickers, move, tags
-  const toolbarContent = () => (
+  const hasSchedule = () => Boolean(effectiveTask().scheduledDate || effectiveTask().isSomeday)
+  const hasDeadline = () => Boolean(effectiveTask().deadline)
+
+  const onScheduleChange = (date: string | undefined, isEvening?: boolean) => {
+    if (props.showCompletedDate && date) {
+      stickyChanges.update({
+        scheduledDate: date,
+        isEvening: isEvening ?? false,
+        completedAt: null,
+        isLogged: false,
+        status: "active",
+      })
+    } else if (props.isTrashView && date) {
+      stickyChanges.update({
+        scheduledDate: date,
+        isEvening: isEvening ?? false,
+        trashedAt: null,
+        status: "active",
+      })
+    } else {
+      stickyChanges.update({
+        scheduledDate: date ?? null,
+        isEvening: isEvening ?? false,
+      })
+    }
+  }
+
+  const onScheduleClear = () => {
+    stickyChanges.update({
+      scheduledDate: null,
+      isEvening: false,
+      isSomeday: false,
+    })
+  }
+
+  const onDeadlineChange = (date: string | undefined) => {
+    stickyChanges.update({ deadline: date ?? null })
+  }
+
+  const onDeadlineClear = () => {
+    stickyChanges.update({ deadline: null })
+  }
+
+  const onSomedaySelect = () => {
+    stickyChanges.update({
+      isSomeday: true,
+      scheduledDate: null,
+      isEvening: false,
+    })
+  }
+
+  const onMoveChange = (listId: string | null, moveToInbox?: boolean) => {
+    if (moveToInbox) {
+      stickyChanges.update({
+        status: null,
+        listId: null,
+        headingId: null,
+        scheduledDate: null,
+        isEvening: false,
+        isSomeday: false,
+      })
+    } else {
+      stickyChanges.update({
+        status: "active",
+        listId,
+        headingId: null,
+      })
+    }
+  }
+
+  // Left side: active indicators (shown when values are set)
+  const toolbarInfo = () => (
     <>
-      <DatePicker
-        value={effectiveTask().scheduledDate ?? undefined}
-        onChange={(date, isEvening) => {
-          // If this is a logged task and we're setting a date, restore it
-          if (props.showCompletedDate && date) {
-            stickyChanges.update({
-              scheduledDate: date,
-              isEvening: isEvening ?? false,
-              completedAt: null,
-              isLogged: false,
-              status: "active",
-            })
-          } else if (props.isTrashView && date) {
-            // If this is a trash view and we're setting a date, restore from trash
-            stickyChanges.update({
-              scheduledDate: date,
-              isEvening: isEvening ?? false,
-              trashedAt: null,
-              status: "active",
-            })
-          } else {
-            // Use stickyChanges.update for fields that affect view membership
-            // This buffers the change until the card collapses
-            stickyChanges.update({
-              scheduledDate: date ?? null,
-              isEvening: isEvening ?? false,
-            })
-          }
-        }}
-        placeholder="When"
-        showSomeday
-        showEvening
-        isEvening={effectiveTask().isEvening}
-        isSomeday={effectiveTask().isSomeday}
-        onSomedaySelect={() => {
-          stickyChanges.update({
-            isSomeday: true,
-            scheduledDate: null,
-            isEvening: false,
-          })
-        }}
-      />
-      <DatePicker
-        value={effectiveTask().deadline ?? undefined}
-        onChange={(date) => {
-          stickyChanges.update({ deadline: date ?? null })
-        }}
-        placeholder="Deadline"
-        icon={<FlagIcon class="h-3.5 w-3.5" />}
-        title="Deadline"
-      />
-      <MovePicker
-        listId={getListId()}
-        onChangeListId={(listId, moveToInbox) => {
-          if (moveToInbox) {
-            // Moving to inbox - set status to null, clear organization
-            stickyChanges.update({
-              status: null,
-              listId: null,
-              headingId: null,
-              scheduledDate: null,
-              isEvening: false,
-              isSomeday: false,
-            })
-          } else {
-            // Moving to project or area - set status to active
-            stickyChanges.update({
-              status: "active",
-              listId,
-              headingId: null,
-            })
-          }
-        }}
-        projects={sidebar.activeProjects}
-        areas={sidebar.sortedAreas}
-        isInbox={effectiveTask().status === null}
-      />
-      {/* Repeat picker - only show if task doesn't have a template yet */}
-      <Show when={!props.task.templateId && !isCompleted() && props.onConvertToRepeat}>
-        <RepeatPicker
-          value={undefined}
-          startDate={props.task.scheduledDate ?? undefined}
-          onChange={(rrule, startDate) => {
-            if (rrule) {
-              props.onConvertToRepeat?.(props.task.id, rrule, startDate)
-            }
-          }}
-          onClear={() => {}}
-          placeholder="Repeat"
-          disabled={isCompleted()}
+      {/* Schedule date indicator */}
+      <Show when={hasSchedule()}>
+        <DatePicker
+          value={effectiveTask().scheduledDate ?? undefined}
+          onChange={onScheduleChange}
+          onClear={onScheduleClear}
+          placeholder="When"
+          showSomeday
+          showEvening
+          isEvening={effectiveTask().isEvening}
+          isSomeday={effectiveTask().isSomeday}
+          onSomedaySelect={onSomedaySelect}
         />
       </Show>
-      {/* Show repeat indicator if task was spawned from a template */}
+      {/* Deadline indicator */}
+      <Show when={hasDeadline()}>
+        <DatePicker
+          value={effectiveTask().deadline ?? undefined}
+          onChange={onDeadlineChange}
+          onClear={onDeadlineClear}
+          placeholder="Deadline"
+          icon={<FlagIcon class="h-3.5 w-3.5 text-things-pink" />}
+          title="Deadline"
+        />
+      </Show>
+      {/* Repeat indicator if task was spawned from a template */}
       <Show when={props.task.templateId}>
         <div class="inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground">
           <RepeatIcon class="h-3.5 w-3.5 opacity-70" />
           <span>Repeating</span>
         </div>
       </Show>
-      {/* Add checklist button - only show if no checklist items exist */}
-      <Show when={!isCompleted() && (props.checklistItems?.length ?? 0) === 0 && props.onCreateChecklistItem}>
-        <ToolbarButton
-          onClick={(e) => {
-            // Blur the button so focus doesn't jump to next element when button disappears
-            ;(e.currentTarget as HTMLButtonElement).blur()
-            props.onCreateChecklistItem?.(props.task.id, {
-              title: "",
-              completed: false,
-              position: 1,
-            })
-          }}
-          icon={<ListChecksIcon class="h-3.5 w-3.5 opacity-70" />}
-        >
-          Checklist
-        </ToolbarButton>
-      </Show>
-      <Show when={props.onTagAdd && props.onTagRemove && !isCompleted()}>
-        <TagPicker
-          selectedTagIds={effectiveTags().map((t) => t.id)}
-          tags={sidebar.sortedTags}
-          onAdd={(tagId) => props.onTagAdd?.(props.task.id, tagId)}
-          onRemove={(tagId) => props.onTagRemove?.(props.task.id, tagId)}
-          disabled={isCompleted()}
-        />
-      </Show>
     </>
   )
 
-  // Footer content - info and delete buttons
-  const footerContent = () => {
+  // Right side: icon-only action buttons + info/delete
+  const actionsContent = () => {
     let infoButtonRef: HTMLButtonElement | undefined
     let deleteButtonRef: HTMLButtonElement | undefined
 
     return (
       <>
+        {/* Schedule button - only when no date set */}
+        <Show when={!hasSchedule()}>
+          <DatePicker
+            value={undefined}
+            onChange={onScheduleChange}
+            placeholder="When"
+            showSomeday
+            showEvening
+            isEvening={effectiveTask().isEvening}
+            isSomeday={false}
+            onSomedaySelect={onSomedaySelect}
+          />
+        </Show>
+        {/* Add checklist button - only show if no checklist items exist */}
+        <Show when={!isCompleted() && (props.checklistItems?.length ?? 0) === 0 && props.onCreateChecklistItem}>
+          <ToolbarButton
+            class="w-6 justify-center px-0"
+            onClick={(e) => {
+              ;(e.currentTarget as HTMLButtonElement).blur()
+              props.onCreateChecklistItem?.(props.task.id, {
+                title: "",
+                completed: false,
+                position: 1,
+              })
+            }}
+            icon={<ListChecksIcon class="h-3.5 w-3.5" />}
+          />
+        </Show>
+        {/* Tags */}
+        <Show when={props.onTagAdd && props.onTagRemove && !isCompleted()}>
+          <TagPicker
+            selectedTagIds={effectiveTags().map((t) => t.id)}
+            tags={sidebar.sortedTags}
+            onAdd={(tagId) => props.onTagAdd?.(props.task.id, tagId)}
+            onRemove={(tagId) => props.onTagRemove?.(props.task.id, tagId)}
+            disabled={isCompleted()}
+          />
+        </Show>
+        {/* Move button */}
+        <MovePicker
+          listId={getListId()}
+          onChangeListId={onMoveChange}
+          projects={sidebar.activeProjects}
+          areas={sidebar.sortedAreas}
+          isInbox={effectiveTask().status === null}
+        />
+        {/* Deadline button - only when no deadline set */}
+        <Show when={!hasDeadline()}>
+          <DatePicker
+            value={undefined}
+            onChange={onDeadlineChange}
+            placeholder="Deadline"
+            icon={<FlagIcon class="h-3.5 w-3.5" />}
+            title="Deadline"
+          />
+        </Show>
+        {/* Repeat picker - only show if task doesn't have a template yet */}
+        <Show when={!props.task.templateId && !isCompleted() && props.onConvertToRepeat}>
+          <RepeatPicker
+            value={undefined}
+            startDate={props.task.scheduledDate ?? undefined}
+            onChange={(rrule, startDate) => {
+              if (rrule) {
+                props.onConvertToRepeat?.(props.task.id, rrule, startDate)
+              }
+            }}
+            onClear={() => {}}
+            placeholder="Repeat"
+            disabled={isCompleted()}
+          />
+        </Show>
         <div class="relative">
           <button
             ref={infoButtonRef}
             type="button"
-            class="flex items-center justify-center w-7 h-7 rounded-md text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowInfo(!showInfo())
@@ -753,7 +801,7 @@ export function TaskCard(props: TaskCardProps) {
           <button
             ref={deleteButtonRef}
             type="button"
-            class="flex items-center justify-center w-7 h-7 rounded-md text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteConfirm(!showDeleteConfirm())
@@ -824,8 +872,8 @@ export function TaskCard(props: TaskCardProps) {
         <ItemDetailLayout
           expanded={props.expanded}
           header={headerContent()}
-          toolbar={toolbarContent()}
-          footer={footerContent()}
+          toolbar={toolbarInfo()}
+          actions={actionsContent()}
           cardRef={(el) => {
             cardRef = el
           }}

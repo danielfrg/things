@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 const toolbarButtonClass = cn(
   "flex items-center justify-center gap-1.5 px-4 py-1 min-w-[100px] text-[13px] font-medium rounded-full",
-  "text-muted-foreground border border-transparent hover:border-border transition-colors",
+  "text-muted-foreground border border-transparent hover:border-toolbar-border hover:bg-transparent hover:text-muted-foreground transition-colors",
 )
 
 type NewTaskButtonProps = {

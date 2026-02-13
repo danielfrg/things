@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils"
 type ItemDetailLayoutProps = ParentProps<{
   expanded: boolean
   header: JSX.Element
+  /** Left side: active indicators (scheduled date, deadline, etc.) */
   toolbar: JSX.Element
   toolbarPrefix?: JSX.Element
-  footer: JSX.Element
+  /** Right side: icon-only action buttons + info/delete */
+  actions: JSX.Element
   cardRef?: (el: HTMLDivElement) => void
   outerRef?: (el: HTMLDivElement) => void
   dataAttribute?: string
@@ -50,7 +52,7 @@ export function ItemDetailLayout(props: ItemDetailLayoutProps) {
                 <Show when={props.toolbarPrefix}>{props.toolbarPrefix}</Show>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1 flex-wrap">{props.toolbar}</div>
-                  <div class="flex items-center gap-0.5 shrink-0">{props.footer}</div>
+                  <div class="flex items-center gap-0.5 shrink-0">{props.actions}</div>
                 </div>
               </div>
             </div>

@@ -90,6 +90,10 @@ code {
   --scheduled-badge-bg: #e6e8ec;
   --scheduled-badge-text: #5e6268;
 
+  /* Toolbar action button colors */
+  --toolbar-icon: #a0a3a8;
+  --toolbar-border: #d1d5da;
+
   /* Dark popover colors (for dark-styled dropdowns in light mode) */
   --popover-dark: #2c2c2e;
   --popover-dark-foreground: #ffffff;
@@ -172,6 +176,10 @@ code {
   /* Scheduled date badge */
   --scheduled-badge-bg: #44464a;
   --scheduled-badge-text: #dadadb;
+
+  /* Toolbar action button colors */
+  --toolbar-icon: #8b8d91;
+  --toolbar-border: #4a4d52;
 
   /* Dark popover (same in dark mode) */
   --popover-dark: #262a30;
@@ -259,6 +267,10 @@ code {
   /* Scheduled date badge */
   --color-scheduled-badge-bg: var(--scheduled-badge-bg);
   --color-scheduled-badge-text: var(--scheduled-badge-text);
+
+  /* Toolbar action button colors */
+  --color-toolbar-icon: var(--toolbar-icon);
+  --color-toolbar-border: var(--toolbar-border);
 
   /* Dark popover colors */
   --color-popover-dark: var(--popover-dark);

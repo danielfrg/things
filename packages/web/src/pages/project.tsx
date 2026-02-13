@@ -120,13 +120,8 @@ function ProjectContent() {
     data.reorderTasks(taskIds, sectionId)
   }
 
-  // Calculate progress
-  const progress = () => {
-    const allTasks = data.sections.flatMap((s) => s.tasks)
-    if (allTasks.length === 0) return 0
-    const completed = allTasks.filter((t) => t.completedAt).length
-    return Math.round((completed / allTasks.length) * 100)
-  }
+  // Progress is computed server-side from all project tasks (including completed)
+  const progress = () => data.project?.progress ?? 0
 
   const handleAddHeading = async () => {
     await data.createHeading("New Heading")

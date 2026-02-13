@@ -247,7 +247,7 @@ export function TemplateCard(props: TemplateCardProps) {
           <button
             ref={infoButtonRef}
             type="button"
-            class="flex items-center justify-center w-7 h-7 rounded-md text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowInfo(!showInfo())
@@ -287,7 +287,7 @@ export function TemplateCard(props: TemplateCardProps) {
           <button
             ref={deleteButtonRef}
             type="button"
-            class="flex items-center justify-center w-7 h-7 rounded-md text-border hover:text-muted-foreground hover:bg-secondary transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteConfirm(!showDeleteConfirm())
@@ -345,7 +345,7 @@ export function TemplateCard(props: TemplateCardProps) {
       expanded={props.expanded}
       header={headerContent()}
       toolbar={toolbarContent()}
-      footer={footerContent()}
+      actions={footerContent()}
       cardRef={(el) => {
         cardRef = el
       }}

@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { CheckIcon, PlusIcon } from '@/components/icons';
+import { CheckIcon, TagIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
@@ -32,14 +32,13 @@ export function TagPicker(props: TagPickerProps) {
         <Popover>
           <PopoverTrigger
             class={cn(
-              'inline-flex items-center gap-1 h-6 px-2 rounded text-[12px]',
-              'text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors',
+              'inline-flex items-center justify-center h-6 w-6 rounded text-[12px]',
+              'text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors',
             )}
             onMouseDown={(e: MouseEvent) => e.stopPropagation()}
             onClick={(e: MouseEvent) => e.stopPropagation()}
           >
-            <PlusIcon class="w-3.5 h-3.5" />
-            <span>Add tag</span>
+            <TagIcon class="w-3.5 h-3.5" />
           </PopoverTrigger>
 
           <PopoverContent

@@ -731,6 +731,7 @@ export interface ProjectViewResponse {
     notes: string | null
     status: string
     areaId: string | null
+    progress: number
   } | null
   sections: ViewSection[]
 }
@@ -770,13 +771,11 @@ export async function getProjectView(userId: string, projectId: string): Promise
   // Separate headings
   const backlogHeading = allHeadings.find((h) => h.isBacklog)
   const regularHeadings = allHeadings.filter((h) => !h.isBacklog).sort((a, b) => a.position - b.position)
-  // Active tasks (not completed/cancelled, not someday) - but include cancelled today (and not logged)
+  // Active tasks: not logged, not someday. Includes completed tasks that haven't been logged yet.
   const activeTasks = projectTasks.filter((t) => {
     if (t.isLogged) return false
-    if (t.status === "cancelled") {
-      return t.completedAt ? isToday(t.completedAt) : false
-    }
-    return !t.completedAt && !t.isSomeday
+    if (t.isSomeday) return false
+    return true
   })
   // Unheaded active tasks (no headingId)
   const unheaded = sortTasksByPosition(
@@ -786,11 +785,6 @@ export async function getProjectView(userId: string, projectId: string): Promise
   // Backlog tasks (isSomeday=true)
   const backlog = sortTasksByPosition(
     projectTasks.filter((t) => t.isSomeday),
-    projectPositions,
-  )
-  // Completed today (not logged)
-  const completedToday = sortTasksByPosition(
-    projectTasks.filter((t) => t.completedAt && isToday(t.completedAt) && !t.isLogged),
     projectPositions,
   )
   const sections: ViewSection[] = []
@@ -845,16 +839,7 @@ export async function getProjectView(userId: string, projectId: string): Promise
       isRepeated: true,
     })
   }
-  // Completed today section
-  if (completedToday.length > 0) {
-    sections.push({
-      id: "section:completed",
-      title: "Completed Today",
-      tasks: completedToday.map((t) => formatTask(t, projectPositions.get(t.id) ?? 0)),
-      projectId,
-      isCompleted: true,
-    })
-  }
+
   // Add tags to all tasks
   const allTaskIds = sections.flatMap((s) => s.tasks.map((t) => t.id))
   const tagsMap = await fetchTagsForTasks(userId, allTaskIds)
@@ -863,6 +848,10 @@ export async function getProjectView(userId: string, projectId: string): Promise
       task.tags = tagsMap.get(task.id) ?? []
     }
   }
+  // Compute progress from all non-template, non-trashed tasks
+  const total = projectTasks.length
+  const completed = projectTasks.filter((t) => t.completedAt).length
+  const progress = total > 0 ? Math.round((completed / total) * 100) : 0
   return {
     project: {
       id: project.id,
@@ -870,6 +859,7 @@ export async function getProjectView(userId: string, projectId: string): Promise
       notes: project.notes,
       status: project.status,
       areaId: project.areaId,
+      progress,
     },
     sections,
   }

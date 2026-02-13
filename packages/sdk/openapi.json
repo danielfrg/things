@@ -400,6 +400,9 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "progress": {
+                    "type": "number"
                   }
                 },
                 "required": [
@@ -407,7 +410,8 @@
                   "title",
                   "notes",
                   "status",
-                  "areaId"
+                  "areaId",
+                  "progress"
                 ]
               },
               {

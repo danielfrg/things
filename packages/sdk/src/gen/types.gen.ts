@@ -71,6 +71,7 @@ export type ProjectViewResponse = {
     notes: string | null
     status: string
     areaId: string | null
+    progress: number
   } | null
   sections: Array<ViewSection>
 }

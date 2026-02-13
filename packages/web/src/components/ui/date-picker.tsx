@@ -1,15 +1,16 @@
 import { format, isToday, isTomorrow } from 'date-fns';
 import type { JSX } from 'solid-js';
-import { createMemo, createSignal } from 'solid-js';
-import { CalendarIcon } from '@/components/icons';
+import { createMemo, createSignal, Show } from 'solid-js';
+import { CalendarIcon, XIcon } from '@/components/icons';
+import { TodayStarIcon, EveningIcon, SomedayIcon } from '@/components/icons';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { toolbarButtonVariants } from '@/components/ui/toolbar-button';
 import { cn, parseLocalDate } from '@/lib/utils';
 
 type DatePickerProps = {
   value?: string;
   onChange?: (date: string | undefined, isEvening?: boolean) => void;
+  onClear?: () => void;
   placeholder?: string;
   disabled?: boolean;
   class?: string;
@@ -34,33 +35,58 @@ export function DatePicker(props: DatePickerProps) {
     return format(date, 'MMM d, yyyy');
   });
 
+  const hasValue = () => Boolean(props.value || props.isSomeday);
+
+  const contextIcon = createMemo(() => {
+    // If an explicit icon is provided (e.g. deadline flag), use it
+    if (props.icon) return props.icon;
+    if (props.isSomeday) return <SomedayIcon class="h-3.5 w-3.5" />;
+    if (!props.value) return <CalendarIcon class="h-3.5 w-3.5" />;
+    const date = parseLocalDate(props.value);
+    if (isToday(date) && props.isEvening) return <EveningIcon class="h-3.5 w-3.5" />;
+    if (isToday(date)) return <TodayStarIcon class="h-3.5 w-3.5" />;
+    return <CalendarIcon class="h-3.5 w-3.5 text-things-pink" />;
+  });
+
   const handleChange = (date: string | undefined, isEvening?: boolean) => {
     props.onChange?.(date, isEvening);
   };
 
+  const handleClear = (e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    props.onClear?.();
+  };
+
   return (
     <Popover open={open()} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={props.disabled}
-        class={cn(
-          'group',
-          toolbarButtonVariants(),
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          props.class,
-        )}
-      >
-        <span class="group-hover:opacity-100 transition-opacity [&>svg]:opacity-70 [&>svg]:group-hover:opacity-100">
-          {props.icon ?? <CalendarIcon class="h-3.5 w-3.5" />}
-        </span>
-        <span
+      <div class="inline-flex items-center">
+        <PopoverTrigger
+          disabled={props.disabled}
           class={cn(
-            'transition-colors',
-            !props.value && !props.isSomeday && 'opacity-70 group-hover:opacity-100',
+            'inline-flex items-center gap-1 rounded text-[12px] transition-colors h-6 border border-transparent',
+            hasValue()
+              ? 'text-foreground hover:border-toolbar-border px-2'
+              : 'text-toolbar-icon hover:border-toolbar-border w-6 justify-center',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            props.class,
           )}
         >
-          {displayValue()}
-        </span>
-      </PopoverTrigger>
+          {contextIcon()}
+          <Show when={hasValue()}>
+            <span class="font-semibold">{displayValue()}</span>
+            <Show when={props.onClear}>
+              <span
+                class="inline-flex items-center justify-center ml-0.5 rounded-sm text-foreground hover:bg-toolbar-border transition-colors"
+                onClick={handleClear}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <XIcon class="h-3 w-3" />
+              </span>
+            </Show>
+          </Show>
+        </PopoverTrigger>
+      </div>
       <PopoverContent class="w-auto p-0 bg-transparent border-0 shadow-xl">
         <CalendarPopover
           value={props.value}

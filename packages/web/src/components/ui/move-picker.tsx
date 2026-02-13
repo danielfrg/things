@@ -2,8 +2,9 @@ import { createMemo, For, Show } from "solid-js"
 import { BoxIcon, CheckIcon, FolderOpenIcon, InboxIcon, XIcon } from "@/components/icons"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ProjectProgressIcon } from "@/components/ui/project-progress-icon"
-import { toolbarButtonVariants } from "@/components/ui/toolbar-button"
 import { cn } from "@/lib/utils"
+
+// MovePickerContent uses BoxIcon, ProjectProgressIcon, etc. for the popover items
 
 type Project = {
   id: string
@@ -192,29 +193,6 @@ type MovePickerProps = {
 }
 
 export function MovePicker(props: MovePickerProps) {
-  const selectedProject = createMemo(() => props.projects.find((p) => p.id === props.listId))
-
-  const selectedArea = createMemo(() => {
-    if (selectedProject()) return undefined
-    return (props.areas ?? []).find((a) => a.id === props.listId)
-  })
-
-  const displayText = createMemo(() => {
-    if (selectedProject()) return selectedProject()!.title
-    if (selectedArea()) return selectedArea()!.title
-    return props.placeholder ?? "Move"
-  })
-
-  const renderIcon = () => {
-    if (selectedProject()) {
-      return <ProjectProgressIcon progress={0} size={14} class="text-muted-foreground" />
-    }
-    if (selectedArea()) {
-      return <BoxIcon class="h-3.5 w-3.5 text-muted-foreground" />
-    }
-    return <FolderOpenIcon class="h-3.5 w-3.5" />
-  }
-
   const handleChange = (listId: string | null, moveToInbox?: boolean) => {
     props.onChangeListId?.(listId, moveToInbox)
   }
@@ -224,14 +202,13 @@ export function MovePicker(props: MovePickerProps) {
       <PopoverTrigger
         disabled={props.disabled}
         class={cn(
-          "group",
-          toolbarButtonVariants(),
+          "inline-flex items-center justify-center h-6 w-6 rounded text-[12px] transition-colors",
+          "text-toolbar-icon border border-transparent hover:border-toolbar-border",
           "disabled:cursor-not-allowed disabled:opacity-50",
           props.class,
         )}
       >
-        <span class="opacity-70 group-hover:opacity-100 transition-opacity">{renderIcon()}</span>
-        <span class="opacity-70 group-hover:opacity-100 transition-opacity truncate">{displayText()}</span>
+        <FolderOpenIcon class="h-3.5 w-3.5" />
       </PopoverTrigger>
 
       <PopoverContent class="w-auto p-0 bg-transparent border-0 shadow-xl">
