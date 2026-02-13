@@ -77,10 +77,16 @@ export const { use: useTrashData, provider: TrashDataProvider } = createSimpleCo
       setStore("tasks", (tasks) => tasks.filter((t) => t.id !== id))
     })
 
+    // On SSE reconnect, refetch trash to catch up on missed events
+    const unsubReconnect = event.on("server.reconnected", () => {
+      fetchTrash()
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
       unsubDelete()
+      unsubReconnect()
     })
 
     createEffect(() => {

@@ -185,6 +185,11 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       )
     })
 
+    // On SSE reconnect, refetch area data to catch up on missed events
+    const unsubReconnect = event.on("server.reconnected", () => {
+      fetchArea()
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
@@ -194,6 +199,7 @@ export const { use: useAreaData, provider: AreaDataProvider } = createSimpleCont
       unsubProjectCreate()
       unsubProjectDelete()
       unsubReorder()
+      unsubReconnect()
       if (refetchTimeout) clearTimeout(refetchTimeout)
     })
 

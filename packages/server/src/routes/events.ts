@@ -25,6 +25,11 @@ export function EventRoutes() {
     async (c) => {
       const userId = c.get("userId")
 
+      // Prevent reverse proxies (nginx, envoy, etc.) from buffering the SSE stream
+      c.header("Cache-Control", "no-cache, no-transform")
+      c.header("X-Accel-Buffering", "no")
+      c.header("Connection", "keep-alive")
+
       return streamSSE(c, async (stream) => {
         // Send initial connection event
         await stream.writeSSE({
@@ -52,7 +57,7 @@ export function EventRoutes() {
           }
         })
 
-        // Heartbeat every 30s to keep connection alive
+        // Heartbeat every 15s to keep connection alive through reverse proxies
         const heartbeat = setInterval(async () => {
           await stream.writeSSE({
             data: JSON.stringify({
@@ -60,7 +65,7 @@ export function EventRoutes() {
               properties: {},
             }),
           })
-        }, 30000)
+        }, 15000)
 
         // Wait for client to disconnect
         await new Promise<void>((resolve) => {

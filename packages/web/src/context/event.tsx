@@ -36,6 +36,7 @@ export const { use: useEvent, provider: EventProvider } = createSimpleContext({
     // Create typed emitter
     const emitter = createGlobalEmitter<{
       "server.connected": Record<string, unknown>
+      "server.reconnected": Record<string, unknown>
       "server.heartbeat": Record<string, unknown>
       "task.created": TaskInfo
       "task.updated": TaskInfo
@@ -59,7 +60,35 @@ export const { use: useEvent, provider: EventProvider } = createSimpleContext({
       "repeatingRule.deleted": { id: string }
     }>()
 
-    // Connect to SSE when authenticated
+    const dispatch = (event: { type: string; properties: unknown }) => {
+      const handlers: Record<string, () => void> = {
+        "server.connected": () => emitter.emit("server.connected", event.properties as Record<string, unknown>),
+        "server.heartbeat": () => emitter.emit("server.heartbeat", event.properties as Record<string, unknown>),
+        "task.created": () => emitter.emit("task.created", event.properties as TaskInfo),
+        "task.updated": () => emitter.emit("task.updated", event.properties as TaskInfo),
+        "task.deleted": () => emitter.emit("task.deleted", event.properties as { id: string }),
+        "tasks.reordered": () => emitter.emit("tasks.reordered", event.properties as TasksReorderedInfo),
+        "task.moved": () => emitter.emit("task.moved", event.properties as TaskMovedInfo),
+        "project.created": () => emitter.emit("project.created", event.properties as ProjectInfo),
+        "project.updated": () => emitter.emit("project.updated", event.properties as ProjectInfo),
+        "project.deleted": () => emitter.emit("project.deleted", event.properties as { id: string }),
+        "area.created": () => emitter.emit("area.created", event.properties as AreaInfo),
+        "area.updated": () => emitter.emit("area.updated", event.properties as AreaInfo),
+        "area.deleted": () => emitter.emit("area.deleted", event.properties as { id: string }),
+        "heading.created": () => emitter.emit("heading.created", event.properties as HeadingInfo),
+        "heading.updated": () => emitter.emit("heading.updated", event.properties as HeadingInfo),
+        "heading.deleted": () => emitter.emit("heading.deleted", event.properties as { id: string; projectId: string }),
+        "tag.created": () => emitter.emit("tag.created", event.properties as TagInfo),
+        "tag.updated": () => emitter.emit("tag.updated", event.properties as TagInfo),
+        "tag.deleted": () => emitter.emit("tag.deleted", event.properties as { id: string }),
+        "repeatingRule.created": () => emitter.emit("repeatingRule.created", event.properties as TemplateInfo),
+        "repeatingRule.updated": () => emitter.emit("repeatingRule.updated", event.properties as TemplateInfo),
+        "repeatingRule.deleted": () => emitter.emit("repeatingRule.deleted", event.properties as { id: string }),
+      }
+      handlers[event.type]?.()
+    }
+
+    // Connect to SSE when authenticated, with automatic reconnection
     createEffect(() => {
       if (!sdk.isReady) return
 
@@ -70,102 +99,80 @@ export const { use: useEvent, provider: EventProvider } = createSimpleContext({
       abort = new AbortController()
       setConnected(false)
 
+      const BASE_DELAY = 1000
+      const MAX_DELAY = 30000
+      let reconnect = false
+
       void (async () => {
-        try {
-          const response = await fetch(`${sdk.baseUrl}/api/v1/event`, {
-            headers: {
-              Accept: "text/event-stream",
-            },
-            credentials: "include", // Send session cookies
-            signal: abort!.signal,
-          })
+        let delay = BASE_DELAY
 
-          if (!response.ok) {
-            setConnected(false)
-            return
-          }
+        while (true) {
+          if (abort!.signal.aborted) return
 
-          setConnected(true)
-          const reader = response.body?.getReader()
-          if (!reader) return
+          try {
+            const response = await fetch(`${sdk.baseUrl}/api/v1/event`, {
+              headers: {
+                Accept: "text/event-stream",
+              },
+              credentials: "include",
+              signal: abort!.signal,
+            })
 
-          const decoder = new TextDecoder()
-          let buffer = ""
-
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) {
+            if (!response.ok) {
               setConnected(false)
-              break
+              await new Promise((r) => setTimeout(r, delay))
+              delay = Math.min(delay * 2, MAX_DELAY)
+              continue
             }
 
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split("\n")
-            buffer = lines.pop() ?? ""
+            setConnected(true)
+            delay = BASE_DELAY
 
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6)
+            // Signal reconnection so consumers can refetch stale data
+            if (reconnect) {
+              emitter.emit("server.reconnected", {})
+            }
+            reconnect = true
+
+            const reader = response.body?.getReader()
+            if (!reader) {
+              setConnected(false)
+              continue
+            }
+
+            const decoder = new TextDecoder()
+            let buffer = ""
+
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) {
+                setConnected(false)
+                break
+              }
+
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split("\n")
+              buffer = lines.pop() ?? ""
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue
                 try {
-                  const event = JSON.parse(data) as {
-                    type: string
-                    properties: unknown
-                  }
-                  if (event.type === "server.connected") {
-                    emitter.emit("server.connected", event.properties as Record<string, unknown>)
-                  } else if (event.type === "server.heartbeat") {
-                    emitter.emit("server.heartbeat", event.properties as Record<string, unknown>)
-                  } else if (event.type === "task.created") {
-                    emitter.emit("task.created", event.properties as TaskInfo)
-                  } else if (event.type === "task.updated") {
-                    emitter.emit("task.updated", event.properties as TaskInfo)
-                  } else if (event.type === "task.deleted") {
-                    emitter.emit("task.deleted", event.properties as { id: string })
-                  } else if (event.type === "tasks.reordered") {
-                    emitter.emit("tasks.reordered", event.properties as TasksReorderedInfo)
-                  } else if (event.type === "task.moved") {
-                    emitter.emit("task.moved", event.properties as TaskMovedInfo)
-                  } else if (event.type === "project.created") {
-                    emitter.emit("project.created", event.properties as ProjectInfo)
-                  } else if (event.type === "project.updated") {
-                    emitter.emit("project.updated", event.properties as ProjectInfo)
-                  } else if (event.type === "project.deleted") {
-                    emitter.emit("project.deleted", event.properties as { id: string })
-                  } else if (event.type === "area.created") {
-                    emitter.emit("area.created", event.properties as AreaInfo)
-                  } else if (event.type === "area.updated") {
-                    emitter.emit("area.updated", event.properties as AreaInfo)
-                  } else if (event.type === "area.deleted") {
-                    emitter.emit("area.deleted", event.properties as { id: string })
-                  } else if (event.type === "heading.created") {
-                    emitter.emit("heading.created", event.properties as HeadingInfo)
-                  } else if (event.type === "heading.updated") {
-                    emitter.emit("heading.updated", event.properties as HeadingInfo)
-                  } else if (event.type === "heading.deleted") {
-                    emitter.emit("heading.deleted", event.properties as { id: string; projectId: string })
-                  } else if (event.type === "tag.created") {
-                    emitter.emit("tag.created", event.properties as TagInfo)
-                  } else if (event.type === "tag.updated") {
-                    emitter.emit("tag.updated", event.properties as TagInfo)
-                  } else if (event.type === "tag.deleted") {
-                    emitter.emit("tag.deleted", event.properties as { id: string })
-                  } else if (event.type === "repeatingRule.created") {
-                    emitter.emit("repeatingRule.created", event.properties as TemplateInfo)
-                  } else if (event.type === "repeatingRule.updated") {
-                    emitter.emit("repeatingRule.updated", event.properties as TemplateInfo)
-                  } else if (event.type === "repeatingRule.deleted") {
-                    emitter.emit("repeatingRule.deleted", event.properties as { id: string })
-                  }
+                  dispatch(JSON.parse(line.slice(6)) as { type: string; properties: unknown })
                 } catch {
                   // Ignore parse errors
                 }
               }
             }
-          }
-        } catch (e) {
-          setConnected(false)
-          if (abort && !abort.signal.aborted) {
+
+            // Stream ended, wait before reconnecting
+            await new Promise((r) => setTimeout(r, delay))
+            delay = Math.min(delay * 2, MAX_DELAY)
+          } catch (e) {
+            setConnected(false)
+            if (abort && abort.signal.aborted) return
             console.error("[SSE] connection error:", e)
+            await new Promise((r) => setTimeout(r, delay))
+            delay = Math.min(delay * 2, MAX_DELAY)
           }
         }
       })()

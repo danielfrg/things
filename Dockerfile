@@ -28,14 +28,11 @@ RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package.json bun.lock ./
-COPY packages/server/package.json ./packages/server/
-COPY packages/sdk/package.json ./packages/sdk/
-COPY packages/web/package.json ./packages/web/
-
-# Install dependencies
-RUN bun install
+# Copy node_modules from builder to avoid needing native build tools in slim image
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=builder /app/packages/sdk/node_modules ./packages/sdk/node_modules
+COPY --from=builder /app/package.json ./
 
 # Copy server source code and config
 COPY --from=builder /app/packages/server/src ./packages/server/src

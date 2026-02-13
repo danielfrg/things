@@ -192,6 +192,11 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
       setStore("tags", (tags) => tags.filter((t) => t.id !== id))
     })
 
+    // On SSE reconnect, refetch all sidebar data to catch up on missed events
+    const unsubReconnect = event.on("server.reconnected", () => {
+      fetchAll()
+    })
+
     onCleanup(() => {
       unsubProjectCreate()
       unsubProjectUpdate()
@@ -202,6 +207,7 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
       unsubTagCreate()
       unsubTagUpdate()
       unsubTagDelete()
+      unsubReconnect()
     })
 
     // Fetch when API key is available

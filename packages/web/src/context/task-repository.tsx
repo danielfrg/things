@@ -624,6 +624,16 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
     const unsubRuleUpdate = event.on("repeatingRule.updated", handleTemplateUpdated)
     const unsubRuleDelete = event.on("repeatingRule.deleted", handleTemplateDeleted)
 
+    // On SSE reconnect, refetch all loaded views to catch up on missed events
+    const unsubReconnect = event.on("server.reconnected", () => {
+      refetchIfLoaded("inbox")
+      refetchIfLoaded("today")
+      refetchIfLoaded("upcoming")
+      refetchIfLoaded("anytime")
+      refetchIfLoaded("someday")
+      refetchIfLoaded("logbook")
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
@@ -633,6 +643,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       unsubRuleCreate()
       unsubRuleUpdate()
       unsubRuleDelete()
+      unsubReconnect()
     })
 
     // Initial fetch - only load today (default route) and inbox (needed for sidebar badge)

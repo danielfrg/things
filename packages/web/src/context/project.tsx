@@ -233,6 +233,11 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       )
     })
 
+    // On SSE reconnect, refetch project data to catch up on missed events
+    const unsubReconnect = event.on("server.reconnected", () => {
+      fetchProject()
+    })
+
     onCleanup(() => {
       unsubCreate()
       unsubUpdate()
@@ -242,6 +247,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       unsubHeadingCreate()
       unsubHeadingDelete()
       unsubReorder()
+      unsubReconnect()
       if (refetchTimeout) clearTimeout(refetchTimeout)
     })
 
