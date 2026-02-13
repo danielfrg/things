@@ -42,6 +42,10 @@ COPY --from=builder /app/packages/server/src ./packages/server/src
 COPY --from=builder /app/packages/server/scripts ./packages/server/scripts
 COPY --from=builder /app/packages/server/tsconfig.json ./packages/server/tsconfig.json
 
+# Copy SDK source (workspace dependency used by server)
+COPY --from=builder /app/packages/sdk/package.json ./packages/sdk/package.json
+COPY --from=builder /app/packages/sdk/src ./packages/sdk/src
+
 # Copy built web assets to where server expects them
 COPY --from=builder /app/packages/web/dist ./packages/server/dist/static
 
