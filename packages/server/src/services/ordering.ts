@@ -1,4 +1,4 @@
-import { parseLocalDate } from "@things/sdk/dates"
+import { parseLocalDate } from "@things/sdk"
 import { and, eq, or, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { taskOrderings, type Task } from "@/db/schema"
