@@ -386,6 +386,28 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       return result
     }
 
+    const restoreFromLogbook = async (id: string): Promise<{ success: boolean; error?: string }> => {
+      // Optimistically remove from logged section
+      setStore("sections", (sections) =>
+        sections.map((section) => ({
+          ...section,
+          tasks: section.isLogged ? section.tasks.filter((t) => t.id !== id) : section.tasks,
+        })),
+      )
+
+      const { error } = await sdk.client.postApiV1TasksByIdRestoreFromLogbook({ id })
+      if (error) {
+        const msg =
+          typeof error === "object" && error !== null && "error" in error
+            ? (error as { error: string }).error
+            : "Failed to restore task"
+        fetchProject()
+        return { success: false, error: msg }
+      }
+      fetchProject()
+      return { success: true }
+    }
+
     const reorderTasks = async (taskIds: string[], sectionId?: string) => {
       isReordering = true
 
@@ -651,6 +673,7 @@ export const { use: useProjectData, provider: ProjectDataProvider } = createSimp
       completeTask,
       cancelTask,
       uncancelTask,
+      restoreFromLogbook,
       reorderTasks,
       moveTask,
 

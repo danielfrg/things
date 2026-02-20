@@ -52,7 +52,19 @@ function ProjectContent() {
     }
   })
 
-  const handleComplete = (id: string, completed: boolean) => {
+  const isLoggedTask = (id: string) => {
+    const logged = data.sections.find((s) => s.isLogged)
+    return logged?.tasks.some((t) => t.id === id) ?? false
+  }
+
+  const handleComplete = async (id: string, completed: boolean) => {
+    // Restoring a completed task from the logged section
+    if (!completed && isLoggedTask(id)) {
+      const result = await data.restoreFromLogbook(id)
+      if (!result.success) toast.error(result.error || "Failed to restore task")
+      else toast.success("Task restored")
+      return
+    }
     data.completeTask(id, completed)
   }
 
@@ -60,7 +72,14 @@ function ProjectContent() {
     data.cancelTask(id)
   }
 
-  const handleUncancel = (id: string) => {
+  const handleUncancel = async (id: string) => {
+    // Restoring a cancelled task from the logged section
+    if (isLoggedTask(id)) {
+      const result = await data.restoreFromLogbook(id)
+      if (!result.success) toast.error(result.error || "Failed to restore task")
+      else toast.success("Task restored")
+      return
+    }
     data.uncancelTask(id)
   }
 

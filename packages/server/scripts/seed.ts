@@ -509,30 +509,30 @@ async function seed() {
   let taskPosition = 0
 
   // Helper to create task
-  // status: null = inbox, "active" = processed, "completed"/"trashed" = lifecycle
+  // status: null = inbox, "active" = processed, "completed"/"cancelled"/"trashed" = lifecycle
   // Now uses listId + headingId for the List hierarchy:
   // - listId: which List (project or area) does this task belong to?
   // - headingId: which heading within the List (if any)?
   const createTask = async (data: {
     title: string
-    status?: "active" | "completed" | "trashed" | null
+    status?: "active" | "completed" | "cancelled" | "trashed" | null
     isSomeday?: boolean
     scheduledDate?: string
     projectId?: string
     areaId?: string
     headingId?: string
     notes?: string
+    completedAt?: Date
   }) => {
     const id = createId("task")
 
     // Determine listId from projectId or areaId
     // projectId takes priority over areaId
-    let listId: string | null = null
-    if (data.projectId) {
-      listId = data.projectId
-    } else if (data.areaId) {
-      listId = data.areaId
-    }
+    const listId = data.projectId ?? data.areaId ?? null
+
+    // completedAt is set for both completed and cancelled statuses
+    const completed =
+      data.completedAt ?? (data.status === "completed" || data.status === "cancelled" ? new Date() : null)
 
     const [task] = await db
       .insert(tasks)
@@ -543,6 +543,7 @@ async function seed() {
         status: data.status === undefined ? null : data.status,
         isSomeday: data.isSomeday ?? false,
         scheduledDate: data.scheduledDate ?? null,
+        completedAt: completed,
         listId,
         headingId: data.headingId ?? null,
         notes: data.notes ?? null,
@@ -1183,7 +1184,76 @@ async function seed() {
     projectId: bookWritingProjectId,
   })
 
-  console.log("Tasks created")
+  // =========================================================================
+  // Cancelled tasks (for testing cancelled state visibility)
+  // =========================================================================
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  // Cancelled today — visible in project active sections before logging
+  await createTask({
+    title: "Old homepage design approach",
+    status: "cancelled",
+    projectId: webAppProjectId,
+    headingId: webDesignHeadingId,
+  })
+  await createTask({
+    title: "Use jQuery for frontend",
+    status: "cancelled",
+    projectId: webAppProjectId,
+    headingId: webDevHeadingId,
+  })
+  await createTask({
+    title: "Manual regression testing",
+    status: "cancelled",
+    projectId: mobileAppProjectId,
+    headingId: mobileIosHeadingId,
+  })
+
+  // Cancelled yesterday — would be in limbo without the log-all fix
+  await createTask({
+    title: "Try waterfall methodology",
+    status: "cancelled",
+    completedAt: yesterday,
+    projectId: webAppProjectId,
+    headingId: webDevHeadingId,
+  })
+
+  // =========================================================================
+  // Logged tasks in projects (completed & cancelled, already logged)
+  // These appear in the project's collapsible "Logged" section
+  // =========================================================================
+  const loggedProjectTasks = [
+    { title: "Initial wireframe review", status: "completed" as const, pid: webAppProjectId, age: 3 },
+    { title: "Setup CI/CD pipeline", status: "completed" as const, pid: webAppProjectId, age: 5 },
+    { title: "Flash animation prototype", status: "cancelled" as const, pid: webAppProjectId, age: 7 },
+    { title: "Design system v1 approval", status: "completed" as const, pid: webAppProjectId, age: 10 },
+    { title: "Use PHP backend", status: "cancelled" as const, pid: webAppProjectId, age: 12 },
+    { title: "Beta TestFlight build", status: "completed" as const, pid: mobileAppProjectId, age: 2 },
+    { title: "Windows Phone support", status: "cancelled" as const, pid: mobileAppProjectId, age: 4 },
+    { title: "Push notification setup", status: "completed" as const, pid: mobileAppProjectId, age: 8 },
+    { title: "5K race registration", status: "completed" as const, pid: fitnessProjectId, age: 6 },
+    { title: "Buy treadmill for home", status: "cancelled" as const, pid: fitnessProjectId, age: 9 },
+    { title: "Fix kitchen faucet", status: "completed" as const, pid: homeProjectId, age: 3 },
+    { title: "Paint garage door", status: "cancelled" as const, pid: homeProjectId, age: 11 },
+  ]
+  const loggedValues = loggedProjectTasks.map((t) => {
+    const completed = new Date(today)
+    completed.setDate(completed.getDate() - t.age)
+    return {
+      id: createId("task"),
+      userId,
+      title: t.title,
+      status: t.status,
+      isSomeday: false,
+      isLogged: true,
+      completedAt: completed,
+      listId: t.pid,
+    }
+  })
+  await db.insert(tasks).values(loggedValues)
+
+  console.log("Tasks created (including cancelled & logged)")
 
   // =========================================================================
   // Bulk logbook tasks (1000 completed & logged)

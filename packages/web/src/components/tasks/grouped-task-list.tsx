@@ -16,6 +16,7 @@ import {
   SomedayIcon,
   Trash2Icon,
 } from "@/components/icons"
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,6 +150,27 @@ function CompletedHeader(props: { section: Section }) {
   )
 }
 
+// Logged section header (collapsible, for project view)
+function LoggedSectionHeader(props: { section: Section; open: boolean; onToggle: () => void }) {
+  return (
+    <div class="mb-2 px-4">
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 pb-2 border-b border-section-border"
+        onClick={props.onToggle}
+      >
+        <h2 class="text-lg md:text-base font-bold" style={{ color: "#999ca1" }}>
+          {props.section.title}
+        </h2>
+        <ChevronRightIcon
+          class={cn("w-4 h-4 transition-transform ml-auto", props.open && "rotate-90")}
+          style={{ color: "#999ca1" }}
+        />
+      </button>
+    </div>
+  )
+}
+
 // Project/Area linked section header
 function LinkedSectionHeader(props: { section: Section }) {
   const icon = () => {
@@ -239,6 +261,11 @@ function SectionHeader(props: {
     props.section.id === "section:unheaded" ||
     props.section.title === ""
   ) {
+    return null
+  }
+
+  // Logged section - handled separately in SectionTasks with collapsible
+  if (props.section.isLogged) {
     return null
   }
 
@@ -378,6 +405,48 @@ function SectionTasks(props: {
   const isSomedaySection = () => props.isSomeday || props.section.isBacklog
   const hasTemplates = () => (props.section.templates ?? []).length > 0
   const hasContent = () => props.section.tasks.length > 0 || hasTemplates()
+
+  // Logged sections use a collapsible wrapper, collapsed by default
+  if (props.section.isLogged) {
+    const [open, setOpen] = createSignal(false)
+    return (
+      <div class="mb-4">
+        <LoggedSectionHeader section={props.section} open={open()} onToggle={() => setOpen((v) => !v)} />
+        <Collapsible open={open()}>
+          <CollapsibleContent>
+            <TaskCardList
+              tasks={props.section.tasks}
+              expandedTaskId={props.expandedTaskId}
+              selectedIds={props.selectedIds}
+              scheduleDatePickerTaskId={props.scheduleDatePickerTaskId}
+              onScheduleDatePickerClose={props.onScheduleDatePickerClose}
+              movePickerTaskId={props.movePickerTaskId}
+              onMovePickerClose={props.onMovePickerClose}
+              projects={props.projects}
+              areas={props.areas}
+              onSelect={props.onSelect}
+              onExpand={props.onExpand}
+              onComplete={props.onComplete}
+              onCancel={props.onCancel}
+              onUncancel={props.onUncancel}
+              onUpdate={props.onUpdate}
+              showCompletedDate
+              taskTags={props.enhancement.taskTags}
+              onTagAdd={props.enhancement.onTagAdd}
+              onTagRemove={props.enhancement.onTagRemove}
+              onFetchTags={props.enhancement.onFetchTags}
+              checklistItems={props.enhancement.checklistItems}
+              onFetchChecklistItems={props.enhancement.onFetchChecklistItems}
+              onCreateChecklistItem={props.enhancement.onCreateChecklistItem}
+              onUpdateChecklistItem={props.enhancement.onUpdateChecklistItem}
+              onDeleteChecklistItem={props.enhancement.onDeleteChecklistItem}
+              onReorderChecklistItems={props.enhancement.onReorderChecklistItems}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    )
+  }
 
   return (
     <div class="mb-4">

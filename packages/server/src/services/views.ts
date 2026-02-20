@@ -47,6 +47,7 @@ export interface ViewSection {
   isBacklog?: boolean
   isCompleted?: boolean
   isRepeated?: boolean
+  isLogged?: boolean
 }
 export interface ViewResponse {
   sections: ViewSection[]
@@ -837,6 +838,24 @@ export async function getProjectView(userId: string, projectId: string): Promise
       templates: sortedTemplates.map((t) => formatTemplate(t)),
       projectId,
       isRepeated: true,
+    })
+  }
+
+  // Logged section: completed/cancelled tasks that have been logged
+  const logged = projectTasks
+    .filter((t) => t.isLogged)
+    .sort((a, b) => {
+      const dateA = a.completedAt?.getTime() ?? 0
+      const dateB = b.completedAt?.getTime() ?? 0
+      return dateB - dateA
+    })
+  if (logged.length > 0) {
+    sections.push({
+      id: "section:logged",
+      title: "Logged",
+      tasks: logged.map((t) => formatTask(t, projectPositions.get(t.id) ?? 0)),
+      projectId,
+      isLogged: true,
     })
   }
 

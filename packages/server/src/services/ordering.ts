@@ -133,9 +133,12 @@ export function getTaskContexts(task: Task): OrderingContext[] {
     }
   }
 
-  // Cancelled tasks can still appear in Today when due/overdue or cancelled today.
-  if (task.status === "cancelled" && belongsInToday(task)) {
-    contexts.push({ type: "today", id: null })
+  // Cancelled tasks appear in logbook (like completed tasks) and can also appear in Today.
+  if (task.status === "cancelled") {
+    contexts.push({ type: "logbook", id: null })
+    if (belongsInToday(task)) {
+      contexts.push({ type: "today", id: null })
+    }
   }
 
   return contexts

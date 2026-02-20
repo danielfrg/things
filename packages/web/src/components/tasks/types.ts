@@ -16,6 +16,7 @@ export type Section = {
   isCompleted?: boolean // For completed today section
   isLater?: boolean // For Upcoming view - "Later" section
   isRepeated?: boolean // For Project/Area view - repeated templates section
+  isLogged?: boolean // For Project view - logged (completed/cancelled) tasks section
 }
 
 // Information about a task being moved between sections

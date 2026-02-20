@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, gte, lt } from "drizzle-orm"
+import { and, eq, isNotNull, isNull } from "drizzle-orm"
 import type { Context } from "hono"
 import { Hono } from "hono"
 import { describeRoute, resolver, validator } from "hono-openapi"
@@ -796,9 +796,9 @@ export function TaskRoutes() {
       "/log-completed",
       describeRoute({
         tags: ["Tasks"],
-        summary: "Log all tasks completed today",
+        summary: "Log all completed/cancelled tasks",
         description:
-          "Marks all tasks completed/cancelled today as logged. " +
+          "Marks all unlogged completed/cancelled tasks as logged. " +
           "Logged tasks only appear in the logbook, not in 'completed today' sections.",
         responses: {
           200: {
@@ -826,12 +826,9 @@ export function TaskRoutes() {
         }
         const userId = c.get("userId")
 
-        // Find all tasks completed/cancelled today that aren't logged yet
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-
+        // Find all completed/cancelled tasks that aren't logged yet.
+        // This includes tasks from previous days that were never logged,
+        // preventing them from falling into limbo (invisible everywhere).
         const result = await db
           .update(tasks)
           .set({ isLogged: true, scheduledDate: null, isEvening: false, updatedAt: new Date() })
@@ -841,8 +838,6 @@ export function TaskRoutes() {
               eq(tasks.isLogged, false),
               isNull(tasks.trashedAt),
               isNotNull(tasks.completedAt),
-              gte(tasks.completedAt, today),
-              lt(tasks.completedAt, tomorrow),
             ),
           )
           .returning()
