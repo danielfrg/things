@@ -202,13 +202,13 @@ export function MovePicker(props: MovePickerProps) {
       <PopoverTrigger
         disabled={props.disabled}
         class={cn(
-          "inline-flex items-center justify-center h-6 w-6 rounded text-[12px] transition-colors",
+          "inline-flex items-center justify-center h-8 w-8 md:h-6 md:w-6 rounded text-[12px] transition-colors",
           "text-toolbar-icon border border-transparent hover:border-toolbar-border",
           "disabled:cursor-not-allowed disabled:opacity-50",
           props.class,
         )}
       >
-        <FolderOpenIcon class="h-3.5 w-3.5" />
+        <FolderOpenIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />
       </PopoverTrigger>
 
       <PopoverContent class="w-auto p-0 bg-transparent border-0 shadow-xl">

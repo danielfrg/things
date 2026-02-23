@@ -41,7 +41,7 @@ export function BatchActionBar(props: BatchActionBarProps) {
   }
 
   return (
-    <div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-4 px-4 pointer-events-none">
+    <div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] px-4 pointer-events-none">
       <div class="pointer-events-auto flex items-center gap-1 rounded-xl bg-popover-dark border border-popover-dark-border shadow-2xl px-3 py-2 animate-in slide-in-from-bottom-4 fade-in duration-200">
         {/* Selection count */}
         <div class="flex items-center gap-2 px-2 text-sm font-medium text-popover-dark-foreground">

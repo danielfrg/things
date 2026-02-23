@@ -1,6 +1,6 @@
 import { parseLocalDate } from "@things/sdk"
 import { addDays, format, isBefore, isSameDay, isToday, startOfDay } from "date-fns"
-import { and, desc, eq, inArray, isNotNull, isNull, or } from "drizzle-orm"
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm"
 import { db } from "@/db"
 import { type Area, areas, headings, type Project, projects, type Task, tags, tasks, taskTags } from "@/db/schema"
 import { getListType, isProjectId } from "@/lib/id"
@@ -165,6 +165,21 @@ export async function getTodayView(userId: string): Promise<ViewResponse> {
 
   // Spawn any due templates first
   await spawnDueTemplates(todayStr, userId)
+
+  // Auto-log completed/cancelled tasks from previous days
+  await db
+    .update(tasks)
+    .set({ isLogged: true, scheduledDate: null, isEvening: false, updatedAt: new Date() })
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.isLogged, false),
+        isNull(tasks.trashedAt),
+        eq(tasks.isTemplate, false),
+        isNotNull(tasks.completedAt),
+        lt(tasks.completedAt, todayStart),
+      ),
+    )
 
   const isDateOverdue = (dateStr: string | null) => {
     if (!dateStr) return false

@@ -91,14 +91,13 @@ function AccountSection() {
   createEffect(() => {
     const t = theme()
     const root = document.documentElement
-
-    if (t === "system") {
-      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      root.classList.toggle("dark", isDark)
-    } else {
-      root.classList.toggle("dark", t === "dark")
-    }
+    const isDark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+    root.classList.toggle("dark", isDark)
     localStorage.setItem("theme", t)
+
+    // Update iOS status/address bar color to match theme
+    const meta = document.querySelector('meta[name="theme-color"]:not([media])')
+    if (meta) meta.setAttribute("content", isDark ? "#23262a" : "#ffffff")
   })
 
   const handleLogout = async () => {
@@ -838,7 +837,7 @@ export function Settings() {
       </div>
 
       {/* Bottom toolbar */}
-      <div class="flex-shrink-0 border-t border-sidebar-border bg-background h-[52px] flex items-center relative">
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-background h-[52px] flex items-center relative pb-[env(safe-area-inset-bottom)]">
         {/* Mobile: centered sidebar trigger */}
         <div class="flex md:hidden items-center justify-center w-full px-4">
           <SidebarTrigger />

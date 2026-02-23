@@ -225,7 +225,7 @@ function ProjectItem(props: {
 
   const innerClass = () => {
     const base =
-      "flex items-center gap-2 mx-2 px-2 py-1.5 rounded-md text-[13px] font-medium transition-colors cursor-grab"
+      "flex items-center gap-3 md:gap-2 mx-2 px-2 py-2.5 md:py-1.5 rounded-md text-lg md:text-[13px] font-medium transition-colors cursor-grab"
     const s = state()
     if (s.type === "is-dragging" || s.type === "is-dragging-and-left-self") {
       return base
@@ -244,7 +244,14 @@ function ProjectItem(props: {
         </Show>
 
         <a ref={innerRef} href={`/project/${props.project.id}`} onClick={handleClick} class={innerClass()}>
-          <ProjectProgressIcon progress={props.progress} size={16} variant="sidebar" class="text-project-progress" />
+          <span class="w-5 h-5 md:w-4 md:h-4 flex items-center justify-center shrink-0">
+            <ProjectProgressIcon
+              progress={props.progress}
+              size={16}
+              variant="sidebar"
+              class="text-project-progress w-full h-full"
+            />
+          </span>
           <span class="flex-1 truncate text-sidebar-foreground">{props.project.title}</span>
         </a>
 
@@ -362,10 +369,10 @@ function AreaHeader(props: { area: AreaInfo; onLinkClick?: () => void }) {
   return (
     <button
       type="button"
-      class="flex-1 text-left text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-2"
+      class="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-3 md:gap-2"
       onClick={handleClick}
     >
-      <BoxIcon class="w-4 h-4 text-muted-foreground" />
+      <BoxIcon class="w-5 h-5 md:w-4 md:h-4 text-muted-foreground" />
       <span class="truncate">{props.area.title}</span>
     </button>
   )
@@ -515,7 +522,7 @@ function AreaItem(props: {
           <div
             ref={headerRef}
             class={cn(
-              "flex items-center justify-between mx-2 px-2 py-1.5 rounded-md group cursor-grab hover:bg-sidebar-accent",
+              "flex items-center justify-between mx-2 px-2 py-2.5 md:py-1.5 rounded-md group cursor-grab hover:bg-sidebar-accent",
               isActive() && "bg-sidebar-accent",
               state().type === "task-over" && "bg-sidebar-accent ring-2 ring-things-blue ring-inset",
             )}

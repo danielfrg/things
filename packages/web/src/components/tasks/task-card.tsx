@@ -643,14 +643,14 @@ export function TaskCard(props: TaskCardProps) {
           onChange={onDeadlineChange}
           onClear={onDeadlineClear}
           placeholder="Deadline"
-          icon={<FlagIcon class="h-3.5 w-3.5 text-things-pink" />}
+          icon={<FlagIcon class="h-4 w-4 md:h-3.5 md:w-3.5 text-things-pink" />}
           title="Deadline"
         />
       </Show>
       {/* Repeat indicator if task was spawned from a template */}
       <Show when={props.task.templateId}>
-        <div class="inline-flex items-center gap-1 h-6 px-2 rounded text-[12px] text-muted-foreground">
-          <RepeatIcon class="h-3.5 w-3.5 opacity-70" />
+        <div class="inline-flex items-center gap-1 h-9 md:h-6 px-2 rounded text-base md:text-[12px] text-muted-foreground">
+          <RepeatIcon class="h-4 w-4 md:h-3.5 md:w-3.5 opacity-70" />
           <span>Repeating</span>
         </div>
       </Show>
@@ -680,7 +680,7 @@ export function TaskCard(props: TaskCardProps) {
         {/* Add checklist button - only show if no checklist items exist */}
         <Show when={!isCompleted() && (props.checklistItems?.length ?? 0) === 0 && props.onCreateChecklistItem}>
           <ToolbarButton
-            class="w-6 justify-center px-0"
+            class="w-8 md:w-6 justify-center px-0"
             onClick={(e) => {
               ;(e.currentTarget as HTMLButtonElement).blur()
               props.onCreateChecklistItem?.(props.task.id, {
@@ -689,7 +689,7 @@ export function TaskCard(props: TaskCardProps) {
                 position: 1,
               })
             }}
-            icon={<ListChecksIcon class="h-3.5 w-3.5" />}
+            icon={<ListChecksIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />}
           />
         </Show>
         {/* Tags */}
@@ -716,7 +716,7 @@ export function TaskCard(props: TaskCardProps) {
             value={undefined}
             onChange={onDeadlineChange}
             placeholder="Deadline"
-            icon={<FlagIcon class="h-3.5 w-3.5" />}
+            icon={<FlagIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />}
             title="Deadline"
           />
         </Show>
@@ -739,13 +739,13 @@ export function TaskCard(props: TaskCardProps) {
           <button
             ref={infoButtonRef}
             type="button"
-            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
+            class="flex items-center justify-center w-8 h-8 md:w-6 md:h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowInfo(!showInfo())
             }}
           >
-            <InfoIcon class="w-3.5 h-3.5" />
+            <InfoIcon class="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
 
           {/* Info popover */}
@@ -801,13 +801,13 @@ export function TaskCard(props: TaskCardProps) {
           <button
             ref={deleteButtonRef}
             type="button"
-            class="flex items-center justify-center w-6 h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
+            class="flex items-center justify-center w-8 h-8 md:w-6 md:h-6 rounded text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteConfirm(!showDeleteConfirm())
             }}
           >
-            <Trash2Icon class="w-3.5 h-3.5" />
+            <Trash2Icon class="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
 
           {/* Delete confirmation popover */}

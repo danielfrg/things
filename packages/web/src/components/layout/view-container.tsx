@@ -59,7 +59,7 @@ export function ViewContainer(props: ViewContainerProps) {
       </div>
 
       {/* Bottom toolbar */}
-      <div class="flex-shrink-0 border-t border-sidebar-border bg-background h-[52px] flex items-center justify-center relative">
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-background min-h-[52px] flex items-center justify-center relative pb-[env(safe-area-inset-bottom)]">
         {props.toolbar}
         <div class="hidden md:block absolute right-6">
           <SyncStatus />

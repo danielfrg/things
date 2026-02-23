@@ -80,7 +80,7 @@ export function SidebarTrigger(props: { class?: string }) {
         )}
         aria-label="Open Sidebar"
       >
-        <PanelLeftIcon class="w-4 h-4" />
+        <PanelLeftIcon class="w-5 h-5 md:w-4 md:h-4" />
       </button>
     </Show>
   )
@@ -137,7 +137,7 @@ function NavItem(props: NavItemProps) {
       href={props.to}
       onClick={props.onClick}
       class={cn(
-        "group flex items-center gap-3 mx-2 px-2 py-1.5 rounded-md text-[13px] font-semibold transition-colors",
+        "group flex items-center gap-3 mx-2 px-2 py-2.5 md:py-1.5 rounded-md text-lg md:text-[13px] font-semibold transition-colors",
         "hover:bg-sidebar-accent",
         isActive() && "bg-sidebar-accent",
         props.secondary && "text-muted-foreground",
@@ -146,7 +146,7 @@ function NavItem(props: NavItemProps) {
     >
       <span
         class={cn(
-          "w-5 h-5 flex items-center justify-center",
+          "w-6 h-6 md:w-5 md:h-5 flex items-center justify-center",
           props.secondary ? "text-muted-foreground" : props.iconColor,
         )}
       >
@@ -155,7 +155,9 @@ function NavItem(props: NavItemProps) {
       <span class={cn("flex-1 truncate", props.secondary ? "text-muted-foreground" : "text-sidebar-foreground")}>
         {props.label}
       </span>
-      {props.count !== undefined && props.count > 0 && <span class="text-xs text-muted-foreground">{props.count}</span>}
+      {props.count !== undefined && props.count > 0 && (
+        <span class="text-base md:text-xs text-muted-foreground">{props.count}</span>
+      )}
     </A>
   )
 }
@@ -506,14 +508,14 @@ function SidebarContent() {
         </div>
       </div>
 
-      <div class="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-2 h-[52px] flex items-center">
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-2 min-h-[52px] flex items-center pb-[env(safe-area-inset-bottom)]">
         <div class="flex items-center justify-between w-full">
           <DropdownMenu>
             <DropdownMenuTrigger
               class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
               aria-label="Create"
             >
-              <PlusIcon class="w-5 h-5" />
+              <PlusIcon class="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onSelect={handleNewProject}>New Project</DropdownMenuItem>
@@ -527,7 +529,7 @@ function SidebarContent() {
             class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Logbook"
           >
-            <BookCheckIcon class="w-5 h-5" />
+            <BookCheckIcon class="w-4 h-4" />
           </A>
 
           <A
@@ -536,7 +538,7 @@ function SidebarContent() {
             class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Trash"
           >
-            <Trash2Icon class="w-5 h-5" />
+            <Trash2Icon class="w-4 h-4" />
           </A>
 
           <A
@@ -545,7 +547,7 @@ function SidebarContent() {
             class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Settings"
           >
-            <Settings2Icon class="w-5 h-5" />
+            <Settings2Icon class="w-4 h-4" />
           </A>
         </div>
       </div>
@@ -679,6 +681,18 @@ export function SidebarProvider(props: ParentProps) {
       setOpen((prev) => !prev)
     }
   }
+
+  // Update iOS theme-color when mobile sidebar opens/closes
+  createEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]:not([media])')
+    if (!meta) return
+    const isDark = document.documentElement.classList.contains("dark")
+    if (openMobile()) {
+      meta.setAttribute("content", isDark ? "#1d1f22" : "#f8f9f9")
+    } else {
+      meta.setAttribute("content", isDark ? "#23262a" : "#ffffff")
+    }
+  })
 
   const value: SidebarContextValue = {
     isMobile,

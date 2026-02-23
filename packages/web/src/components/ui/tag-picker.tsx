@@ -32,13 +32,13 @@ export function TagPicker(props: TagPickerProps) {
         <Popover>
           <PopoverTrigger
             class={cn(
-              'inline-flex items-center justify-center h-6 w-6 rounded text-[12px]',
+              'inline-flex items-center justify-center h-8 w-8 md:h-6 md:w-6 rounded text-[12px]',
               'text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors',
             )}
             onMouseDown={(e: MouseEvent) => e.stopPropagation()}
             onClick={(e: MouseEvent) => e.stopPropagation()}
           >
-            <TagIcon class="w-3.5 h-3.5" />
+            <TagIcon class="w-4 h-4 md:w-3.5 md:h-3.5" />
           </PopoverTrigger>
 
           <PopoverContent

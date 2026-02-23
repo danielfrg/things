@@ -8,8 +8,8 @@ const toolbarButtonVariants = cva(
   {
     variants: {
       size: {
-        sm: 'h-6 px-2',
-        md: 'h-7 px-2.5',
+        sm: 'h-8 md:h-6 px-2',
+        md: 'h-8 md:h-7 px-2.5',
       },
       intent: {
         default:

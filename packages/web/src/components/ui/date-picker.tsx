@@ -40,12 +40,12 @@ export function DatePicker(props: DatePickerProps) {
   const contextIcon = createMemo(() => {
     // If an explicit icon is provided (e.g. deadline flag), use it
     if (props.icon) return props.icon;
-    if (props.isSomeday) return <SomedayIcon class="h-3.5 w-3.5" />;
-    if (!props.value) return <CalendarIcon class="h-3.5 w-3.5" />;
+    if (props.isSomeday) return <SomedayIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />;
+    if (!props.value) return <CalendarIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />;
     const date = parseLocalDate(props.value);
-    if (isToday(date) && props.isEvening) return <EveningIcon class="h-3.5 w-3.5" />;
-    if (isToday(date)) return <TodayStarIcon class="h-3.5 w-3.5" />;
-    return <CalendarIcon class="h-3.5 w-3.5 text-things-pink" />;
+    if (isToday(date) && props.isEvening) return <EveningIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />;
+    if (isToday(date)) return <TodayStarIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />;
+    return <CalendarIcon class="h-4 w-4 md:h-3.5 md:w-3.5 text-things-pink" />;
   });
 
   const handleChange = (date: string | undefined, isEvening?: boolean) => {
@@ -64,10 +64,10 @@ export function DatePicker(props: DatePickerProps) {
         <PopoverTrigger
           disabled={props.disabled}
           class={cn(
-            'inline-flex items-center gap-1 rounded text-[12px] transition-colors h-6 border border-transparent',
+            'inline-flex items-center gap-1 rounded text-base md:text-[12px] transition-colors h-9 md:h-6 border border-transparent',
             hasValue()
               ? 'text-foreground hover:border-toolbar-border px-2'
-              : 'text-toolbar-icon hover:border-toolbar-border w-6 justify-center',
+              : 'text-toolbar-icon hover:border-toolbar-border w-8 md:w-6 justify-center',
             'disabled:cursor-not-allowed disabled:opacity-50',
             props.class,
           )}
@@ -81,7 +81,7 @@ export function DatePicker(props: DatePickerProps) {
                 onClick={handleClear}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <XIcon class="h-3 w-3" />
+                <XIcon class="h-3.5 w-3.5 md:h-3 md:w-3" />
               </span>
             </Show>
           </Show>
