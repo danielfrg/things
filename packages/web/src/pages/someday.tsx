@@ -107,6 +107,7 @@ export function Someday() {
             onReorder={handleReorder}
             isSomeday
             showTodayStar
+            autoCommitSticky
             taskTags={data.taskTags}
             onTagAdd={data.addTagToTask}
             onTagRemove={data.removeTagFromTask}

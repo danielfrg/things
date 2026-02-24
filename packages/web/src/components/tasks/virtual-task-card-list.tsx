@@ -40,6 +40,7 @@ export function VirtualTaskCardList(props: TaskCardListProps) {
           hideScheduledDate={props.hideScheduledDate}
           showTodayStar={props.showTodayStar}
           showCompletedDate={props.showCompletedDate}
+          autoCommitSticky={props.autoCommitSticky}
           isTrashView={props.isTrashView}
           onRestore={props.onRestore}
           onDelete={props.onDelete}

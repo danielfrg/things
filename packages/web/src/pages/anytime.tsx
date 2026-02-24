@@ -106,6 +106,7 @@ export function Anytime() {
             onMove={handleMove}
             onReorder={handleReorder}
             showTodayStar
+            autoCommitSticky
             taskTags={data.taskTags}
             onTagAdd={data.addTagToTask}
             onTagRemove={data.removeTagFromTask}

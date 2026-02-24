@@ -46,6 +46,7 @@ export function Inbox() {
           onComplete={(id, completed) => data.completeTask(id, completed)}
           onUpdate={(id, updates) => data.updateTask(id, updates)}
           onReorder={(taskId, newIndex) => data.reorderTask(taskId, newIndex)}
+          autoCommitSticky
           taskTags={data.taskTags}
           onTagAdd={(taskId, tagId) => data.addTagToTask(taskId, tagId)}
           onTagRemove={(taskId, tagId) => data.removeTagFromTask(taskId, tagId)}

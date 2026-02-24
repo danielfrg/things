@@ -75,6 +75,7 @@ function TaskPreview(props: { task: TaskInfo; dragging: DOMRect; isSomeday?: boo
 export type TaskCardProps = {
   task: TaskInfo
   expanded: boolean
+  autoCommitSticky?: boolean
   onComplete: (id: string, completed: boolean) => void
   onCancel?: (id: string) => void
   onUncancel?: (id: string) => void
@@ -125,6 +126,12 @@ export function TaskCard(props: TaskCardProps) {
     () => props.task,
     (id, changes) => props.onUpdate(id, changes),
   )
+
+  const commitSticky = () => {
+    if (!props.autoCommitSticky) return
+    if (props.expanded) return
+    stickyChanges.commit()
+  }
 
   // Get the effective task with pending changes merged for display
   const effectiveTask = () => stickyChanges.effectiveTask()
@@ -561,6 +568,7 @@ export function TaskCard(props: TaskCardProps) {
         isLogged: false,
         status: "active",
       })
+      commitSticky()
     } else if (props.isTrashView && date) {
       stickyChanges.update({
         scheduledDate: date,
@@ -568,11 +576,13 @@ export function TaskCard(props: TaskCardProps) {
         trashedAt: null,
         status: "active",
       })
+      commitSticky()
     } else {
       stickyChanges.update({
         scheduledDate: date ?? null,
         isEvening: isEvening ?? false,
       })
+      commitSticky()
     }
   }
 
@@ -582,14 +592,17 @@ export function TaskCard(props: TaskCardProps) {
       isEvening: false,
       isSomeday: false,
     })
+    commitSticky()
   }
 
   const onDeadlineChange = (date: string | undefined) => {
     stickyChanges.update({ deadline: date ?? null })
+    commitSticky()
   }
 
   const onDeadlineClear = () => {
     stickyChanges.update({ deadline: null })
+    commitSticky()
   }
 
   const onSomedaySelect = () => {
@@ -598,6 +611,7 @@ export function TaskCard(props: TaskCardProps) {
       scheduledDate: null,
       isEvening: false,
     })
+    commitSticky()
   }
 
   const onMoveChange = (listId: string | null, moveToInbox?: boolean) => {
@@ -610,12 +624,14 @@ export function TaskCard(props: TaskCardProps) {
         isEvening: false,
         isSomeday: false,
       })
+      commitSticky()
     } else {
       stickyChanges.update({
         status: "active",
         listId,
         headingId: null,
       })
+      commitSticky()
     }
   }
 

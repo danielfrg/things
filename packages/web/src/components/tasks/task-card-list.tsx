@@ -24,6 +24,7 @@ export type TaskCardListProps = TaskEnhancementProps & {
   hideScheduledDate?: boolean
   showTodayStar?: boolean
   showCompletedDate?: boolean
+  autoCommitSticky?: boolean
   // Trash view specific props
   isTrashView?: boolean
   onRestore?: (id: string) => void
@@ -60,6 +61,7 @@ export function TaskCardList(props: TaskCardListProps) {
             hideScheduledDate={props.hideScheduledDate}
             showTodayStar={props.showTodayStar}
             showCompletedDate={props.showCompletedDate}
+            autoCommitSticky={props.autoCommitSticky}
             isTrashView={props.isTrashView}
             onRestore={props.onRestore}
             onDelete={props.onDelete}

@@ -290,6 +290,7 @@ function ProjectContent() {
                 onHeadingMoveDown={handleHeadingMoveDown}
                 isProjectView
                 showTodayStar
+                autoCommitSticky
                 taskTags={data.taskTags}
                 onTagAdd={data.addTagToTask}
                 onTagRemove={data.removeTagFromTask}

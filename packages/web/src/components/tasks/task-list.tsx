@@ -14,6 +14,7 @@ export type TaskListProps = TaskEnhancementProps & {
   onUpdate: (id: string, updates: Partial<TaskInfo>) => void
   onReorder: (taskId: string, newIndex: number) => void
   initialExpandedTaskId?: string | null
+  autoCommitSticky?: boolean
 }
 
 export function TaskList(props: TaskListProps) {
@@ -73,6 +74,7 @@ export function TaskList(props: TaskListProps) {
         onExpand={handleExpand}
         onComplete={props.onComplete}
         onUpdate={props.onUpdate}
+        autoCommitSticky={props.autoCommitSticky}
         taskTags={props.taskTags}
         onTagAdd={props.onTagAdd}
         onTagRemove={props.onTagRemove}

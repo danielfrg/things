@@ -121,6 +121,7 @@ export function Upcoming() {
             onReorder={handleReorder}
             hideScheduledDate
             showTodayStar
+            autoCommitSticky
             taskTags={data.taskTags}
             onTagAdd={data.addTagToTask}
             onTagRemove={data.removeTagFromTask}

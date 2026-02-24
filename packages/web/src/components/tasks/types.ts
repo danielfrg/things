@@ -79,6 +79,8 @@ export type GroupedTaskListProps = TaskEnhancementProps &
     onBatchDateChange?: (ids: string[], date: string | null, isEvening?: boolean) => void
     onBatchMove?: (ids: string[], parentId: string | null, moveToInbox?: boolean) => void
     onBatchTrash?: (ids: string[]) => void
+    /** Commit sticky changes immediately when not expanded */
+    autoCommitSticky?: boolean
     /** Projects and areas for move picker */
     projects?: Array<{ id: string; title: string; areaId?: string | null }>
     areas?: Array<{ id: string; title: string }>

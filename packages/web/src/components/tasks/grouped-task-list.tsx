@@ -394,6 +394,7 @@ function SectionTasks(props: {
   onScheduleDatePickerClose: () => void
   movePickerTaskId: Accessor<string | null>
   onMovePickerClose: () => void
+  autoCommitSticky?: boolean
   projects?: Array<{ id: string; title: string; areaId?: string | null }>
   areas?: Array<{ id: string; title: string }>
   onExpand: (id: string) => void
@@ -431,6 +432,7 @@ function SectionTasks(props: {
               onUncancel={props.onUncancel}
               onUpdate={props.onUpdate}
               showCompletedDate
+              autoCommitSticky={props.autoCommitSticky}
               taskTags={props.enhancement.taskTags}
               onTagAdd={props.enhancement.onTagAdd}
               onTagRemove={props.enhancement.onTagRemove}
@@ -489,6 +491,7 @@ function SectionTasks(props: {
             isSomeday={isSomedaySection()}
             hideScheduledDate={props.hideScheduledDate}
             showTodayStar={props.showTodayStar}
+            autoCommitSticky={props.autoCommitSticky}
             taskTags={props.enhancement.taskTags}
             onTagAdd={props.enhancement.onTagAdd}
             onTagRemove={props.enhancement.onTagRemove}
@@ -832,6 +835,7 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
                 onScheduleDatePickerClose={() => setScheduleDatePickerTaskId(null)}
                 movePickerTaskId={movePickerTaskId}
                 onMovePickerClose={() => setMovePickerTaskId(null)}
+                autoCommitSticky={props.autoCommitSticky}
                 projects={props.projects}
                 areas={props.areas}
                 onExpand={handleExpand}

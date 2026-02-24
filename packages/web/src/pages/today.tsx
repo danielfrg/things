@@ -115,6 +115,7 @@ export function Today() {
             onMove={handleMove}
             onReorder={handleReorder}
             hideScheduledDate
+            autoCommitSticky
             taskTags={data.taskTags}
             onTagAdd={data.addTagToTask}
             onTagRemove={data.removeTagFromTask}
