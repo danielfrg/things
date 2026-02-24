@@ -628,6 +628,21 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
     onCleanup(() => document.removeEventListener("keydown", handler))
   })
 
+  // Click outside any task card clears selection
+  createEffect(() => {
+    if (!isMultiSelecting()) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest("[data-task-card]")) return
+      if (target.closest("[data-radix-popper-content-wrapper]")) return
+      if (target.closest('[role="dialog"]')) return
+      if (target.closest("[data-kb-menu]")) return
+      clearSelection()
+    }
+    document.addEventListener("mousedown", handler)
+    onCleanup(() => document.removeEventListener("mousedown", handler))
+  })
+
   const handleExpand = (taskId: string) => {
     // Clear multi-selection when expanding
     clearSelection()

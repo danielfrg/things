@@ -883,6 +883,7 @@ export function TaskCard(props: TaskCardProps) {
           outerRef = el
         }}
         class={outerClass()}
+        data-task-card
       >
         {beforeCard()}
         <ItemDetailLayout
