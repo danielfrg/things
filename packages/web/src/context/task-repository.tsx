@@ -692,9 +692,28 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         // Remove from all views when trashing
         handleTaskDeleted({ id })
       } else if (current) {
-        setStore("tasks", id, { ...current, ...updates })
-        // In-place update only — no refetch to avoid racing with the PUT
-        applyTaskUpdate({ ...current, ...updates })
+        const optimistic = { ...current, ...updates }
+        setStore("tasks", id, optimistic)
+        applyTaskUpdate(optimistic)
+
+        // Remove the task from any view it no longer belongs to
+        const viewBelongs: Array<[keyof TaskStore["viewSections"], (t: TaskInfo) => boolean]> = [
+          ["inbox", belongsInInbox],
+          ["today", belongsInToday],
+          ["upcoming", belongsInUpcoming],
+          ["anytime", belongsInAnytime],
+          ["someday", belongsInSomeday],
+        ]
+        for (const [view, belongs] of viewBelongs) {
+          if (fetched.has(view) && !belongs(optimistic)) {
+            setStore("viewSections", view, (sections) =>
+              sections.map((section) => ({
+                ...section,
+                tasks: section.tasks.filter((t) => t.id !== id),
+              })),
+            )
+          }
+        }
       }
 
       const { data, error } = await sdk.client.putApiV1TasksById({
@@ -726,6 +745,24 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         refetchIfLoaded("anytime")
         refetchIfLoaded("someday")
         return null
+      }
+
+      if (current) {
+        const updated = (data as TaskInfo | null) ?? { ...current, ...updates }
+        const views = ["inbox", "today", "upcoming", "anytime", "someday"] as const
+        const belongs: Record<string, (t: TaskInfo) => boolean> = {
+          inbox: belongsInInbox,
+          today: belongsInToday,
+          upcoming: belongsInUpcoming,
+          anytime: belongsInAnytime,
+          someday: belongsInSomeday,
+        }
+
+        for (const view of views) {
+          const now = belongs[view]!(updated)
+          const before = belongs[view]!(current)
+          if (now || before) refetchIfLoaded(view)
+        }
       }
 
       return data
