@@ -113,7 +113,10 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
         return
       }
 
-      setStore("loading", true)
+      const empty = store.projects.length === 0 && store.areas.length === 0 && store.tags.length === 0
+      if (empty) {
+        setStore("loading", true)
+      }
       setStore("error", undefined)
 
       try {
