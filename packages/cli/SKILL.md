@@ -1,115 +1,107 @@
 ---
 name: things
 description: |
-  Things CLI to manages tasks
+  Things CLI to manage tasks from the command line.
 
   Use for:
-  - Viewing today's tasks, upcoming tasks, anytime tasks, or someday tasks
-  - Creating, updating, completing, and deleting tasks
-  - Managing projects (create, update, delete, list)
-  - Task queries like 'what's on my list today', 'show upcoming tasks'
+  - Adding tasks with natural tokens (date, deadline, project)
+  - Completing and deleting tasks
+  - Viewing tasks by view (today, inbox, upcoming, anytime, someday, logbook, trash)
+  - Listing all tasks and projects
 
-  The CLI returns plain text output suitable for terminal display.
+  The CLI returns plain text by default. Use --json for raw JSON output.
 
 version: 1.0.0
 ---
 
 # Things CLI
 
-Manage tasks and projects via the Things CLI.
+Manage tasks and projects from the command line.
 
 ## Tips
 
-- Task and project IDs are shown in brackets [id] in list outputs
+- Default output is a clean table without IDs
+- Use `--json` to get full JSON output including task IDs and all fields
+- Task IDs (e.g. `tsk_abc123`) are needed for `done` and `delete` commands
+- Use `things today --json` or `things list <name> --json` to find task IDs
 - Dates use YYYY-MM-DD format
-- View commands (today, upcoming, anytime, someday) show tasks grouped by section
-- Task statuses: inbox, anytime, someday, completed
-- Project statuses: active, completed, trashed
-- Use 'things skill > SKILL.md' to regenerate documentation
+- Project and area names are matched case-insensitively
+- `things today` shows a checkbox column indicating completion status
 
 ## Commands Reference
 
-### Main Commands
-
 ```
-things today     Show today's tasks
-things upcoming  Show upcoming tasks
-things anytime   Show anytime tasks
-things someday   Show someday tasks
-things tasks     Manage tasks
-things projects  Manage projects
-things skill     Output AI SKILL.md
-```
+things add <desc> [tokens]   Create a task
+things done <id>             Complete a task
+things delete <id>           Delete a task
+things list <name>           List tasks in a project or area
 
-### Tasks Commands
+things today                 Show today's tasks
+things inbox                 Show inbox tasks
+things upcoming              Show upcoming tasks
+things anytime               Show anytime tasks
+things someday               Show someday tasks
+things logbook               Show completed tasks
+things trash                 Show trashed tasks
+things projects              List projects
 
-```
-things tasks list            List all tasks
-things tasks create <title>  Create a new task
-things tasks update <id>     Update a task
-things tasks delete <id>     Delete a task
-things tasks complete <id>   Complete a task
-
-Options for 'tasks create':
-  positional: title     Task title
-  --notes <text>        Task notes
-  --scheduled <date>    Scheduled date (YYYY-MM-DD)
-  --deadline <date>     Deadline (YYYY-MM-DD)
-  --project <id>        Project ID
-
-Options for 'tasks update':
-  positional: id        Task ID
-  --title <text>        New title
-  --notes <text>        New notes
-  --scheduled <date>    Scheduled date (YYYY-MM-DD)
-  --deadline <date>     Deadline (YYYY-MM-DD)
-  --status <status>     Task status (inbox, anytime, someday, completed)
+things login [url]           Authenticate with Things
+things logout                Sign out
+things whoami                Show current user
+things skill                 Output AI SKILL.md
 ```
 
-### Projects Commands
+## Add Tokens
+
+When using `things add`, append tokens after the description:
 
 ```
-things projects list            List all projects
-things projects create <title>  Create a new project
-things projects update <id>     Update a project
-things projects delete <id>     Delete a project
+date:YYYY-MM-DD       Set scheduled date
+deadline:YYYY-MM-DD   Set deadline
+project:Name          Assign to project (by name)
+notes:Text            Add notes
+```
 
-Options for 'projects create':
-  --notes <text>  Project notes
-  --area <id>     Area ID
+## Flags
 
-Options for 'projects update':
-  --title <text>    New title
-  --notes <text>    New notes
-  --status <status> Project status (active, completed, trashed)
+```
+--json                Output raw JSON (includes IDs and all fields)
+--help, -h            Show help
+--version, -v         Show version
 ```
 
 ## Example Usage
 
 ```bash
 # Log in (opens browser)
-things login
+things login http://localhost:3000
 
-# View today's tasks
+# Add tasks
+things add Buy milk
+things add Buy eggs date:2025-03-05
+things add Submit report deadline:2025-03-10 project:Work
+things add Read docs notes:Chapter3
+
+# View tasks
 things today
+things upcoming
+things list
 
-# Create a task
-things tasks create 'Review PR #123' --scheduled 2024-01-15
+# List tasks in a project or area
+things list Work
+things list Personal
 
-# Create a task with notes and deadline
-things tasks create 'Submit report' --notes 'Q4 summary' --deadline 2024-01-20
+# Get task IDs via JSON output
+things today --json
+things list Work --json
 
-# List all tasks
-things tasks list
+# Complete and delete
+things done tsk_abc123
+things delete tsk_abc123
 
-# Complete a task
-things tasks complete abc123
-
-# Create a project
-things projects create 'Website Redesign' --notes 'New landing page'
-
-# Update a task
-things tasks update abc123 --title 'Updated title' --status anytime
+# List projects
+things projects
+things projects --json
 
 # Log out
 things logout

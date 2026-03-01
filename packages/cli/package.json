@@ -12,11 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@things/sdk": "workspace:*",
-    "yargs": "^18.0.0"
+    "@things/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "catalog:",
-    "@types/yargs": "^17.0.35"
+    "@types/bun": "catalog:"
   }
 }
