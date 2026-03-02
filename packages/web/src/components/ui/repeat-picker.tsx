@@ -2,7 +2,7 @@ import { addDays, format, isValid, lastDayOfMonth } from 'date-fns';
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 import { RepeatIcon } from '@/components/icons';
 import { cn, parseLocalDate } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { ResponsivePicker } from './responsive-picker';
 
 type RepeatMode = 'daily' | 'weekly' | 'monthly';
 type Weekday = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
@@ -149,21 +149,14 @@ function computeNextOccurrences(
   return occurrences;
 }
 
-interface RepeatPickerProps {
+interface RepeatPickerContentProps {
   value: string | undefined;
   startDate: string | undefined;
   onChange: (rrule: string | undefined, startDate: string) => void;
-  onClear: () => void;
-  placeholder?: string;
-  disabled?: boolean;
-  class?: string;
-  /** Hide the X clear button and "Remove Repeat" button */
-  hideClear?: boolean;
+  onClose: () => void;
 }
 
-export function RepeatPicker(props: RepeatPickerProps) {
-  const [open, setOpen] = createSignal(false);
-
+export function RepeatPickerContent(props: RepeatPickerContentProps) {
   const parsed = createMemo(() => parseRRule(props.value));
 
   const [mode, setMode] = createSignal<RepeatMode | ''>(parsed()?.mode ?? '');
@@ -202,196 +195,222 @@ export function RepeatPicker(props: RepeatPickerProps) {
     const s = startIso();
     if (!m || !s) return;
     props.onChange(buildRRule(m as RepeatMode, weekday(), monthDay()), s);
-    setOpen(false);
+    props.onClose();
   };
 
   return (
-    <Popover open={open()} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={props.disabled}
-        class={cn(
-          'inline-flex items-center justify-center h-8 w-8 md:h-6 md:w-6 rounded text-[12px] transition-colors',
-          'text-toolbar-icon border border-transparent hover:border-toolbar-border',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          props.class,
-        )}
-      >
-        <RepeatIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />
-      </PopoverTrigger>
+    <div class="w-[280px] rounded-xl bg-popover-dark border border-popover-dark-border p-3 overflow-hidden">
+      {/* Header with title */}
+      <div class="flex mb-2 items-center justify-center relative">
+        <h3 class="text-sm font-semibold text-popover-dark-foreground">
+          Repeat
+        </h3>
+      </div>
 
-      <PopoverContent
-        class="w-[280px] max-md:w-[calc(100vw-32px)] p-3 max-md:p-4 max-md:max-h-[80vh] max-md:overflow-y-auto bg-popover-dark border border-popover-dark-border shadow-xl ring-0 gap-0"
-      >
-        {/* Header with title */}
-        <div class="flex mb-2 items-center justify-center relative max-md:mb-4">
-          <h3 class="text-sm max-md:text-base font-semibold text-popover-dark-foreground">
-            Repeat
-          </h3>
+      <div class="space-y-2">
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            class={cn(
+              'h-9 rounded-lg px-3 text-sm font-medium transition-colors outline-none',
+              mode() === 'daily'
+                ? 'bg-popover-dark-selected text-white'
+                : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+            )}
+            onClick={() => {
+              setMode('daily');
+              const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+              const iso =
+                startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
+              setStartIso(iso);
+            }}
+          >
+            Daily
+          </button>
+          <button
+            type="button"
+            class={cn(
+              'h-9 rounded-lg px-3 text-sm font-medium transition-colors outline-none',
+              mode() === 'weekly'
+                ? 'bg-popover-dark-selected text-white'
+                : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+            )}
+            onClick={() => {
+              setMode('weekly');
+              const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+              const iso =
+                startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
+              setStartIso(iso);
+            }}
+          >
+            Weekly
+          </button>
+          <button
+            type="button"
+            class={cn(
+              'h-9 rounded-lg px-3 text-sm font-medium transition-colors outline-none',
+              mode() === 'monthly'
+                ? 'bg-popover-dark-selected text-white'
+                : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+            )}
+            onClick={() => {
+              setMode('monthly');
+              const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+              const iso =
+                startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
+              setStartIso(iso);
+              if (!monthDay()) setMonthDay(1);
+            }}
+          >
+            Monthly
+          </button>
         </div>
 
-        <div class="space-y-2 max-md:space-y-4">
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              class={cn(
-                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors outline-none',
-                mode() === 'daily'
-                  ? 'bg-popover-dark-selected text-white'
-                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-              )}
-              onClick={() => {
-                setMode('daily');
-                const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-                const iso =
-                  startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
-                setStartIso(iso);
-              }}
-            >
-              Daily
-            </button>
-            <button
-              type="button"
-              class={cn(
-                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors outline-none',
-                mode() === 'weekly'
-                  ? 'bg-popover-dark-selected text-white'
-                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-              )}
-              onClick={() => {
-                setMode('weekly');
-                const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-                const iso =
-                  startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
-                setStartIso(iso);
-              }}
-            >
-              Weekly
-            </button>
-            <button
-              type="button"
-              class={cn(
-                'h-9 max-md:h-12 rounded-lg px-3 text-sm max-md:text-base font-medium transition-colors outline-none',
-                mode() === 'monthly'
-                  ? 'bg-popover-dark-selected text-white'
-                  : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-              )}
-              onClick={() => {
-                setMode('monthly');
-                const tomorrowIso = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-                const iso =
-                  startIso() && startIso()! > tomorrowIso ? startIso() : tomorrowIso;
-                setStartIso(iso);
-                if (!monthDay()) setMonthDay(1);
-              }}
-            >
-              Monthly
-            </button>
+        <Show when={mode() === 'weekly'}>
+          <div>
+            <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+              Day
+            </div>
+            <div class="grid grid-cols-7 gap-1">
+              <For each={WEEKDAYS}>
+                {(d) => (
+                  <button
+                    type="button"
+                    class={cn(
+                      'h-8 rounded-md text-xs font-medium transition-colors outline-none',
+                      weekday() === d.code
+                        ? 'bg-popover-dark-selected text-white'
+                        : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+                    )}
+                    onClick={() => setWeekday(d.code)}
+                  >
+                    {d.label}
+                  </button>
+                )}
+              </For>
+            </div>
           </div>
+        </Show>
 
-          <Show when={mode() === 'weekly'}>
-            <div>
-              <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                Day
-              </div>
-              <div class="grid grid-cols-7 gap-1">
-                <For each={WEEKDAYS}>
-                  {(d) => (
-                    <button
-                      type="button"
-                      class={cn(
-                        'h-8 rounded-md text-xs font-medium transition-colors outline-none',
-                        weekday() === d.code
-                          ? 'bg-popover-dark-selected text-white'
-                          : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                      )}
-                      onClick={() => setWeekday(d.code)}
-                    >
-                      {d.label}
-                    </button>
-                  )}
-                </For>
-              </div>
+        <Show when={mode() === 'monthly'}>
+          <div>
+            <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+              Day of Month
             </div>
-          </Show>
-
-          <Show when={mode() === 'monthly'}>
-            <div>
-              <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                Day of Month
-              </div>
-              <div class="grid grid-cols-8 gap-1">
-                <For each={MONTH_DAYS}>
-                  {(d) => (
-                    <button
-                      type="button"
-                      class={cn(
-                        'h-8 rounded-md text-xs font-medium transition-colors outline-none',
-                        monthDay() === d
-                          ? 'bg-popover-dark-selected text-white'
-                          : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
-                        d === 'last' && 'col-span-2',
-                      )}
-                      onClick={() => setMonthDay(d)}
-                    >
-                      {d === 'last' ? 'Last' : d}
-                    </button>
-                  )}
-                </For>
-              </div>
+            <div class="grid grid-cols-8 gap-1">
+              <For each={MONTH_DAYS}>
+                {(d) => (
+                  <button
+                    type="button"
+                    class={cn(
+                      'h-8 rounded-md text-xs font-medium transition-colors outline-none',
+                      monthDay() === d
+                        ? 'bg-popover-dark-selected text-white'
+                        : 'bg-popover-dark-accent text-white hover:bg-popover-dark-accent-hover',
+                      d === 'last' && 'col-span-2',
+                    )}
+                    onClick={() => setMonthDay(d)}
+                  >
+                    {d === 'last' ? 'Last' : d}
+                  </button>
+                )}
+              </For>
             </div>
-          </Show>
-
-          <Show when={mode()}>
-            <div>
-              <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
-                Starting
-              </div>
-              <input
-                type="date"
-                min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
-                value={startIso() ?? ''}
-                onInput={(e) => {
-                  const val = e.currentTarget.value;
-                  setStartIso(val);
-                }}
-                class="w-full h-9 rounded-lg bg-popover-dark-accent text-white px-3 text-sm outline-none placeholder:text-popover-dark-muted"
-              />
-              <p class="mt-1 text-xs text-popover-dark-muted">
-                Start date must be tomorrow or later.
-              </p>
-            </div>
-          </Show>
-
-          <Show when={nextDates().length > 0}>
-            <div class="text-xs text-popover-dark-muted">
-              Next: {nextDates().join(', ')}
-            </div>
-          </Show>
-
-          <div class="flex items-center gap-2 pt-1">
-            <button
-              type="button"
-              class={cn(
-                'flex-1 h-9 rounded-lg text-sm font-medium transition-colors outline-none',
-                canApply()
-                  ? 'bg-popover-dark-selected text-white hover:bg-popover-dark-selected/90'
-                  : 'bg-popover-dark-accent text-popover-dark-muted cursor-not-allowed',
-              )}
-              disabled={!canApply()}
-              onClick={apply}
-            >
-              Apply
-            </button>
-            <button
-              type="button"
-              class="flex-1 h-9 rounded-lg bg-popover-dark-accent text-white text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors outline-none"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </button>
           </div>
+        </Show>
+
+        <Show when={mode()}>
+          <div>
+            <div class="text-xs font-medium text-popover-dark-muted mb-2 uppercase tracking-wide">
+              Starting
+            </div>
+            <input
+              type="date"
+              min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
+              value={startIso() ?? ''}
+              onInput={(e) => {
+                const val = e.currentTarget.value;
+                setStartIso(val);
+              }}
+              class="w-full h-9 rounded-lg bg-popover-dark-accent text-white px-3 text-sm outline-none placeholder:text-popover-dark-muted"
+            />
+            <p class="mt-1 text-xs text-popover-dark-muted">
+              Start date must be tomorrow or later.
+            </p>
+          </div>
+        </Show>
+
+        <Show when={nextDates().length > 0}>
+          <div class="text-xs text-popover-dark-muted">
+            Next: {nextDates().join(', ')}
+          </div>
+        </Show>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            class={cn(
+              'flex-1 h-9 rounded-lg text-sm font-medium transition-colors outline-none',
+              canApply()
+                ? 'bg-popover-dark-selected text-white hover:bg-popover-dark-selected/90'
+                : 'bg-popover-dark-accent text-popover-dark-muted cursor-not-allowed',
+            )}
+            disabled={!canApply()}
+            onClick={apply}
+          >
+            Apply
+          </button>
+          <button
+            type="button"
+            class="flex-1 h-9 rounded-lg bg-popover-dark-accent text-white text-sm font-medium hover:bg-popover-dark-accent-hover transition-colors outline-none"
+            onClick={props.onClose}
+          >
+            Cancel
+          </button>
         </div>
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
+  );
+}
+
+interface RepeatPickerProps {
+  value: string | undefined;
+  startDate: string | undefined;
+  onChange: (rrule: string | undefined, startDate: string) => void;
+  onClear: () => void;
+  placeholder?: string;
+  disabled?: boolean;
+  class?: string;
+  /** Hide the X clear button and "Remove Repeat" button */
+  hideClear?: boolean;
+}
+
+export function RepeatPicker(props: RepeatPickerProps) {
+  const [open, setOpen] = createSignal(false);
+
+  return (
+    <ResponsivePicker
+      open={open()}
+      onOpenChange={setOpen}
+      trigger={
+        <div
+          class={cn(
+            'inline-flex items-center justify-center h-8 w-8 md:h-6 md:w-6 rounded text-[12px] transition-colors',
+            'text-toolbar-icon border border-transparent hover:border-toolbar-border',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            props.class,
+          )}
+        >
+          <RepeatIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />
+        </div>
+      }
+    >
+      <RepeatPickerContent
+        value={props.value}
+        startDate={props.startDate}
+        onChange={props.onChange}
+        onClose={() => setOpen(false)}
+      />
+    </ResponsivePicker>
   );
 }

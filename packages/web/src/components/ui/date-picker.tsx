@@ -4,7 +4,7 @@ import { createMemo, createSignal, Show } from 'solid-js';
 import { CalendarIcon, XIcon } from '@/components/icons';
 import { TodayStarIcon, EveningIcon, SomedayIcon } from '@/components/icons';
 import { CalendarPopover } from '@/components/ui/calendar-popover';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ResponsivePicker } from '@/components/ui/responsive-picker';
 import { cn, parseLocalDate } from '@/lib/utils';
 
 type DatePickerProps = {
@@ -63,10 +63,11 @@ export function DatePicker(props: DatePickerProps) {
   };
 
   return (
-    <Popover open={open()} onOpenChange={setOpen}>
-      <div class="inline-flex items-center">
-        <PopoverTrigger
-          disabled={props.disabled}
+    <ResponsivePicker
+      open={open()}
+      onOpenChange={setOpen}
+      trigger={
+        <div
           class={cn(
             'inline-flex items-center gap-1 rounded transition-colors border border-transparent',
             large()
@@ -77,7 +78,7 @@ export function DatePicker(props: DatePickerProps) {
                 ? 'text-foreground hover:border-toolbar-border pl-2 pr-0'
                 : 'text-foreground hover:border-toolbar-border px-2'
               : 'text-toolbar-icon hover:border-toolbar-border w-8 md:w-6 justify-center',
-            'disabled:cursor-not-allowed disabled:opacity-50',
+            props.disabled && 'cursor-not-allowed opacity-50',
             props.class,
           )}
         >
@@ -97,21 +98,20 @@ export function DatePicker(props: DatePickerProps) {
               </span>
             </Show>
           </Show>
-        </PopoverTrigger>
-      </div>
-      <PopoverContent class="w-auto p-0 bg-transparent border-0 shadow-xl">
-        <CalendarPopover
-          value={props.value}
-          onChange={handleChange}
-          onSomedaySelect={props.onSomedaySelect}
-          isSomeday={props.isSomeday}
-          showSomeday={props.showSomeday}
-          showEvening={props.showEvening}
-          isEvening={props.isEvening}
-          onClose={() => setOpen(false)}
-          title={props.title}
-        />
-      </PopoverContent>
-    </Popover>
+        </div>
+      }
+    >
+      <CalendarPopover
+        value={props.value}
+        onChange={handleChange}
+        onSomedaySelect={props.onSomedaySelect}
+        isSomeday={props.isSomeday}
+        showSomeday={props.showSomeday}
+        showEvening={props.showEvening}
+        isEvening={props.isEvening}
+        onClose={() => setOpen(false)}
+        title={props.title}
+      />
+    </ResponsivePicker>
   );
 }
