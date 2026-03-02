@@ -26,9 +26,9 @@ const toolbarButtonVariants = cva(
 
 type ToolbarButtonProps = ParentProps<
   JSX.ButtonHTMLAttributes<HTMLButtonElement> &
-    VariantProps<typeof toolbarButtonVariants> & {
-      icon?: JSX.Element;
-    }
+  VariantProps<typeof toolbarButtonVariants> & {
+    icon?: JSX.Element;
+  }
 >;
 
 export function ToolbarButton(props: ToolbarButtonProps) {

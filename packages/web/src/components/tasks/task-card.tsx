@@ -650,6 +650,7 @@ export function TaskCard(props: TaskCardProps) {
           isEvening={effectiveTask().isEvening}
           isSomeday={effectiveTask().isSomeday}
           onSomedaySelect={onSomedaySelect}
+          size="lg"
         />
       </Show>
       {/* Deadline indicator */}

@@ -52,7 +52,7 @@ export function ItemDetailLayout(props: ItemDetailLayoutProps) {
                 <Show when={props.toolbarPrefix}>{props.toolbarPrefix}</Show>
                 <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div class="flex items-center gap-2 md:gap-1 flex-wrap">{props.toolbar}</div>
-                  <div class="flex items-center gap-1 md:gap-0.5 shrink-0 flex-wrap">{props.actions}</div>
+                  <div class="flex items-center gap-2 md:gap-1 shrink-0 flex-wrap">{props.actions}</div>
                 </div>
               </div>
             </div>
