@@ -660,8 +660,9 @@ export function TaskCard(props: TaskCardProps) {
           onChange={onDeadlineChange}
           onClear={onDeadlineClear}
           placeholder="Deadline"
-          icon={<FlagIcon class="h-4 w-4 md:h-3.5 md:w-3.5 text-things-pink" />}
+          icon={<FlagIcon class="h-4.5 w-4.5 md:h-3.5 md:w-3.5 text-things-pink" />}
           title="Deadline"
+          size="lg"
         />
       </Show>
       {/* Repeat indicator if task was spawned from a template */}
