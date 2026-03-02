@@ -25,6 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditableText } from "@/components/ui/editable-text"
+import { ProjectProgressIcon } from "@/components/ui/project-progress-icon"
+import { useSidebarData } from "@/context/sidebar"
 import { useMultiSelect } from "@/lib/hooks/useMultiSelect"
 import { useTaskKeyboardNav } from "@/lib/hooks/useTaskKeyboardNav"
 import { cn } from "@/lib/utils"
@@ -173,6 +175,14 @@ function LoggedSectionHeader(props: { section: Section; open: boolean; onToggle:
 
 // Project/Area linked section header
 function LinkedSectionHeader(props: { section: Section }) {
+  const sidebar = useSidebarData()
+
+  const progress = () => {
+    const pid = props.section.projectId
+    if (!pid) return 0
+    return sidebar.projectProgress.get(pid) ?? 0
+  }
+
   const icon = () => {
     if (props.section.isEvening) {
       return (
@@ -182,11 +192,7 @@ function LinkedSectionHeader(props: { section: Section }) {
       )
     }
     if (props.section.projectId) {
-      return (
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-        </svg>
-      )
+      return <ProjectProgressIcon progress={progress()} size={16} variant="sidebar" class="text-things-blue" />
     }
     if (props.section.areaId) {
       return <BoxIcon class="w-4 h-4" />

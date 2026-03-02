@@ -3,7 +3,6 @@ import { A, useLocation, useNavigate } from "@solidjs/router"
 import { isToday } from "date-fns"
 import type { Accessor, JSX, ParentProps } from "solid-js"
 import { createContext, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js"
-import { createStore } from "solid-js/store"
 import { isTaskData } from "@/components/dnd/task-data"
 import {
   BookCheckIcon,
@@ -169,40 +168,7 @@ function SidebarContent() {
   const event = useEvent()
   const sidebar = useSidebarState()
 
-  const [allTasks, setAllTasks] = createStore<TaskInfo[]>([])
-
-  const fetchTasksForCounts = async () => {
-    if (!sdk.isReady) return
-
-    try {
-      const { data, error } = await sdk.client.getApiV1Tasks()
-      if (error) {
-        console.error("[Sidebar] fetch tasks error:", error)
-        return
-      }
-      setAllTasks(data as TaskInfo[])
-    } catch (e) {
-      console.error("[Sidebar] fetch tasks error:", e)
-    }
-  }
-
-  createEffect(() => {
-    if (sdk.isReady) {
-      fetchTasksForCounts()
-    }
-  })
-
-  createEffect(() => {
-    const unsubCreate = event.on("task.created", () => fetchTasksForCounts())
-    const unsubUpdate = event.on("task.updated", () => fetchTasksForCounts())
-    const unsubDelete = event.on("task.deleted", () => fetchTasksForCounts())
-
-    onCleanup(() => {
-      unsubCreate()
-      unsubUpdate()
-      unsubDelete()
-    })
-  })
+  const allTasks = () => sidebarData.allTasks
 
   const isDateToday = (dateStr: string | null): boolean => {
     if (!dateStr) return false
@@ -210,7 +176,7 @@ function SidebarContent() {
   }
 
   const counts = createMemo(() => {
-    return allTasks.reduce(
+    return allTasks().reduce(
       (acc, task) => {
         if (task.trashedAt) return acc
         if (task.completedAt) return acc
@@ -232,28 +198,7 @@ function SidebarContent() {
     )
   })
 
-  const projectProgress = createMemo(() => {
-    const progressMap = new Map<string, number>()
-    const taskCounts = new Map<string, { total: number; completed: number }>()
-
-    for (const task of allTasks) {
-      if (!task.listId || task.trashedAt) continue
-
-      const c = taskCounts.get(task.listId) ?? { total: 0, completed: 0 }
-      c.total++
-      if (task.completedAt) {
-        c.completed++
-      }
-      taskCounts.set(task.listId, c)
-    }
-
-    for (const [projectId, c] of taskCounts) {
-      const progress = c.total > 0 ? Math.round((c.completed / c.total) * 100) : 0
-      progressMap.set(projectId, progress)
-    }
-
-    return progressMap
-  })
+  const projectProgress = () => sidebarData.projectProgress
 
   const handleReorderProjects = (projectIds: string[], areaId: string | null) => {
     sidebarData.reorderProjects(projectIds, areaId)
@@ -299,7 +244,7 @@ function SidebarContent() {
   }
 
   const handleTaskDrop = async (taskId: string, dropType: string) => {
-    const task = allTasks.find((t) => t.id === taskId)
+    const task = allTasks().find((t) => t.id === taskId)
     if (!task) return
 
     const updates: Partial<TaskInfo> = {}
@@ -368,7 +313,7 @@ function SidebarContent() {
   }
 
   const handleProjectTaskDrop = async (taskId: string, projectId: string, _areaId: string | undefined) => {
-    const task = allTasks.find((t) => t.id === taskId)
+    const task = allTasks().find((t) => t.id === taskId)
     if (!task) return
 
     const optimisticTask: TaskInfo = {
@@ -396,7 +341,7 @@ function SidebarContent() {
   }
 
   const handleAreaTaskDrop = async (taskId: string, areaId: string) => {
-    const task = allTasks.find((t) => t.id === taskId)
+    const task = allTasks().find((t) => t.id === taskId)
     if (!task) return
 
     const optimisticTask: TaskInfo = {

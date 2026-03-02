@@ -1,6 +1,7 @@
-import { createEffect, onCleanup } from "solid-js"
+import { createEffect, createMemo, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { createSimpleContext } from "./context"
+import type { TaskInfo } from "./data"
 import { useEvent } from "./event"
 import { useSDK } from "./sdk"
 
@@ -198,6 +199,40 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
     // On SSE reconnect, refetch all sidebar data to catch up on missed events
     const unsubReconnect = event.on("server.reconnected", () => {
       fetchAll()
+      fetchTasks()
+    })
+
+    // ================== TASK PROGRESS ==================
+    const [tasks, setTasks] = createStore<TaskInfo[]>([])
+
+    const fetchTasks = async () => {
+      if (!sdk.isReady) return
+      const { data, error } = await sdk.client.getApiV1Tasks()
+      if (error) return
+      setTasks(reconcile((data ?? []) as TaskInfo[]))
+    }
+
+    const unsubTaskCreate = event.on("task.created", () => fetchTasks())
+    const unsubTaskUpdate = event.on("task.updated", () => fetchTasks())
+    const unsubTaskDelete = event.on("task.deleted", () => fetchTasks())
+
+    const projectProgress = createMemo(() => {
+      const map = new Map<string, number>()
+      const counts = new Map<string, { total: number; completed: number }>()
+
+      for (const task of tasks) {
+        if (!task.listId || task.trashedAt) continue
+        const c = counts.get(task.listId) ?? { total: 0, completed: 0 }
+        c.total++
+        if (task.completedAt) c.completed++
+        counts.set(task.listId, c)
+      }
+
+      for (const [id, c] of counts) {
+        map.set(id, c.total > 0 ? Math.round((c.completed / c.total) * 100) : 0)
+      }
+
+      return map
     })
 
     onCleanup(() => {
@@ -210,6 +245,9 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
       unsubTagCreate()
       unsubTagUpdate()
       unsubTagDelete()
+      unsubTaskCreate()
+      unsubTaskUpdate()
+      unsubTaskDelete()
       unsubReconnect()
     })
 
@@ -217,6 +255,7 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
     createEffect(() => {
       if (sdk.isReady) {
         fetchAll()
+        fetchTasks()
       }
     })
 
@@ -404,6 +443,13 @@ export const { use: useSidebarData, provider: SidebarDataProvider } = createSimp
       getProject,
       getArea,
       getListLabel,
+      // Task data for progress and counts
+      get allTasks() {
+        return tasks
+      },
+      get projectProgress() {
+        return projectProgress()
+      },
       // Mutations
       updateProject,
       updateArea,
