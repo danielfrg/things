@@ -149,7 +149,7 @@ export function TaskCard(props: TaskCardProps) {
 
   // Get the listId for MovePicker display
   const getListId = () => {
-    return props.task.listId ?? null
+    return effectiveTask().listId ?? null
   }
 
   // Local state for notes to avoid re-render on every keystroke
