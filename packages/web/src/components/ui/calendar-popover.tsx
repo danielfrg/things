@@ -1,12 +1,7 @@
 import { addDays, format, isBefore, isToday, isTomorrow, startOfDay } from 'date-fns';
 import { createMemo, Show } from 'solid-js';
-import {
-  CalendarIcon,
-  CheckIcon,
-  EveningIcon,
-  SomedayIcon,
-  StarIcon,
-} from '@/components/icons';
+import { Check as CheckIcon, Star as StarIcon } from 'lucide-solid';
+import { CalendarIcon, EveningIcon, SomedayIcon } from '@/components/icons';
 import { Calendar } from '@/components/ui/calendar';
 import { cn, parseLocalDate } from '@/lib/utils';
 

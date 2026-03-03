@@ -4,7 +4,7 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 import { attachClosestEdge, type Edge, extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge"
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
-import { GripVerticalIcon } from "@/components/icons"
+import { GripVertical as GripVerticalIcon } from "lucide-solid"
 import { cn } from "@/lib/utils"
 
 // Checklist item type

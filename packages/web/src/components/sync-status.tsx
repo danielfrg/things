@@ -1,5 +1,5 @@
 import { Show } from "solid-js"
-import { CloudIcon, CloudOffIcon } from "@/components/icons"
+import { Cloud as CloudIcon, CloudOff as CloudOffIcon } from "lucide-solid"
 import { useEvent } from "@/context/event"
 
 export function SyncStatus() {

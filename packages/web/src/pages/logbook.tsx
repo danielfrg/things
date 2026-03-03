@@ -1,5 +1,5 @@
 import { createSignal, Show } from "solid-js"
-import { BookCheckIcon } from "@/components/icons"
+import { BookCheck as BookCheckIcon } from "lucide-solid"
 import { ViewContainer } from "@/components/layout/view-container"
 import { VirtualTaskCardList } from "@/components/tasks/virtual-task-card-list"
 import { LogCompletedButton, SearchButton, ViewToolbar } from "@/components/toolbar"

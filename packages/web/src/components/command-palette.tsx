@@ -1,15 +1,7 @@
 import { useNavigate } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
-import {
-  ArchiveIcon,
-  BookCheckIcon,
-  CalendarIcon,
-  InboxIcon,
-  LayersIcon,
-  SearchIcon,
-  TodayStarIcon,
-  Trash2Icon,
-} from "@/components/icons"
+import { Archive as ArchiveIcon, BookCheck as BookCheckIcon, Search as SearchIcon } from "lucide-solid"
+import { AreaIcon, CalendarIcon, InboxIcon, LayersIcon, TodayStarIcon, TrashIcon } from "@/components/icons"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import type { TaskInfo } from "@/context/data"
 import { useSDK } from "@/context/sdk"
@@ -244,7 +236,7 @@ export function CommandPalette(props: CommandPaletteProps) {
           case "logbook":
             return <BookCheckIcon class="size-4 opacity-60" />
           case "trash":
-            return <Trash2Icon class="size-4 opacity-60" />
+            return <TrashIcon class="size-4 opacity-60" />
           default:
             return null
         }
@@ -254,11 +246,7 @@ export function CommandPalette(props: CommandPaletteProps) {
       case "project":
         return <div class="size-4 rounded-full border-2 border-things-blue flex-shrink-0" />
       case "area":
-        return (
-          <div class="size-4 rounded bg-things-green flex items-center justify-center">
-            <div class="size-2 rounded-sm bg-white/90" />
-          </div>
-        )
+        return <AreaIcon class="size-4" />
       default:
         return null
     }

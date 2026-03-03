@@ -1,6 +1,6 @@
+import { Search as SearchIcon } from 'lucide-solid';
 import { type ParentProps, type ComponentProps, splitProps } from 'solid-js';
 import { Command as CommandPrimitive } from 'cmdk-solid';
-import { SearchIcon } from '@/components/icons';
 import {
   Dialog,
   DialogContent,

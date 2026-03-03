@@ -1,84 +1,17 @@
-import {
-  Archive,
-  BookCheck,
-  Box,
-  Calendar,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Cloud,
-  CloudOff,
-  Copy,
-  FileText,
-  GripVertical,
-  Key,
-  LogOut,
-  Monitor,
-  Moon,
-  MoreHorizontal,
-  Pause,
-  Pencil,
-  Play,
-  Plus,
-  RotateCcw,
-  Search,
-  SeparatorHorizontal,
-  Settings,
-  Settings2,
-  Star,
-  Sun,
-  X,
-} from "lucide-solid"
+import { ArrowRight, Box, Moon } from "lucide-solid"
 import type { ComponentProps } from "solid-js"
 import { splitProps } from "solid-js"
 import { cn } from "@/lib/utils"
 
-// Re-export base icons from lucide-solid
-export {
-  Archive as ArchiveIcon,
-  BookCheck as BookCheckIcon,
-  Box as BoxIcon,
-  Check as CheckIcon,
-  CheckCircle as CheckCircleIcon,
-  ChevronDown as ChevronDownIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  ChevronUp as ChevronUpIcon,
-  Cloud as CloudIcon,
-  CloudOff as CloudOffIcon,
-  Copy as CopyIcon,
-  FileText as FileTextIcon,
-  GripVertical as GripVerticalIcon,
-  Key as KeyIcon,
-  LogOut as LogOutIcon,
-  Monitor as MonitorIcon,
-  Moon as MoonIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Pause as PauseIcon,
-  Pencil as PencilIcon,
-  Play as PlayIcon,
-  Plus as PlusIcon,
-  RotateCcw as RestoreIcon,
-  Search as SearchIcon,
-  SeparatorHorizontal as SeparatorHorizontalIcon,
-  Settings as SettingsIcon,
-  Settings2 as Settings2Icon,
-  Star as StarIcon,
-  Sun as SunIcon,
-  X as XIcon,
-}
+export { X as XIcon } from "lucide-solid"
 
 type IconProps = ComponentProps<"svg">
 
-/** Filled star icon for Today view - yellow by default */
 export function TodayStarIcon(props: IconProps) {
   const [local, rest] = splitProps(props, ["class"])
   return (
     <svg
-      viewBox="0 0 14 13"
+      viewBox="-0.5 -0.5 15 14"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       class={cn("text-things-yellow", local.class)}
@@ -87,17 +20,17 @@ export function TodayStarIcon(props: IconProps) {
       <path
         d="M2.60742 12.4863C2.33203 12.2812 2.27344 11.9414 2.43164 11.4785L3.63867 7.89844L0.5625 5.68945C0.164062 5.4082 0 5.09766 0.111328 4.76953C0.222656 4.44727 0.527344 4.29492 1.01367 4.29492H4.78711L5.93555 0.720703C6.08789 0.251953 6.32812 0 6.66797 0C7.01367 0 7.25391 0.251953 7.40039 0.720703L8.54883 4.29492H12.3223C12.8086 4.29492 13.1191 4.44727 13.2305 4.76953C13.3418 5.09766 13.1719 5.4082 12.7793 5.68945L9.70312 7.89844L10.9043 11.4785C11.0625 11.9414 11.0039 12.2812 10.7344 12.4863C10.459 12.6973 10.1133 12.627 9.71484 12.3398L6.66797 10.1016L3.62109 12.3398C3.22266 12.627 2.88281 12.6973 2.60742 12.4863Z"
         fill="currentColor"
+        stroke="#f0ce21"
+        stroke-width="0.25"
       />
     </svg>
   )
 }
 
-/** Evening icon - moon with fill */
 export function EveningIcon(props: IconProps) {
   return <Moon fill="#80a4d6" color="#80a4d6" {...props} />
 }
 
-/** Someday icon - inbox tray with minus bar - beige by default */
 export function SomedayIcon(props: IconProps) {
   const [local, rest] = splitProps(props, ["class"])
   return (
@@ -116,7 +49,6 @@ export function SomedayIcon(props: IconProps) {
   )
 }
 
-/** Custom inbox icon - blue by default */
 export function InboxIcon(props: IconProps) {
   const [local, rest] = splitProps(props, ["class"])
   return (
@@ -124,7 +56,7 @@ export function InboxIcon(props: IconProps) {
       viewBox="0 0 14 11"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      class={cn("text-things-blue", local.class)}
+      class={cn("text-[#1aadf8]", local.class)}
       {...rest}
     >
       <path
@@ -135,7 +67,6 @@ export function InboxIcon(props: IconProps) {
   )
 }
 
-/** Custom anytime icon - stacked layers - teal by default */
 export function LayersIcon(props: IconProps) {
   const [local, rest] = splitProps(props, ["class"])
   return (
@@ -154,7 +85,6 @@ export function LayersIcon(props: IconProps) {
   )
 }
 
-/** Custom calendar icon with dot grid (SF Symbols style) */
 export function CalendarIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -166,18 +96,7 @@ export function CalendarIcon(props: IconProps) {
   )
 }
 
-/** Calendar icon for Upcoming view */
-export function UpcomingCalendarIcon(props: IconProps) {
-  return <Calendar {...props} />
-}
-
-/** Book check icon for Logbook view */
-export function LogbookIcon(props: IconProps) {
-  return <BookCheck {...props} />
-}
-
-/** Custom trash icon */
-export function Trash2Icon(props: IconProps) {
+export function TrashIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -186,11 +105,6 @@ export function Trash2Icon(props: IconProps) {
       />
     </svg>
   )
-}
-
-/** Alias for sidebar/view usage */
-export function TrashIcon(props: IconProps) {
-  return <Trash2Icon {...props} />
 }
 
 /** Custom info icon */
@@ -205,7 +119,6 @@ export function InfoIcon(props: IconProps) {
   )
 }
 
-/** Custom checklist icon - circles with lines */
 export function ListChecksIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -229,19 +142,10 @@ export function FlagIcon(props: IconProps) {
   )
 }
 
-/** Custom folder open icon - move to */
-export function FolderOpenIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 14 11" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path
-        d="M1.83984 10.7227C0.615234 10.7227 0 10.1191 0 8.90625V1.76367C0 0.585938 0.591797 0 1.61719 0H3.28711C3.86719 0 4.16602 0.105469 4.55273 0.433594L4.91016 0.726562C5.20312 0.978516 5.44336 1.07227 5.8418 1.07227H11.4668C12.6855 1.07227 13.3066 1.68164 13.3066 2.88867V8.90625C13.3066 10.1133 12.6914 10.7227 11.6426 10.7227H1.83984ZM1.85156 9.7793H11.4492C12.0293 9.7793 12.3633 9.46875 12.3633 8.86523V2.94141C12.3633 2.33203 12.0293 2.01562 11.4492 2.01562H5.5957C5.01562 2.01562 4.70508 1.9043 4.32422 1.58789L3.9668 1.28906C3.66797 1.03711 3.43359 0.9375 3.04688 0.9375H1.81055C1.24805 0.9375 0.943359 1.23633 0.943359 1.81641V8.85938C0.943359 9.46875 1.26562 9.7793 1.85156 9.7793ZM4.16016 6.32227C3.91406 6.32227 3.70312 6.11133 3.70312 5.85938C3.70312 5.60742 3.91406 5.39062 4.16016 5.39062L7.55273 5.39648L8.32617 5.42578L7.96875 5.08594L7.01367 4.19531C6.91992 4.11328 6.87305 3.99023 6.87305 3.87891C6.87305 3.63281 7.04883 3.45117 7.28906 3.45117C7.41211 3.45117 7.50586 3.49805 7.59375 3.58594L9.45703 5.51953C9.57422 5.63672 9.61523 5.73633 9.61523 5.85938C9.61523 5.97656 9.57422 6.08203 9.45703 6.19922L7.59375 8.12695C7.50586 8.2207 7.41211 8.26758 7.28906 8.26758C7.04883 8.26758 6.87305 8.0918 6.87305 7.8457C6.87305 7.73438 6.91992 7.60547 7.01367 7.52344L7.96875 6.63281L8.32617 6.29297L7.55273 6.32227H4.16016Z"
-        fill="currentColor"
-      />
-    </svg>
-  )
+export function MoveIcon(props: IconProps) {
+  return <ArrowRight stroke-width={2} {...props} />
 }
 
-/** Custom repeat icon */
 export function RepeatIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 13 11" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -253,7 +157,11 @@ export function RepeatIcon(props: IconProps) {
   )
 }
 
-/** Custom tag icon */
+export function AreaIcon(props: IconProps) {
+  const [local, rest] = splitProps(props, ["class"])
+  return <Box class={cn("text-[#67b593]", local.class)} {...rest} />
+}
+
 export function TagIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

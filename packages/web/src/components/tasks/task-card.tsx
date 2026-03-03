@@ -7,15 +7,15 @@ import { format, isToday, isYesterday } from "date-fns"
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
 import { getTaskData, isTaskData } from "@/components/dnd/task-data"
+import { RotateCcw as RestoreIcon } from "lucide-solid"
 import {
   EveningIcon,
   FlagIcon,
   InfoIcon,
   ListChecksIcon,
   RepeatIcon,
-  RestoreIcon,
   TodayStarIcon,
-  Trash2Icon,
+  TrashIcon,
 } from "@/components/icons"
 import { CalendarPopover } from "@/components/ui/calendar-popover"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -825,7 +825,7 @@ export function TaskCard(props: TaskCardProps) {
               setShowDeleteConfirm(!showDeleteConfirm())
             }}
           >
-            <Trash2Icon class="w-4 h-4 md:w-3.5 md:h-3.5" />
+            <TrashIcon class="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
 
           {/* Delete confirmation popover */}

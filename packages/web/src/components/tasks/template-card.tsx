@@ -1,7 +1,8 @@
 import { format } from "date-fns"
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
-import { FileTextIcon, InfoIcon, ListChecksIcon, PauseIcon, PlayIcon, RepeatIcon, Trash2Icon } from "@/components/icons"
+import { FileText as FileTextIcon, Pause as PauseIcon, Play as PlayIcon } from "lucide-solid"
+import { InfoIcon, ListChecksIcon, RepeatIcon, TrashIcon } from "@/components/icons"
 import { EditableText } from "@/components/ui/editable-text"
 import { MovePicker } from "@/components/ui/move-picker"
 import { ProseEditor } from "@/components/ui/prose-editor"
@@ -293,7 +294,7 @@ export function TemplateCard(props: TemplateCardProps) {
               setShowDeleteConfirm(!showDeleteConfirm())
             }}
           >
-            <Trash2Icon class="w-3.5 h-3.5" />
+            <TrashIcon class="w-3.5 h-3.5" />
           </button>
 
           <Show when={showDeleteConfirm() && deleteButtonRef}>

@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js"
-import { CalendarIcon, CheckIcon, FolderOpenIcon, Trash2Icon, XIcon } from "@/components/icons"
+import { Check as CheckIcon } from "lucide-solid"
+import { CalendarIcon, MoveIcon, TrashIcon, XIcon } from "@/components/icons"
 import { CalendarPopover } from "@/components/ui/calendar-popover"
 import { MovePickerContent } from "@/components/ui/move-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -82,7 +83,7 @@ export function BatchActionBar(props: BatchActionBarProps) {
               "text-popover-dark-foreground hover:bg-popover-dark-accent transition-colors",
             )}
           >
-            <FolderOpenIcon class="w-4 h-4" />
+            <MoveIcon class="w-4 h-4" />
             <span>Move</span>
           </PopoverTrigger>
           <PopoverContent class="w-auto p-0 bg-transparent border-0 shadow-xl ring-0">
@@ -105,7 +106,7 @@ export function BatchActionBar(props: BatchActionBarProps) {
             "text-red-400 hover:bg-red-500/20 transition-colors",
           )}
         >
-          <Trash2Icon class="w-4 h-4" />
+          <TrashIcon class="w-4 h-4" />
           <span>Delete</span>
         </button>
 

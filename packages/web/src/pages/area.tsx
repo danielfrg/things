@@ -1,10 +1,10 @@
 import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router"
 import { createSignal, For, Show } from "solid-js"
 import { AreaActionsMenu } from "@/components/area-actions-menu"
-import { BoxIcon } from "@/components/icons"
+import { AreaIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,12 +141,14 @@ function AreaContent() {
       >
         <ViewContainer
           title={data.area!.title}
-          icon={<BoxIcon class="w-6 h-6 text-things-green" stroke-width={2} />}
+          icon={<AreaIcon class="w-6 h-6" />}
           onTitleChange={handleTitleChange}
           titleActions={<AreaActionsMenu onDelete={handleDeleteClick} />}
           toolbar={
             <ViewToolbar>
               <NewTaskButton onClick={app.openTaskInput} />
+              <SetDateButton />
+              <MoveTaskButton />
               <SearchButton onClick={app.openCommandPalette} />
             </ViewToolbar>
           }
@@ -227,7 +229,7 @@ function AreaContent() {
               {/* Empty state */}
               <Show when={!hasProjects() && !hasTasks()}>
                 <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                  <BoxIcon class="w-12 h-12 mb-4 opacity-30" />
+                  <AreaIcon class="w-12 h-12 mb-4 opacity-30" />
                   <p class="text-sm">No projects or tasks in this area yet</p>
                 </div>
               </Show>

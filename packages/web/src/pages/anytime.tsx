@@ -3,7 +3,7 @@ import { Show } from "solid-js"
 import { LayersIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import { useSidebarData } from "@/context/sidebar"
 import { useAnytimeView } from "@/context/view-adapters"
@@ -70,6 +70,8 @@ export function Anytime() {
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
+          <SetDateButton />
+          <MoveTaskButton />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }

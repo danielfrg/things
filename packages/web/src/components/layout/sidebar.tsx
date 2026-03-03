@@ -4,17 +4,8 @@ import { isToday } from "date-fns"
 import type { Accessor, JSX, ParentProps } from "solid-js"
 import { createContext, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js"
 import { isTaskData } from "@/components/dnd/task-data"
-import {
-  BookCheckIcon,
-  CalendarIcon,
-  InboxIcon,
-  LayersIcon,
-  PlusIcon,
-  Settings2Icon,
-  SomedayIcon,
-  TodayStarIcon,
-  Trash2Icon,
-} from "@/components/icons"
+import { BookCheck as BookCheckIcon, Plus as PlusIcon, Settings2 as Settings2Icon } from "lucide-solid"
+import { CalendarIcon, InboxIcon, LayersIcon, SomedayIcon, TodayStarIcon, TrashIcon } from "@/components/icons"
 import { DraggableSidebarList } from "@/components/layout/sidebar-items"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { TaskInfo } from "@/context/data"
@@ -453,11 +444,11 @@ function SidebarContent() {
         </div>
       </div>
 
-      <div class="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-2 min-h-[52px] flex items-center pb-[env(safe-area-inset-bottom)]">
+      <div class="flex-shrink-0 border-t border-sidebar-border bg-sidebar px-2 min-h-[44px] flex items-center pb-[env(safe-area-inset-bottom)]">
         <div class="flex items-center justify-between w-full">
           <DropdownMenu>
             <DropdownMenuTrigger
-              class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
+              class="p-2 rounded-md text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
               aria-label="Create"
             >
               <PlusIcon class="w-4 h-4" />
@@ -471,7 +462,7 @@ function SidebarContent() {
           <A
             href="/logbook"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
+            class="p-2 rounded-md text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Logbook"
           >
             <BookCheckIcon class="w-4 h-4" />
@@ -480,16 +471,16 @@ function SidebarContent() {
           <A
             href="/trash"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
+            class="p-2 rounded-md text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Trash"
           >
-            <Trash2Icon class="w-4 h-4" />
+            <TrashIcon class="w-4 h-4" />
           </A>
 
           <A
             href="/settings"
             onClick={closeMobileIfOpen}
-            class="p-2 rounded-md text-muted-foreground border border-transparent hover:border-toolbar-border transition-colors"
+            class="p-2 rounded-md text-toolbar-icon border border-transparent hover:border-toolbar-border transition-colors"
             aria-label="Settings"
           >
             <Settings2Icon class="w-4 h-4" />

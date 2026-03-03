@@ -3,7 +3,7 @@ import { Show } from "solid-js"
 import { TodayStarIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import { useSidebarData } from "@/context/sidebar"
 import { useTodayView } from "@/context/view-adapters"
@@ -79,6 +79,8 @@ export function Today() {
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
+          <SetDateButton />
+          <MoveTaskButton />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }

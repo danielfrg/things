@@ -9,8 +9,8 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, Star as StarIcon } from 'lucide-solid';
 import { createMemo, createSignal, For } from 'solid-js';
-import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 type CalendarProps = {

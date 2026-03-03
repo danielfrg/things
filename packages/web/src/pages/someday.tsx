@@ -1,9 +1,9 @@
 import { useSearchParams } from "@solidjs/router"
 import { Show } from "solid-js"
-import { ArchiveIcon } from "@/components/icons"
+import { Archive as ArchiveIcon } from "lucide-solid"
 import { ViewContainer } from "@/components/layout/view-container"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import { useSidebarData } from "@/context/sidebar"
 import { useSomedayView } from "@/context/view-adapters"
@@ -70,6 +70,8 @@ export function Someday() {
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
+          <SetDateButton />
+          <MoveTaskButton />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }

@@ -7,15 +7,12 @@ import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "so
 import { BatchActionBar } from "@/components/batch-action-bar"
 import { getSectionData, isSectionData, isTaskData } from "@/components/dnd/task-data"
 import {
-  BoxIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ChevronUpIcon,
-  MoreHorizontalIcon,
-  RepeatIcon,
-  SomedayIcon,
-  Trash2Icon,
-} from "@/components/icons"
+  ChevronDown as ChevronDownIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronUp as ChevronUpIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+} from "lucide-solid"
+import { AreaIcon, RepeatIcon, SomedayIcon, TrashIcon } from "@/components/icons"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import {
   DropdownMenu,
@@ -130,7 +127,7 @@ function HeadingHeader(props: {
                 <DropdownMenuSeparator />
               </Show>
               <DropdownMenuItem onSelect={handleDelete}>
-                <Trash2Icon class="w-4 h-4" />
+                <TrashIcon class="w-4 h-4" />
                 <span>Delete Heading</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -195,7 +192,7 @@ function LinkedSectionHeader(props: { section: Section }) {
       return <ProjectProgressIcon progress={progress()} size={16} variant="sidebar" class="text-things-blue" />
     }
     if (props.section.areaId) {
-      return <BoxIcon class="w-4 h-4" />
+      return <AreaIcon class="w-4 h-4" />
     }
     return null
   }
@@ -203,7 +200,7 @@ function LinkedSectionHeader(props: { section: Section }) {
   const iconColor = () => {
     if (props.section.isEvening) return "text-things-evening"
     if (props.section.projectId) return "text-things-blue"
-    if (props.section.areaId) return "text-things-green"
+    if (props.section.areaId) return ""
     return "text-muted-foreground"
   }
 

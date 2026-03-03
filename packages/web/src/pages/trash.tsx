@@ -1,5 +1,5 @@
 import { createSignal, Show } from "solid-js"
-import { Trash2Icon } from "@/components/icons"
+import { TrashIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { VirtualTaskCardList } from "@/components/tasks/virtual-task-card-list"
 import { SearchButton, ViewToolbar } from "@/components/toolbar"
@@ -73,7 +73,7 @@ function TrashContent() {
     <>
       <ViewContainer
         title="Trash"
-        icon={<Trash2Icon class="w-6 h-6 text-muted-foreground" />}
+        icon={<TrashIcon class="w-6 h-6 text-muted-foreground" />}
         toolbar={
           <ViewToolbar>
             <Show when={count() > 0}>
@@ -107,7 +107,7 @@ function TrashContent() {
             when={count() > 0}
             fallback={
               <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Trash2Icon class="w-12 h-12 mb-4 opacity-30" />
+                <TrashIcon class="w-12 h-12 mb-4 opacity-30" />
                 <p class="text-sm">Trash is empty.</p>
               </div>
             }

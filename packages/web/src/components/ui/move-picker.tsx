@@ -1,10 +1,11 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
-import { BoxIcon, CheckIcon, FolderOpenIcon, InboxIcon, XIcon } from "@/components/icons"
+import { Check as CheckIcon } from "lucide-solid"
+import { AreaIcon, InboxIcon, MoveIcon, XIcon } from "@/components/icons"
 import { ProjectProgressIcon } from "@/components/ui/project-progress-icon"
 import { ResponsivePicker } from "@/components/ui/responsive-picker"
 import { cn } from "@/lib/utils"
 
-// MovePickerContent uses BoxIcon, ProjectProgressIcon, etc. for the popover items
+// MovePickerContent uses AreaIcon, ProjectProgressIcon, etc. for the popover items
 
 type Project = {
   id: string
@@ -86,7 +87,7 @@ export function MovePickerContent(props: MovePickerContentProps) {
             "hover:bg-popover-dark-accent transition-colors focus-visible:outline-none",
           )}
         >
-          <InboxIcon class="w-4 h-4 text-popover-dark-muted" />
+          <InboxIcon class="w-4 h-4" />
           <span class="flex-1 text-left">Inbox</span>
           <Show when={props.isInbox}>
             <CheckIcon class="w-4 h-4 text-popover-dark-selected" />
@@ -146,7 +147,7 @@ export function MovePickerContent(props: MovePickerContentProps) {
                   "hover:bg-popover-dark-accent transition-colors focus-visible:outline-none",
                 )}
               >
-                <BoxIcon class="w-[14px] h-[14px] text-things-green" />
+                <AreaIcon class="w-[14px] h-[14px]" />
                 <span class="flex-1 text-left truncate">{area.title}</span>
                 <Show when={selectedArea()?.id === area.id}>
                   <CheckIcon class="w-4 h-4 text-popover-dark-selected" />
@@ -212,7 +213,7 @@ export function MovePicker(props: MovePickerProps) {
             props.class,
           )}
         >
-          <FolderOpenIcon class="h-4 w-4 md:h-3.5 md:w-3.5" />
+          <MoveIcon class="h-5 w-5 md:h-4 md:w-4" />
         </div>
       }
     >

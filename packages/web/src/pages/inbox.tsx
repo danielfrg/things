@@ -3,7 +3,7 @@ import { Show } from "solid-js"
 import { InboxIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { TaskList } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import { useInboxView } from "@/context/view-adapters"
 
@@ -20,10 +20,12 @@ export function Inbox() {
   return (
     <ViewContainer
       title="Inbox"
-      icon={<InboxIcon class="w-6 h-6 text-[#1aadf8]" />}
+      icon={<InboxIcon class="w-6 h-6" />}
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
+          <SetDateButton />
+          <MoveTaskButton />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }

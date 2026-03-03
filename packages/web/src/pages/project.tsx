@@ -3,7 +3,14 @@ import { createEffect, createSignal, Show } from "solid-js"
 import { ViewContainer } from "@/components/layout/view-container"
 import { ProjectActionsMenu } from "@/components/project-actions-menu"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { AddHeadingButton, NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import {
+  AddHeadingButton,
+  MoveTaskButton,
+  NewTaskButton,
+  SearchButton,
+  SetDateButton,
+  ViewToolbar,
+} from "@/components/toolbar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -253,6 +260,8 @@ function ProjectContent() {
           toolbar={
             <ViewToolbar>
               <NewTaskButton onClick={app.openTaskInput} />
+              <SetDateButton />
+              <MoveTaskButton />
               <AddHeadingButton onClick={handleAddHeading} />
               <SearchButton onClick={app.openCommandPalette} />
             </ViewToolbar>

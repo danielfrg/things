@@ -1,4 +1,5 @@
-import { CheckIcon, MoreHorizontalIcon, Trash2Icon } from "@/components/icons"
+import { Check as CheckIcon, MoreHorizontal as MoreHorizontalIcon } from "lucide-solid"
+import { TrashIcon } from "@/components/icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,7 @@ export function ProjectActionsMenu(props: ProjectActionsMenuProps) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={props.onDelete} class="text-destructive focus:text-destructive">
-          <Trash2Icon class="w-4 h-4" />
+          <TrashIcon class="w-4 h-4" />
           <span>Delete Project</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

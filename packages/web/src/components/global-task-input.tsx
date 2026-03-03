@@ -1,8 +1,8 @@
 import { useLocation } from "@solidjs/router"
 import { addDays, format } from "date-fns"
-import { FolderOpen } from "lucide-solid"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
-import { BoxIcon, CheckIcon, InboxIcon } from "@/components/icons"
+import { Check as CheckIcon } from "lucide-solid"
+import { AreaIcon, InboxIcon, MoveIcon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -230,9 +230,9 @@ export function GlobalTaskInput(props: GlobalTaskInputProps) {
                 fallback={
                   <Show
                     when={listId() && areas().find((a) => a.id === listId())}
-                    fallback={<FolderOpen class="size-3.5" />}
+                    fallback={<MoveIcon class="size-3.5" />}
                   >
-                    <BoxIcon class="size-3.5 text-things-green" />
+                    <AreaIcon class="size-3.5" />
                   </Show>
                 }
               >
@@ -295,7 +295,7 @@ export function GlobalTaskInput(props: GlobalTaskInputProps) {
                           "hover:bg-accent",
                         )}
                       >
-                        <BoxIcon class="w-3 h-3 text-things-green" />
+                        <AreaIcon class="w-3 h-3" />
                         <span class="flex-1 text-left truncate">{area.title}</span>
                         <Show when={listId() === area.id}>
                           <CheckIcon class="w-3.5 h-3.5 text-primary" />

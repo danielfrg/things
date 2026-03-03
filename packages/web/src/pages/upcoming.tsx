@@ -3,7 +3,7 @@ import { Show } from "solid-js"
 import { CalendarIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
 import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
+import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import type { TemplateInfo } from "@/context/data"
 import { useSidebarData } from "@/context/sidebar"
@@ -84,6 +84,8 @@ export function Upcoming() {
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
+          <SetDateButton />
+          <MoveTaskButton />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }

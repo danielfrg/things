@@ -1,19 +1,19 @@
 import { A, useNavigate } from "@solidjs/router"
 import { createEffect, createResource, createSignal, For, Show } from "solid-js"
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  CopyIcon,
-  KeyIcon,
-  LogOutIcon,
-  MonitorIcon,
-  MoonIcon,
-  PencilIcon,
-  PlusIcon,
-  Settings2Icon,
-  SunIcon,
-  Trash2Icon,
-} from "@/components/icons"
+  Check as CheckIcon,
+  ChevronDown as ChevronDownIcon,
+  Copy as CopyIcon,
+  Key as KeyIcon,
+  LogOut as LogOutIcon,
+  Monitor as MonitorIcon,
+  Moon as MoonIcon,
+  Pencil as PencilIcon,
+  Plus as PlusIcon,
+  Settings2 as Settings2Icon,
+  Sun as SunIcon,
+} from "lucide-solid"
+import { TrashIcon } from "@/components/icons"
 import { SidebarTrigger } from "@/components/layout/sidebar"
 import { SyncStatus } from "@/components/sync-status"
 import {
@@ -520,7 +520,7 @@ function TagsSection() {
                     class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5"
                     title="Delete tag"
                   >
-                    <Trash2Icon class="w-4 h-4" />
+                    <TrashIcon class="w-4 h-4" />
                   </Button>
                 </div>
               )}
@@ -708,7 +708,7 @@ function ApiKeysSection() {
                     onClick={() => setDeleteKeyId(key.id)}
                     class="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2Icon class="w-4 h-4" />
+                    <TrashIcon class="w-4 h-4" />
                   </Button>
                 </div>
               )}

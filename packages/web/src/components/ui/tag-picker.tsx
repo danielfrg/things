@@ -1,5 +1,6 @@
+import { Check as CheckIcon } from 'lucide-solid';
 import { createSignal, For, Show } from 'solid-js';
-import { CheckIcon, TagIcon } from '@/components/icons';
+import { TagIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { ResponsivePicker } from './responsive-picker';
 

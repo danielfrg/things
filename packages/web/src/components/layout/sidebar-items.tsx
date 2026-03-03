@@ -22,7 +22,7 @@ import {
   isProjectDropData,
 } from "@/components/dnd/sidebar-data"
 import { isTaskData } from "@/components/dnd/task-data"
-import { BoxIcon } from "@/components/icons"
+import { AreaIcon } from "@/components/icons"
 import { ProjectProgressIcon } from "@/components/ui/project-progress-icon"
 import type { AreaInfo, ProjectInfo } from "@/context/sidebar"
 import { cn } from "@/lib/utils"
@@ -349,7 +349,7 @@ function AreaPreview(props: { area: AreaInfo }) {
     <div class="mb-4">
       <div class="flex items-center justify-between mx-2 px-2 py-1 group bg-sidebar shadow-lg border border-border rounded-md">
         <span class="flex-1 text-[13px] font-medium text-sidebar-foreground flex items-center gap-2">
-          <BoxIcon class="w-4 h-4 text-muted-foreground" />
+          <AreaIcon class="w-4 h-4 text-muted-foreground" />
           {props.area.title}
         </span>
       </div>
@@ -372,7 +372,7 @@ function AreaHeader(props: { area: AreaInfo; onLinkClick?: () => void }) {
       class="flex-1 text-left text-lg md:text-[13px] font-medium text-sidebar-foreground cursor-pointer select-none flex items-center gap-3 md:gap-2"
       onClick={handleClick}
     >
-      <BoxIcon class="w-5 h-5 md:w-4 md:h-4 text-muted-foreground" />
+      <AreaIcon class="w-5 h-5 md:w-4 md:h-4 text-muted-foreground" />
       <span class="truncate">{props.area.title}</span>
     </button>
   )

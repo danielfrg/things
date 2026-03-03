@@ -1,5 +1,5 @@
 import { For } from "solid-js"
-import { BookCheckIcon } from "@/components/icons"
+import { BookCheck as BookCheckIcon } from "lucide-solid"
 import { cn } from "@/lib/utils"
 
 type Shortcut = {

@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js"
-import { FileTextIcon, FlagIcon, ListChecksIcon, RepeatIcon } from "@/components/icons"
+import { FileText as FileTextIcon } from "lucide-solid"
+import { FlagIcon, ListChecksIcon, RepeatIcon } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatTaskDate, isDateOverdue } from "@/lib/utils"
 

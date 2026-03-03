@@ -1,4 +1,5 @@
-import { MoreHorizontalIcon, Trash2Icon } from "@/components/icons"
+import { MoreHorizontal as MoreHorizontalIcon } from "lucide-solid"
+import { TrashIcon } from "@/components/icons"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 type AreaActionsMenuProps = {
@@ -13,7 +14,7 @@ export function AreaActionsMenu(props: AreaActionsMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem onSelect={props.onDelete} class="text-destructive focus:text-destructive">
-          <Trash2Icon class="w-4 h-4" />
+          <TrashIcon class="w-4 h-4" />
           <span>Delete Area</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
