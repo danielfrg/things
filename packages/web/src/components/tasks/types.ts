@@ -44,6 +44,13 @@ export type TaskEnhancementProps = {
   onReorderChecklistItems?: (taskId: string, items: { id: string; position: number }[]) => void
 }
 
+export type TaskPickerControls = {
+  selectedTaskId: () => string | null
+  selectedIds: () => string[]
+  canOpenSchedule: () => boolean
+  canOpenMove: () => boolean
+}
+
 // Props for template operations
 export type TemplateEnhancementProps = {
   onTemplateUpdate?: (id: string, updates: Partial<TemplateInfo>) => void
@@ -88,4 +95,6 @@ export type GroupedTaskListProps = TaskEnhancementProps &
     initialExpandedTaskId?: string | null
     /** Initial template ID to expand when component mounts */
     initialExpandedTemplateId?: string | null
+    /** Register picker controls for toolbar buttons */
+    onRegisterPickers?: (controls: TaskPickerControls | null) => void
   }

@@ -1,7 +1,15 @@
 import { useNavigate } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
-import { Archive as ArchiveIcon, BookCheck as BookCheckIcon, Search as SearchIcon } from "lucide-solid"
-import { AreaIcon, CalendarIcon, InboxIcon, LayersIcon, TodayStarIcon, TrashIcon } from "@/components/icons"
+import { BookCheck as BookCheckIcon, Search as SearchIcon } from "lucide-solid"
+import {
+  AreaIcon,
+  CalendarIcon,
+  InboxIcon,
+  LayersIcon,
+  SomedayIcon,
+  TodayStarIcon,
+  TrashIcon,
+} from "@/components/icons"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import type { TaskInfo } from "@/context/data"
 import { useSDK } from "@/context/sdk"
@@ -224,25 +232,68 @@ export function CommandPalette(props: CommandPaletteProps) {
       case "view": {
         switch (item.id) {
           case "inbox":
-            return <InboxIcon class="size-4 opacity-60" />
+            return <InboxIcon class="size-4 text-things-blue" />
           case "today":
-            return <TodayStarIcon class="size-4 opacity-60" />
+            return <TodayStarIcon class="size-4 text-things-yellow" />
           case "upcoming":
-            return <CalendarIcon class="size-4 opacity-60" />
+            return <CalendarIcon class="size-4 text-things-pink" />
           case "anytime":
-            return <LayersIcon class="size-4 opacity-60" />
+            return <LayersIcon class="size-4 text-things-teal" />
           case "someday":
-            return <ArchiveIcon class="size-4 opacity-60" />
+            return <SomedayIcon class="size-4 text-things-beige" />
           case "logbook":
-            return <BookCheckIcon class="size-4 opacity-60" />
+            return <BookCheckIcon class="size-4 text-muted-foreground" />
           case "trash":
-            return <TrashIcon class="size-4 opacity-60" />
+            return <TrashIcon class="size-4 text-muted-foreground" />
           default:
             return null
         }
       }
-      case "task":
-        return <div class="size-4 rounded-full border-2 border-things-blue flex-shrink-0" />
+      case "task": {
+        const task = allTasks().find((entry) => entry.id === item.taskId)
+        const isChecked = task?.status === "completed"
+        const isCancelled = task?.status === "cancelled"
+        const isCheckedOrCancelled = Boolean(isChecked || isCancelled)
+        return (
+          <div
+            class={cn(
+              "w-4 h-4 rounded border border-solid flex items-center justify-center shrink-0",
+              isCheckedOrCancelled ? "bg-things-blue border-things-blue text-white" : "border-muted-foreground/50",
+              task?.isSomeday && !isCheckedOrCancelled && "border-dashed",
+            )}
+          >
+            <Show when={isChecked && !isCancelled}>
+              <svg
+                class="size-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-label="Completed"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </Show>
+            <Show when={isCancelled}>
+              <svg
+                class="size-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-label="Cancelled"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </Show>
+          </div>
+        )
+      }
       case "project":
         return <div class="size-4 rounded-full border-2 border-things-blue flex-shrink-0" />
       case "area":

@@ -1,16 +1,10 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router"
-import { createEffect, createSignal, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { ViewContainer } from "@/components/layout/view-container"
 import { ProjectActionsMenu } from "@/components/project-actions-menu"
-import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import {
-  AddHeadingButton,
-  MoveTaskButton,
-  NewTaskButton,
-  SearchButton,
-  SetDateButton,
-  ViewToolbar,
-} from "@/components/toolbar"
+import { TaskToolbarPickers } from "@/components/task-toolbar-pickers"
+import { GroupedTaskList, type TaskMoveInfo, type TaskPickerControls } from "@/components/tasks"
+import { AddHeadingButton, NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +28,9 @@ function ProjectContent() {
   const sidebar = useSidebarData()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const [pickers, setPickers] = createSignal<TaskPickerControls | null>(null)
+  const [scheduleOpen, setScheduleOpen] = createSignal(false)
+  const [moveOpen, setMoveOpen] = createSignal(false)
 
   // Dialog state
   const [showCompleteDialog, setShowCompleteDialog] = createSignal(false)
@@ -45,6 +42,49 @@ function ProjectContent() {
     const taskParam = searchParams.task
     return typeof taskParam === "string" ? taskParam : null
   }
+
+  const canSchedule = () => pickers()?.canOpenSchedule() ?? false
+  const canMove = () => pickers()?.canOpenMove() ?? false
+  const selectedIds = () => pickers()?.selectedIds() ?? []
+
+  const handleBatchDateChange = (ids: string[], date: string | null, isEvening?: boolean) => {
+    void Promise.all(ids.map((id) => data.updateTask(id, { scheduledDate: date, isEvening: isEvening ?? false })))
+  }
+
+  const handleBatchMove = (ids: string[], listId: string | null, moveToInbox?: boolean) => {
+    if (moveToInbox) {
+      void Promise.all(
+        ids.map((id) =>
+          data.updateTask(id, {
+            status: null,
+            listId: null,
+            headingId: null,
+            scheduledDate: null,
+            isEvening: false,
+            isSomeday: false,
+          }),
+        ),
+      )
+      return
+    }
+
+    void Promise.all(ids.map((id) => data.updateTask(id, { status: "active", listId, headingId: null })))
+  }
+
+  const selectedTask = createMemo(() => {
+    const id = pickers()?.selectedTaskId()
+    if (!id) return undefined
+    return data.sections.flatMap((section) => section.tasks).find((task) => task.id === id)
+  })
+
+  createEffect(() => {
+    if (!canSchedule()) {
+      setScheduleOpen(false)
+    }
+    if (!canMove()) {
+      setMoveOpen(false)
+    }
+  })
 
   // Local state for notes to avoid re-render on every keystroke
   const [localNotes, setLocalNotes] = createSignal("")
@@ -260,8 +300,21 @@ function ProjectContent() {
           toolbar={
             <ViewToolbar>
               <NewTaskButton onClick={app.openTaskInput} />
-              <SetDateButton />
-              <MoveTaskButton />
+              <TaskToolbarPickers
+                task={selectedTask()}
+                selectedIds={selectedIds()}
+                canSchedule={canSchedule()}
+                canMove={canMove()}
+                scheduleOpen={scheduleOpen()}
+                moveOpen={moveOpen()}
+                onScheduleOpenChange={setScheduleOpen}
+                onMoveOpenChange={setMoveOpen}
+                onUpdate={data.updateTask}
+                onBatchDateChange={handleBatchDateChange}
+                onBatchMove={handleBatchMove}
+                projects={sidebar.activeProjects}
+                areas={sidebar.sortedAreas}
+              />
               <AddHeadingButton onClick={handleAddHeading} />
               <SearchButton onClick={app.openCommandPalette} />
             </ViewToolbar>
@@ -300,6 +353,7 @@ function ProjectContent() {
                 isProjectView
                 showTodayStar
                 autoCommitSticky
+                onRegisterPickers={setPickers}
                 taskTags={data.taskTags}
                 onTagAdd={data.addTagToTask}
                 onTagRemove={data.removeTagFromTask}

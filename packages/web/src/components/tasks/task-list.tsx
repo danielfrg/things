@@ -2,11 +2,13 @@ import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/ad
 import { triggerPostMoveFlash } from "@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash"
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge"
-import { createEffect, createSignal, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
 import { isTaskData } from "@/components/dnd/task-data"
 import type { TaskInfo } from "@/context/data"
+import { useMultiSelect } from "@/lib/hooks/useMultiSelect"
+import { useTaskKeyboardNav } from "@/lib/hooks/useTaskKeyboardNav"
 import { TaskCardList } from "./task-card-list"
-import type { TaskEnhancementProps } from "./types"
+import type { TaskEnhancementProps, TaskPickerControls } from "./types"
 
 export type TaskListProps = TaskEnhancementProps & {
   tasks: TaskInfo[]
@@ -15,14 +17,108 @@ export type TaskListProps = TaskEnhancementProps & {
   onReorder: (taskId: string, newIndex: number) => void
   initialExpandedTaskId?: string | null
   autoCommitSticky?: boolean
+  projects?: Array<{ id: string; title: string; areaId?: string | null }>
+  areas?: Array<{ id: string; title: string }>
+  onRegisterPickers?: (controls: TaskPickerControls | null) => void
 }
 
 export function TaskList(props: TaskListProps) {
   const [expandedTaskId, setExpandedTaskId] = createSignal<string | null>(props.initialExpandedTaskId ?? null)
+  const [scheduleDatePickerTaskId, setScheduleDatePickerTaskId] = createSignal<string | null>(null)
+  const [movePickerTaskId, setMovePickerTaskId] = createSignal<string | null>(null)
+
+  const tasks = createMemo(() => props.tasks)
+  const { selectedIds, lastSelectedId, handleSelect, clearSelection, selectAll, isMultiSelecting } = useMultiSelect({
+    items: tasks,
+  })
+
+  const canOpenSchedule = createMemo(() => selectedIds().size > 0 && !expandedTaskId())
+  const canOpenMove = createMemo(() => selectedIds().size > 0 && !expandedTaskId())
+  const selectedList = createMemo(() => Array.from(selectedIds()))
+
+  const pickerControls: TaskPickerControls = {
+    selectedTaskId: () => lastSelectedId(),
+    selectedIds: () => selectedList(),
+    canOpenSchedule: () => canOpenSchedule(),
+    canOpenMove: () => canOpenMove(),
+  }
 
   const handleExpand = (taskId: string) => {
     setExpandedTaskId((prev) => (prev === taskId ? null : taskId))
   }
+
+  createEffect(() => {
+    const initialId = props.initialExpandedTaskId
+    if (initialId && tasks().some((task) => task.id === initialId)) {
+      setExpandedTaskId(initialId)
+      handleSelect(initialId, {
+        shiftKey: false,
+        metaKey: false,
+        ctrlKey: false,
+        button: 0,
+      } as MouseEvent)
+    }
+  })
+
+  useTaskKeyboardNav({
+    tasks,
+    selectedTaskId: lastSelectedId,
+    expandedTaskId,
+    onSelect: (taskId) => {
+      if (taskId) {
+        handleSelect(taskId, {
+          shiftKey: false,
+          metaKey: false,
+          ctrlKey: false,
+          button: 0,
+        } as MouseEvent)
+        return
+      }
+      clearSelection()
+    },
+    onExpand: (taskId) => {
+      setExpandedTaskId((prev) => (prev === taskId ? null : taskId))
+    },
+  })
+
+  createEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        return
+      }
+
+      const selected = lastSelectedId()
+      const expanded = expandedTaskId()
+      const multiSelecting = isMultiSelecting()
+
+      if (e.key === "s" && e.ctrlKey && !e.metaKey) {
+        if (selected && !expanded && !multiSelecting) {
+          e.preventDefault()
+          setScheduleDatePickerTaskId(selected)
+        }
+      }
+
+      if (e.key === "d" && e.ctrlKey && !e.metaKey) {
+        if (selected && !expanded && !multiSelecting) {
+          e.preventDefault()
+          setMovePickerTaskId(selected)
+        }
+      }
+
+      if (e.key === "a" && e.metaKey) {
+        e.preventDefault()
+        selectAll()
+      }
+    }
+    document.addEventListener("keydown", handler)
+    onCleanup(() => document.removeEventListener("keydown", handler))
+  })
+
+  createEffect(() => {
+    props.onRegisterPickers?.(pickerControls)
+    onCleanup(() => props.onRegisterPickers?.(null))
+  })
 
   createEffect(() => {
     const cleanup = monitorForElements({
@@ -71,6 +167,14 @@ export function TaskList(props: TaskListProps) {
       <TaskCardList
         tasks={props.tasks}
         expandedTaskId={expandedTaskId}
+        selectedIds={selectedIds}
+        scheduleDatePickerTaskId={scheduleDatePickerTaskId}
+        onScheduleDatePickerClose={() => setScheduleDatePickerTaskId(null)}
+        movePickerTaskId={movePickerTaskId}
+        onMovePickerClose={() => setMovePickerTaskId(null)}
+        projects={props.projects}
+        areas={props.areas}
+        onSelect={handleSelect}
         onExpand={handleExpand}
         onComplete={props.onComplete}
         onUpdate={props.onUpdate}

@@ -4,7 +4,6 @@ import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/clo
 import { reorderWithEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge"
 import type { Accessor } from "solid-js"
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
-import { BatchActionBar } from "@/components/batch-action-bar"
 import { getSectionData, isSectionData, isTaskData } from "@/components/dnd/task-data"
 import {
   ChevronDown as ChevronDownIcon,
@@ -35,6 +34,7 @@ import type {
   TaskEnhancementProps,
   TaskMoveInfo,
   TemplateEnhancementProps,
+  TaskPickerControls,
 } from "./types"
 
 function getDayOfMonth(dateStr: string): string {
@@ -553,6 +553,17 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
     items: allTasks,
   })
 
+  const canOpenSchedule = createMemo(() => selectedIds().size > 0 && !expandedTaskId())
+  const canOpenMove = createMemo(() => selectedIds().size > 0 && !expandedTaskId())
+  const selectedList = createMemo(() => Array.from(selectedIds()))
+
+  const pickerControls: TaskPickerControls = {
+    selectedTaskId: () => lastSelectedId(),
+    selectedIds: () => selectedList(),
+    canOpenSchedule: () => canOpenSchedule(),
+    canOpenMove: () => canOpenMove(),
+  }
+
   // If initialExpandedTaskId is provided, also select that task
   createEffect(() => {
     const initialId = props.initialExpandedTaskId
@@ -629,6 +640,11 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
     }
     document.addEventListener("keydown", handler)
     onCleanup(() => document.removeEventListener("keydown", handler))
+  })
+
+  createEffect(() => {
+    props.onRegisterPickers?.(pickerControls)
+    onCleanup(() => props.onRegisterPickers?.(null))
   })
 
   // Click outside any task card clears selection
@@ -787,25 +803,6 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
     onCleanup(cleanup)
   })
 
-  // Batch operation handlers
-  const handleBatchDateChange = (date: string | null, isEvening?: boolean) => {
-    const ids = Array.from(selectedIds())
-    props.onBatchDateChange?.(ids, date, isEvening)
-    clearSelection()
-  }
-
-  const handleBatchMove = (parentId: string | null, moveToInbox?: boolean) => {
-    const ids = Array.from(selectedIds())
-    props.onBatchMove?.(ids, parentId, moveToInbox)
-    clearSelection()
-  }
-
-  const handleBatchTrash = () => {
-    const ids = Array.from(selectedIds())
-    props.onBatchTrash?.(ids)
-    clearSelection()
-  }
-
   // Calculate which headings can move
   const headingSections = createMemo(() => props.sections.filter((s) => s.headingId && !s.isBacklog))
 
@@ -881,19 +878,6 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
           }}
         </For>
       </div>
-
-      {/* Batch action bar - shown when multiple tasks are selected */}
-      <Show when={isMultiSelecting() && props.onBatchDateChange && props.onBatchMove && props.onBatchTrash}>
-        <BatchActionBar
-          count={selectedIds().size}
-          onDateChange={handleBatchDateChange}
-          onMove={handleBatchMove}
-          onTrash={handleBatchTrash}
-          onClear={clearSelection}
-          projects={props.projects ?? []}
-          areas={props.areas ?? []}
-        />
-      </Show>
     </>
   )
 }

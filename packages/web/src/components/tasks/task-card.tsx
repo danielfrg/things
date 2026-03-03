@@ -7,7 +7,7 @@ import { format, isToday, isYesterday } from "date-fns"
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
 import { getTaskData, isTaskData } from "@/components/dnd/task-data"
-import { RotateCcw as RestoreIcon } from "lucide-solid"
+import { FileText as FileTextIcon, RotateCcw as RestoreIcon } from "lucide-solid"
 import {
   EveningIcon,
   FlagIcon,
@@ -18,6 +18,7 @@ import {
   TrashIcon,
 } from "@/components/icons"
 import { CalendarPopover } from "@/components/ui/calendar-popover"
+import { Badge } from "@/components/ui/badge"
 import { DatePicker } from "@/components/ui/date-picker"
 import { EditableText } from "@/components/ui/editable-text"
 import { MovePicker, MovePickerContent } from "@/components/ui/move-picker"
@@ -31,10 +32,9 @@ import { Button } from "@/components/ui/button"
 import type { ChecklistItemInfo, TaskInfo, TaskTagInfo } from "@/context/data"
 import { useStickyFields } from "@/context/pending-changes"
 import { useSidebarData } from "@/context/sidebar"
-import { cn, formatTaskDate } from "@/lib/utils"
+import { cn, formatTaskDate, isDateOverdue } from "@/lib/utils"
 import { ChecklistEditor, type ChecklistItem } from "./checklist-editor"
 import { ItemDetailLayout } from "./item-detail-layout"
-import { TaskMetadata } from "./task-metadata"
 
 type TaskState =
   | { type: "idle" }
@@ -193,11 +193,25 @@ export function TaskCard(props: TaskCardProps) {
     }
   })
 
+  const [checklistFetched, setChecklistFetched] = createSignal(false)
+
   // Fetch checklist items when task expands
   createEffect(() => {
     if (props.expanded && props.onFetchChecklistItems) {
       props.onFetchChecklistItems(props.task.id)
     }
+  })
+
+  // Prefetch checklist items so collapsed metadata can show counts
+  createEffect(() => {
+    if (checklistFetched()) return
+    if (!props.onFetchChecklistItems) return
+    if (props.checklistItems) {
+      setChecklistFetched(true)
+      return
+    }
+    props.onFetchChecklistItems(props.task.id)
+    setChecklistFetched(true)
   })
 
   // Commit pending changes when card collapses (expanded -> collapsed)
@@ -401,7 +415,7 @@ export function TaskCard(props: TaskCardProps) {
   const headerContent = () => (
     <div
       class={cn(
-        "flex items-center gap-2 px-4 transition-all duration-300 ease-in-out group/row",
+        "flex items-center gap-2 px-4 transition-all duration-200 ease-in-out group/row",
         props.expanded ? "pt-4 pb-2" : "py-3 md:py-2 md:cursor-grab md:rounded-md",
         !props.expanded && props.selected && "bg-task-selected",
         !props.expanded && !props.selected && "hover:bg-secondary/50",
@@ -460,26 +474,76 @@ export function TaskCard(props: TaskCardProps) {
           !isCompleted()
         }
       >
-        <Show when={props.task.isEvening} fallback={<TodayStarIcon class="w-3.5 h-3.5 shrink-0" />}>
-          <EveningIcon class="w-3.5 h-3.5 shrink-0" />
+        <Show when={props.task.isEvening} fallback={<TodayStarIcon class="w-3.5 h-3.5 shrink-0 stroke-1" />}>
+          <EveningIcon class="w-3.5 h-3.5 shrink-0 stroke-1" />
         </Show>
+      </Show>
+
+      {/* Scheduled date badge - shown when collapsed and not Today */}
+      <Show when={!props.expanded && showScheduledDate()}>
+        <Badge
+          variant="secondary"
+          size="sm"
+          class={cn(
+            "font-bold bg-scheduled-badge-bg text-scheduled-badge-text",
+            scheduledOverdue() && "bg-transparent text-things-pink",
+          )}
+        >
+          {scheduledDateStr()}
+        </Badge>
       </Show>
 
       <Show
         when={props.expanded}
         fallback={
           <div class="flex-1 min-w-0">
-            <span
-              class={cn(
-                "text-lg md:text-[15px] leading-tight truncate block",
-                // Don't strikethrough in logbook/trash view
-                !props.showCompletedDate && !props.isTrashView && (isCompleted() || isCancelled())
-                  ? "line-through text-muted-foreground"
-                  : "text-foreground",
-              )}
-            >
-              {effectiveTask().title}
-            </span>
+            <div class="flex items-center gap-2 min-w-0">
+              <span
+                class={cn(
+                  "text-lg md:text-[15px] leading-tight truncate",
+                  // Don't strikethrough in logbook/trash view
+                  !props.showCompletedDate && !props.isTrashView && (isCompleted() || isCancelled())
+                    ? "line-through text-muted-foreground"
+                    : "text-foreground",
+                )}
+              >
+                {effectiveTask().title}
+              </span>
+              <Show when={hasNotes()}>
+                <FileTextIcon class="w-3.5 h-3.5 text-task-inline shrink-0 stroke-1" />
+              </Show>
+              <Show when={hasChecklist()}>
+                <span class="flex items-center gap-1 text-xs text-task-inline shrink-0">
+                  <ListChecksIcon class="w-3.5 h-3.5 stroke-1" />
+                  {checklistCompleted()}/{checklistTotal()}
+                </span>
+              </Show>
+              <Show when={tagCount() > 0}>
+                <span class="hidden md:flex items-center gap-1 shrink-0">
+                  <For each={effectiveTags().slice(0, 2)}>
+                    {(tag) => (
+                      <Badge variant="outline" size="xs" class="border-muted-foreground/40 text-task-inline">
+                        {tag.title}
+                      </Badge>
+                    )}
+                  </For>
+                  <Show when={tagCount() > 2}>
+                    <span class="text-xs text-task-inline">+{tagCount() - 2}</span>
+                  </Show>
+                </span>
+              </Show>
+              <Show when={deadlineStr()}>
+                <span
+                  class={cn(
+                    "flex items-center gap-1 text-xs text-muted-foreground shrink-0",
+                    deadlineOverdue() && "text-things-pink",
+                  )}
+                >
+                  <FlagIcon class="w-3.5 h-3.5 stroke-1" />
+                  {deadlineStr()}
+                </span>
+              </Show>
+            </div>
             {/* Project/Area subtitle - shown in logbook/trash view */}
             <Show when={(props.showCompletedDate || props.isTrashView) && getProjectOrAreaName()}>
               <span class="text-[12px] text-muted-foreground block truncate">{getProjectOrAreaName()}</span>
@@ -509,22 +573,6 @@ export function TaskCard(props: TaskCardProps) {
         />
       </Show>
 
-      {/* Metadata shown when collapsed (not in logbook/trash view) */}
-      <Show when={!props.expanded && !props.showCompletedDate && !props.isTrashView}>
-        <TaskMetadata
-          scheduledDate={props.task.scheduledDate}
-          deadline={props.task.deadline}
-          notes={props.task.notes}
-          hideScheduledDate={props.hideScheduledDate}
-          templateId={props.task.templateId}
-          tags={effectiveTags()}
-          showTodayStar={props.showTodayStar}
-          checklistItems={props.checklistItems?.map((i) => ({
-            completed: i.completed,
-          }))}
-        />
-      </Show>
-
       {/* Restore/Delete buttons - shown on hover in trash view when collapsed */}
       <Show when={!props.expanded && props.isTrashView}>
         <div class="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
@@ -537,7 +585,7 @@ export function TaskCard(props: TaskCardProps) {
               props.onRestore?.(props.task.id)
             }}
           >
-            <RestoreIcon class="w-3.5 h-3.5 mr-1" />
+            <RestoreIcon class="w-3.5 h-3.5 mr-1 stroke-1" />
             Restore
           </Button>
           <Button
@@ -558,6 +606,18 @@ export function TaskCard(props: TaskCardProps) {
 
   const hasSchedule = () => Boolean(effectiveTask().scheduledDate || effectiveTask().isSomeday)
   const hasDeadline = () => Boolean(effectiveTask().deadline)
+  const hasChecklist = () => (props.checklistItems?.length ?? 0) > 0
+  const checklistCompleted = () => props.checklistItems?.filter((item) => item.completed).length ?? 0
+  const checklistTotal = () => props.checklistItems?.length ?? 0
+  const scheduledDateStr = () => formatTaskDate(props.task.scheduledDate)
+  const deadlineStr = () => formatTaskDate(props.task.deadline)
+  const scheduledOverdue = () => isDateOverdue(props.task.scheduledDate)
+  const deadlineOverdue = () => isDateOverdue(props.task.deadline)
+  const showScheduledDate = () => {
+    const dateStr = scheduledDateStr()
+    return dateStr && !props.hideScheduledDate && !(props.showTodayStar && dateStr === "Today")
+  }
+  const tagCount = () => effectiveTags().length
 
   const onScheduleChange = (date: string | undefined, isEvening?: boolean) => {
     if (props.showCompletedDate && date) {

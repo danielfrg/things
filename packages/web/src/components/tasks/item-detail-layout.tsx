@@ -27,13 +27,13 @@ export function ItemDetailLayout(props: ItemDetailLayoutProps) {
     <Collapsible open={props.expanded}>
       <div
         ref={props.outerRef}
-        class={cn("mx-0 transition-all duration-300 ease-in-out", props.expanded && "my-3", props.outerClass)}
+        class={cn("mx-0 transition-all duration-200 ease-in-out", props.expanded && "my-3", props.outerClass)}
       >
         <div
           ref={props.cardRef}
           {...dataAttr()}
           class={cn(
-            "md:rounded-xl transition-all duration-300 ease-in-out",
+            "md:rounded-xl transition-all duration-200 ease-in-out",
             props.expanded
               ? "border-y md:border border-border dark:border-transparent shadow-sm bg-card-expanded"
               : "border border-transparent select-none",

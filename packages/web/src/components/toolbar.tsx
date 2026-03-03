@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { useApp } from "@/context/app"
 import { cn } from "@/lib/utils"
 
-const toolbarButtonClass = cn(
+export const toolbarButtonClass = cn(
   "flex items-center justify-center px-4 py-1 min-w-[100px] rounded-full [&_svg]:size-5 md:[&_svg]:size-4",
   "text-toolbar-icon border border-transparent hover:border-toolbar-border hover:bg-transparent hover:text-toolbar-icon transition-colors",
 )

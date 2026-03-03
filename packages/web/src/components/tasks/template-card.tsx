@@ -138,14 +138,27 @@ export function TemplateCard(props: TemplateCardProps) {
       <Show
         when={props.expanded}
         fallback={
-          <span
-            class={cn(
-              "flex-1 min-w-0 text-lg md:text-[15px] leading-tight truncate",
-              isPaused() ? "text-muted-foreground" : "text-foreground",
-            )}
-          >
-            {props.template.title}
-          </span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
+              <span
+                class={cn(
+                  "text-lg md:text-[15px] leading-tight truncate",
+                  isPaused() ? "text-muted-foreground" : "text-foreground",
+                )}
+              >
+                {props.template.title}
+              </span>
+              <Show when={props.template.notes?.trim()}>
+                <FileTextIcon class="w-3.5 h-3.5 text-task-inline shrink-0 stroke-1" />
+              </Show>
+              <Show when={(props.checklistItems?.length ?? 0) > 0}>
+                <span class="flex items-center gap-1 text-xs text-task-inline shrink-0">
+                  <ListChecksIcon class="w-3.5 h-3.5 stroke-1" />
+                  {props.checklistItems?.filter((i) => i.completed).length ?? 0}/{props.checklistItems?.length ?? 0}
+                </span>
+              </Show>
+            </div>
+          </div>
         }
       >
         <EditableText
@@ -172,23 +185,6 @@ export function TemplateCard(props: TemplateCardProps) {
       <Show when={!props.expanded && props.showNextDate}>
         <span class="text-xs font-bold bg-scheduled-badge-bg text-scheduled-badge-text px-1.5 py-0.5 rounded">
           {format(parseLocalDate(props.template.nextOccurrence), "MMM d")}
-        </span>
-      </Show>
-
-      {/* Metadata shown when collapsed */}
-      <Show when={!props.expanded}>
-        <span class="flex items-center gap-2 ml-auto shrink-0 overflow-hidden">
-          {/* Notes icon */}
-          <Show when={props.template.notes?.trim()}>
-            <FileTextIcon class="w-3.5 h-3.5 text-task-inline shrink-0" />
-          </Show>
-          {/* Checklist count */}
-          <Show when={(props.checklistItems?.length ?? 0) > 0}>
-            <span class="flex items-center gap-1 text-xs text-task-inline shrink-0">
-              <ListChecksIcon class="w-3.5 h-3.5" />
-              {props.checklistItems?.filter((i) => i.completed).length ?? 0}/{props.checklistItems?.length ?? 0}
-            </span>
-          </Show>
         </span>
       </Show>
     </div>

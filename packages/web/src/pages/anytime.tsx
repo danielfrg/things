@@ -1,25 +1,70 @@
 import { useSearchParams } from "@solidjs/router"
-import { Show } from "solid-js"
+import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { LayersIcon } from "@/components/icons"
 import { ViewContainer } from "@/components/layout/view-container"
-import { GroupedTaskList, type TaskMoveInfo } from "@/components/tasks"
-import { MoveTaskButton, NewTaskButton, SearchButton, SetDateButton, ViewToolbar } from "@/components/toolbar"
+import { TaskToolbarPickers } from "@/components/task-toolbar-pickers"
+import { GroupedTaskList, type TaskMoveInfo, type TaskPickerControls } from "@/components/tasks"
+import { NewTaskButton, SearchButton, ViewToolbar } from "@/components/toolbar"
 import { useApp } from "@/context/app"
 import { useSidebarData } from "@/context/sidebar"
 import { useAnytimeView } from "@/context/view-adapters"
-import { useBatchOperations } from "@/lib/hooks/useBatchOperations"
 
 export function Anytime() {
   const app = useApp()
   const data = useAnytimeView()
   const sidebar = useSidebarData()
-  const batchOps = useBatchOperations()
   const [searchParams] = useSearchParams()
+  const [pickers, setPickers] = createSignal<TaskPickerControls | null>(null)
+  const [scheduleOpen, setScheduleOpen] = createSignal(false)
+  const [moveOpen, setMoveOpen] = createSignal(false)
 
   const initialTaskId = () => {
     const taskParam = searchParams.task
     return typeof taskParam === "string" ? taskParam : null
   }
+
+  const canSchedule = () => pickers()?.canOpenSchedule() ?? false
+  const canMove = () => pickers()?.canOpenMove() ?? false
+  const selectedIds = () => pickers()?.selectedIds() ?? []
+
+  const handleBatchDateChange = (ids: string[], date: string | null, isEvening?: boolean) => {
+    void Promise.all(ids.map((id) => data.updateTask(id, { scheduledDate: date, isEvening: isEvening ?? false })))
+  }
+
+  const handleBatchMove = (ids: string[], listId: string | null, moveToInbox?: boolean) => {
+    if (moveToInbox) {
+      void Promise.all(
+        ids.map((id) =>
+          data.updateTask(id, {
+            status: null,
+            listId: null,
+            headingId: null,
+            scheduledDate: null,
+            isEvening: false,
+            isSomeday: false,
+          }),
+        ),
+      )
+      return
+    }
+
+    void Promise.all(ids.map((id) => data.updateTask(id, { status: "active", listId, headingId: null })))
+  }
+
+  const selectedTask = createMemo(() => {
+    const id = pickers()?.selectedTaskId()
+    if (!id) return undefined
+    return data.sections.flatMap((section) => section.tasks).find((task) => task.id === id)
+  })
+
+  createEffect(() => {
+    if (!canSchedule()) {
+      setScheduleOpen(false)
+    }
+    if (!canMove()) {
+      setMoveOpen(false)
+    }
+  })
 
   const handleComplete = (id: string, completed: boolean) => {
     data.completeTask(id, completed)
@@ -70,8 +115,21 @@ export function Anytime() {
       toolbar={
         <ViewToolbar>
           <NewTaskButton onClick={app.openTaskInput} />
-          <SetDateButton />
-          <MoveTaskButton />
+          <TaskToolbarPickers
+            task={selectedTask()}
+            selectedIds={selectedIds()}
+            canSchedule={canSchedule()}
+            canMove={canMove()}
+            scheduleOpen={scheduleOpen()}
+            moveOpen={moveOpen()}
+            onScheduleOpenChange={setScheduleOpen}
+            onMoveOpenChange={setMoveOpen}
+            onUpdate={data.updateTask}
+            onBatchDateChange={handleBatchDateChange}
+            onBatchMove={handleBatchMove}
+            projects={sidebar.activeProjects}
+            areas={sidebar.sortedAreas}
+          />
           <SearchButton onClick={app.openCommandPalette} />
         </ViewToolbar>
       }
@@ -109,6 +167,7 @@ export function Anytime() {
             onReorder={handleReorder}
             showTodayStar
             autoCommitSticky
+            onRegisterPickers={setPickers}
             taskTags={data.taskTags}
             onTagAdd={data.addTagToTask}
             onTagRemove={data.removeTagFromTask}
@@ -120,9 +179,6 @@ export function Anytime() {
             onUpdateChecklistItem={data.updateChecklistItem}
             onDeleteChecklistItem={data.deleteChecklistItem}
             onReorderChecklistItems={data.reorderChecklistItems}
-            onBatchDateChange={batchOps.batchSetDate}
-            onBatchMove={batchOps.batchMove}
-            onBatchTrash={batchOps.batchTrash}
             projects={sidebar.activeProjects}
             areas={sidebar.sortedAreas}
             initialExpandedTaskId={initialTaskId()}
