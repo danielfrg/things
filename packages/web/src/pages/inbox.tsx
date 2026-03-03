@@ -65,7 +65,6 @@ export function Inbox() {
           <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <InboxIcon class="w-12 h-12 mb-4 opacity-30" />
             <p class="text-sm">Your inbox is empty</p>
-            <p class="text-xs mt-1">Add a task below to get started</p>
           </div>
         </Show>
       </Show>

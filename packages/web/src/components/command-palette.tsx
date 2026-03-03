@@ -269,16 +269,16 @@ export function CommandPalette(props: CommandPaletteProps) {
       <DialogContent
         position="top"
         showCloseButton={false}
-        class="p-0 gap-0 sm:max-w-[560px] bg-popover-dark border-popover-dark-border overflow-hidden"
+        class="p-0 gap-0 sm:max-w-[560px] bg-popover border-border dark:bg-popover-dark dark:border-popover-dark-border overflow-hidden"
       >
         {/* Search input */}
         <div class="p-2 pb-0">
           <div class="flex items-center gap-2 bg-input/30 border border-input/30 rounded-lg px-3 h-10">
-            <SearchIcon class="size-4 shrink-0 opacity-50 text-popover-dark-muted" />
+            <SearchIcon class="size-4 shrink-0 opacity-50 text-muted-foreground dark:text-popover-dark-muted" />
             <input
               type="text"
               placeholder="Search tasks, projects, areas..."
-              class="flex-1 bg-transparent text-sm text-popover-dark-foreground placeholder:text-popover-dark-muted outline-none"
+              class="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground dark:text-popover-dark-foreground dark:placeholder:text-popover-dark-muted outline-none"
               value={search()}
               onInput={(e) => handleSearchChange(e.currentTarget.value)}
               onKeyDown={handleKeyDown}
@@ -291,15 +291,21 @@ export function CommandPalette(props: CommandPaletteProps) {
         <div class="max-h-[400px] overflow-y-auto p-2">
           <Show
             when={flatItems().length > 0}
-            fallback={<div class="py-8 text-center text-sm text-popover-dark-muted">No results found.</div>}
+            fallback={
+              <div class="py-8 text-center text-sm text-muted-foreground dark:text-popover-dark-muted">
+                No results found.
+              </div>
+            }
           >
             <For each={groupedItems()}>
               {(group, groupIndex) => (
                 <>
                   <Show when={groupIndex() > 0}>
-                    <div class="h-px bg-popover-dark-border my-2" />
+                    <div class="h-px bg-border dark:bg-popover-dark-border my-2" />
                   </Show>
-                  <div class="px-2 py-1.5 text-xs font-medium text-popover-dark-muted">{group.label}</div>
+                  <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground dark:text-popover-dark-muted">
+                    {group.label}
+                  </div>
                   <For each={group.items}>
                     {(item) => {
                       const index = () => flatItems().indexOf(item)
@@ -309,8 +315,10 @@ export function CommandPalette(props: CommandPaletteProps) {
                           type="button"
                           class={cn(
                             itemClass,
-                            "w-full text-left text-popover-dark-foreground",
-                            isSelected() ? "bg-popover-dark-accent" : "hover:bg-popover-dark-accent/50",
+                            "w-full text-left text-foreground dark:text-popover-dark-foreground",
+                            isSelected()
+                              ? "bg-accent dark:bg-popover-dark-accent"
+                              : "hover:bg-accent/50 dark:hover:bg-popover-dark-accent/50",
                           )}
                           onClick={() => goToItem(item)}
                           onMouseEnter={() => setSelectedIndex(index())}
@@ -319,10 +327,14 @@ export function CommandPalette(props: CommandPaletteProps) {
                           <div class="flex-1 min-w-0">
                             <div class="truncate">{item.title}</div>
                             <Show when={item.subtitle}>
-                              <div class="text-xs text-popover-dark-muted truncate">{item.subtitle}</div>
+                              <div class="text-xs text-muted-foreground dark:text-popover-dark-muted truncate">
+                                {item.subtitle}
+                              </div>
                             </Show>
                           </div>
-                          <span class="text-xs text-popover-dark-muted capitalize">{item.type}</span>
+                          <span class="text-xs text-muted-foreground dark:text-popover-dark-muted capitalize">
+                            {item.type}
+                          </span>
                         </button>
                       )
                     }}
@@ -334,17 +346,23 @@ export function CommandPalette(props: CommandPaletteProps) {
         </div>
 
         {/* Footer with keyboard hints */}
-        <div class="px-4 py-2 border-t border-popover-dark-border flex items-center gap-4 text-popover-dark-muted text-xs">
+        <div class="px-4 py-2 border-t border-border dark:border-popover-dark-border flex items-center gap-4 text-muted-foreground dark:text-popover-dark-muted text-xs">
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 rounded bg-popover-dark-accent-hover text-popover-dark-foreground/70">↑↓</kbd>
+            <kbd class="px-1.5 py-0.5 rounded bg-muted dark:bg-popover-dark-accent-hover text-foreground/70 dark:text-popover-dark-foreground/70">
+              ↑↓
+            </kbd>
             <span>Navigate</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 rounded bg-popover-dark-accent-hover text-popover-dark-foreground/70">↵</kbd>
+            <kbd class="px-1.5 py-0.5 rounded bg-muted dark:bg-popover-dark-accent-hover text-foreground/70 dark:text-popover-dark-foreground/70">
+              ↵
+            </kbd>
             <span>Open</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 rounded bg-popover-dark-accent-hover text-popover-dark-foreground/70">esc</kbd>
+            <kbd class="px-1.5 py-0.5 rounded bg-muted dark:bg-popover-dark-accent-hover text-foreground/70 dark:text-popover-dark-foreground/70">
+              esc
+            </kbd>
             <span>Close</span>
           </span>
         </div>
