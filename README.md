@@ -31,6 +31,7 @@ docker run -p 3000:3000 -v things-data:/data -e BASE_URL=https://mythings.local 
 ### Keyboard Shortcuts
 
 The app supports several keyboard shortcuts for efficient task management:
+
 - **Ctrl+N** - Create new task
 - **Ctrl+S** - Open date picker for selected task
 - **Ctrl+D** - Open move picker for selected task
@@ -46,6 +47,7 @@ See the Help page in the app for a complete list.
 The CLI allows you to interact with the Things REST API from the command line.
 
 Install the CLI binary:
+
 - This installs to `~/.things/bin/things`. Be sure to add to your `PATH`.
 
 ```bash
@@ -55,7 +57,7 @@ curl -fsSL https://raw.githubusercontent.com/danielfrg/things/main/install | bas
 Generate an API from the settings page and export these environment variables:
 
 ```bash
-export THINGS_API_BASE_URL=http://things.local/api  # Default: http://localhost:3000
+export THINGS_BASE_URL=http://things.local/api  # Default: http://localhost:3000
 export THINGS_API_KEY=sk_...
 ```
 
