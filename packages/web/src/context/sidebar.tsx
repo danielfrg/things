@@ -42,7 +42,7 @@ export type ListType = "area" | "project" | null
 
 export function getListType(listId: string | null): ListType {
   if (!listId) return null
-  if (listId.startsWith("are_")) return "area"
+  if (listId.startsWith("area_")) return "area"
   if (listId.startsWith("prj_")) return "project"
   return null
 }
@@ -59,7 +59,7 @@ export function isProjectId(id: string | null): boolean {
 
 // Helper to check if an ID is an area
 export function isAreaId(id: string | null): boolean {
-  return !!id && id.startsWith("are_")
+  return !!id && id.startsWith("area_")
 }
 
 type SidebarStore = {

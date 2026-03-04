@@ -15,7 +15,7 @@ const prefixes = {
   session: "ses",
   account: "acc",
   verification: "vrf",
-  area: "are",
+  area: "area",
   project: "prj",
   heading: "hdg",
   task: "tsk",
@@ -67,7 +67,7 @@ export function idSchema(entity: EntityType) {
 // =============================================================================
 // The new "List" abstraction: both Projects and Areas are "Lists" that hold tasks.
 // - Projects (prj_) are lists that can be completed
-// - Areas (are_) are lists that never end
+// - Areas (area_) are lists that never end
 // - listId points to the containing List
 // - headingId points to a grouping Heading within the List (optional)
 
@@ -76,14 +76,14 @@ export type ListType = "none" | "area" | "project"
 /**
  * Derive the list type from a listId
  * @example getListType("prj_01ARZ...") => "project"
- * @example getListType("are_01ARZ...") => "area"
+ * @example getListType("area_01ARZ...") => "area"
  * @example getListType(null) => "none" (Inbox)
  */
 export function getListType(listId: string | null | undefined): ListType {
   if (!listId) return "none"
   if (listId.startsWith(`${prefixes.area}_`)) return "area"
   if (listId.startsWith(`${prefixes.project}_`)) return "project"
-  throw new Error(`Invalid list ID prefix: ${listId}. Must be area (are_) or project (prj_)`)
+  throw new Error(`Invalid list ID prefix: ${listId}. Must be area (area_) or project (prj_)`)
 }
 
 /**
@@ -127,7 +127,7 @@ export function isValidHeadingId(headingId: string): boolean {
 export const listIdSchema = z
   .string()
   .refine(isValidListId, {
-    message: "listId must be a valid area (are_) or project (prj_) ID",
+    message: "listId must be a valid area (area_) or project (prj_) ID",
   })
   .nullable()
   .optional()

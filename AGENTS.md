@@ -18,7 +18,7 @@ For Coding Style see [STYLE_GUIDE.md](STYLE_GUIDE.md).
 ## TypeScript
 
 - Strictness: No `any`. Use specific types or Generics.
-- IDs: Use the prefixed ID system (e.g., `tsk_`, `prj_`, `are_`). Logic for this is in `packages/server/src/lib/id.ts`.
+- IDs: Use the prefixed ID system (e.g., `tsk_`, `prj_`, `area_`). Logic for this is in `packages/server/src/lib/id.ts`.
 - Imports: Import directly from source or using the `@/` alias (e.g., `@/components/ui/button`).
 
 ## Solid.js Best Practices

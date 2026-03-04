@@ -16,11 +16,11 @@ export const SuccessSchema = z
 
 export const TaskStatusSchema = z.enum(["active", "completed", "cancelled", "trashed"]).nullable()
 
-// ListId schema: must be a valid area (are_) or project (prj_) ID, or null
+// ListId schema: must be a valid area (area_) or project (prj_) ID, or null
 export const ListIdSchema = z
   .string()
   .refine((val) => isValidListId(val), {
-    message: "listId must be a valid area (are_) or project (prj_) ID",
+    message: "listId must be a valid area (area_) or project (prj_) ID",
   })
   .nullable()
   .optional()

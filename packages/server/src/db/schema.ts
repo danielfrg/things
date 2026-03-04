@@ -229,7 +229,7 @@ export const headingsRelations = relations(headings, ({ one, many }) => ({
 //
 // List Types (by ID prefix):
 // - prj_xxx = Project (a list that can be completed)
-// - are_xxx = Area (a list that never ends)
+// - area_xxx = Area (a list that never ends)
 // - null = Inbox (unprocessed task)
 //
 // Templates (repeating rules) are stored as tasks with isTemplate=true.
@@ -258,7 +258,7 @@ export const tasks = sqliteTable("tasks", {
   // List Hierarchy: Which List does this task belong to?
   // - null = Inbox (unprocessed task)
   // - prj_xxx = belongs to a Project
-  // - are_xxx = belongs to an Area
+  // - area_xxx = belongs to an Area
   listId: text("list_id"),
 
   // Heading: Is this task grouped under a Heading within the List?
@@ -297,7 +297,7 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   }),
   // List relation: task belongs to a Project or Area via listId
   // Note: This is a polymorphic relation - listId can reference either table
-  // The ID prefix (prj_ or are_) determines which table to use at runtime
+  // The ID prefix (prj_ or area_) determines which table to use at runtime
   project: one(projects, {
     fields: [tasks.listId],
     references: [projects.id],
@@ -447,7 +447,7 @@ export const taskOrderings = sqliteTable(
     // - trash: trashed tasks (system view)
     // - project: tasks directly in a project (contextId = prj_xxx)
     // - heading: tasks in a heading (contextId = hdg_xxx)
-    // - area: tasks in an area without project (contextId = are_xxx)
+    // - area: tasks in an area without project (contextId = area_xxx)
     contextType: text("context_type", {
       enum: ["inbox", "today", "upcoming", "anytime", "someday", "logbook", "trash", "project", "heading", "area"],
     }).notNull(),

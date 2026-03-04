@@ -68,7 +68,7 @@ function belongsInToday(task: Task): boolean {
  *
  * Structural context is determined by listId and headingId:
  * - listId = null → no structural context (inbox only if status is null)
- * - listId = are_xxx → area context
+ * - listId = area_xxx → area context
  * - listId = prj_xxx → project context
  * - headingId = hdg_xxx → heading context (in addition to project)
  */
