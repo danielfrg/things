@@ -11,10 +11,6 @@ import { z } from "zod"
 // - Debug and trace entities in logs
 
 const prefixes = {
-  user: "usr",
-  session: "ses",
-  account: "acc",
-  verification: "vrf",
   area: "area",
   project: "prj",
   heading: "hdg",
@@ -148,10 +144,6 @@ export const headingIdSchema = z
 // =============================================================================
 // These are used as $defaultFn in drizzle schema definitions
 
-export const createUserId = () => createId("user")
-export const createSessionId = () => createId("session")
-export const createAccountId = () => createId("account")
-export const createVerificationId = () => createId("verification")
 export const createAreaId = () => createId("area")
 export const createProjectId = () => createId("project")
 export const createHeadingId = () => createId("heading")

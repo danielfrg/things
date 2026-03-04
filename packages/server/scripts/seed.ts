@@ -61,7 +61,7 @@ async function seed() {
       await db.update(accounts).set({ password: hashedPassword }).where(eq(accounts.userId, userId))
     } else {
       await db.insert(accounts).values({
-        id: createId("account"),
+        id: crypto.randomUUID(),
         userId,
         accountId: userId,
         providerId: "credential",
@@ -73,7 +73,7 @@ async function seed() {
   } else {
     // Create a seed user
     console.log("Creating seed user...")
-    userId = createId("user")
+    userId = crypto.randomUUID()
     await db.insert(users).values({
       id: userId,
       name: "Seed User",
@@ -84,7 +84,7 @@ async function seed() {
     // Create credential account with hashed password
     const hashedPassword = await hashPassword(SEED_PASSWORD)
     await db.insert(accounts).values({
-      id: createId("account"),
+      id: crypto.randomUUID(),
       userId,
       accountId: userId,
       providerId: "credential",

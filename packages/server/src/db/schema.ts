@@ -1,10 +1,6 @@
 import { relations, sql } from "drizzle-orm"
 import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 import {
-  createUserId,
-  createSessionId,
-  createAccountId,
-  createVerificationId,
   createAreaId,
   createProjectId,
   createHeadingId,
@@ -21,7 +17,7 @@ import {
 // =============================================================================
 
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey().$defaultFn(createUserId),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
@@ -45,7 +41,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 }))
 
 export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey().$defaultFn(createSessionId),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -69,7 +65,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }))
 
 export const accounts = sqliteTable("accounts", {
-  id: text("id").primaryKey().$defaultFn(createAccountId),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -102,7 +98,7 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 }))
 
 export const verifications = sqliteTable("verifications", {
-  id: text("id").primaryKey().$defaultFn(createVerificationId),
+  id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
