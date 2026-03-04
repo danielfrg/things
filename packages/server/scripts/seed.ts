@@ -186,76 +186,6 @@ async function seed() {
   ])
   console.log("Projects created")
 
-  // Create backlog headings for each project
-  console.log("\nCreating backlog headings...")
-  await db.insert(headings).values([
-    {
-      id: createId("heading"),
-      userId,
-      projectId: webAppProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: mobileAppProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: fitnessProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: homeProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: shoppingProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: programmingCourseId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: freelanceProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-    {
-      id: createId("heading"),
-      userId,
-      projectId: bookWritingProjectId,
-      title: "Backlog",
-      position: 9999,
-      isBacklog: true,
-    },
-  ])
-  console.log("Backlog headings created")
-
   // Create regular headings for some projects
   console.log("\nCreating regular headings...")
   const webDesignHeadingId = createId("heading")
@@ -517,6 +447,7 @@ async function seed() {
     title: string
     status?: "active" | "completed" | "cancelled" | "trashed" | null
     isSomeday?: boolean
+    isEvening?: boolean
     scheduledDate?: string
     projectId?: string
     areaId?: string
@@ -542,6 +473,7 @@ async function seed() {
         title: data.title,
         status: data.status === undefined ? null : data.status,
         isSomeday: data.isSomeday ?? false,
+        isEvening: data.isEvening ?? false,
         scheduledDate: data.scheduledDate ?? null,
         completedAt: completed,
         listId,
@@ -703,6 +635,34 @@ async function seed() {
     title: "Water the plants",
     status: "active",
     scheduledDate: todayStr,
+  })
+
+  // EVENING tasks (scheduled for today, isEvening: true)
+  await createTask({
+    title: "Read before bed",
+    status: "active",
+    scheduledDate: todayStr,
+    isEvening: true,
+  })
+  await createTask({
+    title: "Review pull requests",
+    status: "active",
+    scheduledDate: todayStr,
+    isEvening: true,
+    projectId: webAppProjectId,
+  })
+  await createTask({
+    title: "Plan tomorrow's meals",
+    status: "active",
+    scheduledDate: todayStr,
+    isEvening: true,
+    projectId: homeProjectId,
+  })
+  await createTask({
+    title: "Stretch and wind down",
+    status: "active",
+    scheduledDate: todayStr,
+    isEvening: true,
   })
 
   // TOMORROW tasks
