@@ -12,6 +12,7 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
 } from "lucide-solid"
 import { AreaIcon, RepeatIcon, SomedayIcon, TrashIcon } from "@/components/icons"
+import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import {
   DropdownMenu,
@@ -152,20 +153,12 @@ function CompletedHeader(props: { section: Section }) {
 // Logged section header (collapsible, for project view)
 function LoggedSectionHeader(props: { section: Section; open: boolean; onToggle: () => void }) {
   return (
-    <div class="mb-2 px-4">
-      <button
-        type="button"
-        class="flex w-full items-center gap-2 pb-2 border-b border-section-border"
-        onClick={props.onToggle}
-      >
-        <h2 class="text-lg md:text-base font-bold" style={{ color: "#999ca1" }}>
-          {props.section.title}
-        </h2>
-        <ChevronRightIcon
-          class={cn("w-4 h-4 transition-transform ml-auto", props.open && "rotate-90")}
-          style={{ color: "#999ca1" }}
-        />
-      </button>
+    <div class="mb-2 px-4 md:px-2">
+      <Button variant="ghost" size="sm" class="text-muted-foreground" onClick={props.onToggle}>
+        <Show when={props.open} fallback="Show logged items">
+          Hide logged items
+        </Show>
+      </Button>
     </div>
   )
 }
