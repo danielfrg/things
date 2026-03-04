@@ -220,6 +220,13 @@ export function TaskCard(props: TaskCardProps) {
   createEffect(() => {
     const isExpanded = props.expanded
     if (wasExpanded && !isExpanded) {
+      // Flush unsaved notes before the editor unmounts — the blur event
+      // won't fire when the panel is closed via click-outside (mousedown)
+      // or Escape because the editor is removed from the DOM first.
+      const trimmed = localNotes().trim()
+      if (trimmed !== (props.task.notes ?? "")) {
+        props.onUpdate(props.task.id, { notes: trimmed || null })
+      }
       // Card just collapsed - delay commit so the collapse animation
       // isn't interrupted by store updates replacing the task object
       setTimeout(() => stickyChanges.commit(), 300)
