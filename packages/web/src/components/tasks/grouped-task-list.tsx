@@ -383,6 +383,7 @@ function SectionTasks(props: {
   isSomeday?: boolean
   hideScheduledDate?: boolean
   showTodayStar?: boolean
+  showProjectName?: boolean
   isProjectView?: boolean
   onHeadingEdit?: (headingId: string, title: string) => void
   onHeadingDelete?: (headingId: string) => void
@@ -494,6 +495,7 @@ function SectionTasks(props: {
             isSomeday={isSomedaySection()}
             hideScheduledDate={props.hideScheduledDate}
             showTodayStar={props.showTodayStar}
+            showProjectName={props.showProjectName}
             autoCommitSticky={props.autoCommitSticky}
             taskTags={props.enhancement.taskTags}
             onTagAdd={props.enhancement.onTagAdd}
@@ -856,6 +858,7 @@ export function GroupedTaskList(props: GroupedTaskListProps) {
                 onExpand={handleExpand}
                 onTemplateExpand={handleTemplateExpand}
                 showTodayStar={props.showTodayStar}
+                showProjectName={section.isEvening}
                 enhancement={{
                   taskTags: props.taskTags,
                   onTagAdd: props.onTagAdd,

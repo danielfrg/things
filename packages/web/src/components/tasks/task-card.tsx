@@ -93,6 +93,7 @@ export type TaskCardProps = {
   hideScheduledDate?: boolean
   showTodayStar?: boolean
   showCompletedDate?: boolean
+  showProjectName?: boolean
   // Trash view specific props
   isTrashView?: boolean
   onRestore?: (id: string) => void
@@ -551,8 +552,10 @@ export function TaskCard(props: TaskCardProps) {
                 </span>
               </Show>
             </div>
-            {/* Project/Area subtitle - shown in logbook/trash view */}
-            <Show when={(props.showCompletedDate || props.isTrashView) && getProjectOrAreaName()}>
+            {/* Project/Area subtitle - shown in logbook/trash view or when showProjectName is set */}
+            <Show
+              when={(props.showCompletedDate || props.isTrashView || props.showProjectName) && getProjectOrAreaName()}
+            >
               <span class="text-[12px] text-muted-foreground block truncate">{getProjectOrAreaName()}</span>
             </Show>
           </div>

@@ -13,6 +13,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      jsx: "automatic",
+    },
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
