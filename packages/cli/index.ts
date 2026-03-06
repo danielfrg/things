@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { createClient } from "@things/sdk"
 import type { ThingsClient } from "@things/sdk"
-import type { ViewTask, Task, Project } from "@things/sdk"
+import type { ViewTask, Task, Project, Area } from "@things/sdk"
 import { login, logout, whoami } from "./src/auth"
 import { getCredentials, getCredentialsPath } from "./src/config"
 
@@ -107,25 +107,64 @@ function printSections(sections: Array<{ title: string; tasks: TaskLike[] }>, op
   }
 }
 
-function printProjects(projects: Project[], json: boolean) {
+function printHierarchy(areas: Area[], projects: Project[], json: boolean) {
+  const area = [...areas].sort((a, b) => a.position - b.position || a.title.localeCompare(b.title))
+  const project = [...projects].sort((a, b) => a.position - b.position || a.title.localeCompare(b.title))
+
+  const tree = area.map((item) => ({
+    ...item,
+    projects: project.filter((row) => row.areaId === item.id),
+  }))
+  const loose = project.filter((item) => !item.areaId)
+
   if (json) {
-    console.log(JSON.stringify(projects, null, 2))
+    console.log(
+      JSON.stringify(
+        {
+          areas: tree.map((item) => ({
+            id: item.id,
+            title: item.title,
+            projects: item.projects,
+          })),
+          unassigned: loose,
+        },
+        null,
+        2,
+      ),
+    )
     return
   }
-  if (projects.length === 0) {
+
+  if (project.length === 0) {
     console.log("No projects.")
     return
   }
 
-  const maxTitle = Math.max(...projects.map((p) => p.title.length), 5)
-  const width = Math.min(maxTitle, 40)
-
-  console.log(`${pad("Title", width)}  Status`)
-  console.log("-".repeat(width + 10))
-  for (const project of projects) {
-    console.log(`${pad(project.title.slice(0, width), width)}  ${project.status}`)
+  for (const item of tree) {
+    console.log(item.title)
+    if (item.projects.length === 0) {
+      console.log("  (no projects)")
+      console.log("")
+      continue
+    }
+    for (const row of item.projects) {
+      const tag = row.status === "active" ? "" : ` [${row.status}]`
+      console.log(`  > ${row.title}${tag}`)
+    }
+    console.log("")
   }
-  console.log(`\n${projects.length} ${projects.length === 1 ? "project" : "projects"}.`)
+
+  if (loose.length === 0) {
+    console.log(`${project.length} ${project.length === 1 ? "project" : "projects"}.`)
+    return
+  }
+
+  console.log("No Area")
+  for (const item of loose) {
+    const tag = item.status === "active" ? "" : ` [${item.status}]`
+    console.log(`  > ${item.title}${tag}`)
+  }
+  console.log(`\n${project.length} ${project.length === 1 ? "project" : "projects"}.`)
 }
 
 // ── Token parsing for `add` ──────────────────────────────────────────────────
@@ -397,6 +436,24 @@ async function main() {
     process.exit(1)
   }
 
+  // ── tree ─────────────────────────────────────────────────────────────────
+
+  if (command === "tree") {
+    const c = requireAuth()
+    const { data: areas, error: areaError } = await c.getApiV1Areas()
+    if (areaError) {
+      console.error("Error:", areaError)
+      process.exit(1)
+    }
+    const { data: projects, error: projectError } = await c.getApiV1Projects()
+    if (projectError) {
+      console.error("Error:", projectError)
+      process.exit(1)
+    }
+    printHierarchy(areas || [], projects || [], json)
+    return
+  }
+
   // ── View commands ────────────────────────────────────────────────────────
 
   if (command === "inbox") {
@@ -490,19 +547,6 @@ async function main() {
     return
   }
 
-  // ── projects ─────────────────────────────────────────────────────────────
-
-  if (command === "projects") {
-    const c = requireAuth()
-    const { data, error } = await c.getApiV1Projects()
-    if (error) {
-      console.error("Error:", error)
-      process.exit(1)
-    }
-    printProjects(data || [], json)
-    return
-  }
-
   // ── skill ────────────────────────────────────────────────────────────────
 
   if (command === "skill") {
@@ -533,6 +577,7 @@ Commands:
   done <id>             Complete a task
   delete <id>           Delete a task
   list <name>           List tasks in a project or area
+  tree                  Show areas and nested projects
 
   today                 Show today's tasks
   inbox                 Show inbox tasks
@@ -541,7 +586,6 @@ Commands:
   someday               Show someday tasks
   logbook               Show completed tasks
   trash                 Show trashed tasks
-  projects              List projects
 
   login [url]           Authenticate with Things
   logout                Sign out
@@ -565,7 +609,8 @@ Examples:
   things today
   things done tsk_abc123
   things list Work
-  things list Work --json`)
+  things tree
+  things tree --json`)
 }
 
 main()
