@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull } from "drizzle-orm"
+import { and, eq, inArray, isNotNull, isNull, or } from "drizzle-orm"
 import type { Context } from "hono"
 import { Hono } from "hono"
 import { describeRoute, resolver, validator } from "hono-openapi"
@@ -12,6 +12,7 @@ import {
   CompleteTaskSchema,
   CreateTaskSchema,
   ErrorSchema,
+  ListTasksQuerySchema,
   MoveTaskSchema,
   ReorderTasksSchema,
   SuccessSchema,
@@ -91,12 +92,38 @@ export function TaskRoutes() {
           },
         },
       }),
+      validator("query", ListTasksQuerySchema, validationHook),
       async (c) => {
         const userId = c.get("userId")
+        const query = c.req.valid("query")
+        const filters = [eq(tasks.userId, userId)]
+
+        if (query.active) {
+          filters.push(isNull(tasks.trashedAt))
+          const active = or(eq(tasks.status, "active"), isNull(tasks.status))
+          if (active) {
+            filters.push(active)
+          }
+        } else {
+          filters.push(isNull(tasks.trashedAt))
+        }
+
+        if (query.tagId) {
+          const result = await db
+            .select({ taskId: taskTags.taskId })
+            .from(taskTags)
+            .where(and(eq(taskTags.userId, userId), eq(taskTags.tagId, query.tagId), isNull(taskTags.trashedAt)))
+          const ids = [...new Set(result.map((item) => item.taskId))]
+          if (ids.length === 0) {
+            return c.json([], 200)
+          }
+          filters.push(inArray(tasks.id, ids))
+        }
+
         const result = await db
           .select()
           .from(tasks)
-          .where(and(eq(tasks.userId, userId), isNull(tasks.trashedAt)))
+          .where(and(...filters))
         const formatted = await Promise.all(result.map(formatTaskResponse))
         return c.json(formatted, 200)
       },

@@ -61,6 +61,11 @@ export const TaskSchema = z
   })
   .meta({ ref: "Task" })
 
+export const ListTasksQuerySchema = z.object({
+  active: z.coerce.boolean().optional().describe("When true, return only non-trashed tasks with active/null status"),
+  tagId: z.string().optional().describe("Filter tasks by tag ID"),
+})
+
 export const CreateTaskSchema = z
   .object({
     title: z.string().min(1),

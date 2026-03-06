@@ -338,10 +338,28 @@ export class ThingsClient extends HeyApiClient {
   /**
    * List all tasks
    */
-  public getApiV1Tasks<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
+  public getApiV1Tasks<ThrowOnError extends boolean = false>(
+    parameters?: {
+      active?: boolean
+      tagId?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "active" },
+            { in: "query", key: "tagId" },
+          ],
+        },
+      ],
+    )
     return (options?.client ?? this.client).get<GetApiV1TasksResponses, unknown, ThrowOnError>({
       url: "/api/v1/tasks",
       ...options,
+      ...params,
     })
   }
 
@@ -589,9 +607,9 @@ export class ThingsClient extends HeyApiClient {
   }
 
   /**
-   * Log all tasks completed today
+   * Log all completed/cancelled tasks
    *
-   * Marks all tasks completed/cancelled today as logged. Logged tasks only appear in the logbook, not in 'completed today' sections.
+   * Marks all unlogged completed/cancelled tasks as logged. Logged tasks only appear in the logbook, not in 'completed today' sections.
    */
   public postApiV1TasksLogCompleted<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
     return (options?.client ?? this.client).post<

@@ -3311,7 +3311,25 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "When true, return only non-trashed tasks with active/null status"
+          },
+          {
+            "in": "query",
+            "name": "tagId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tasks by tag ID"
+          }
+        ]
       },
       "post": {
         "operationId": "postApiV1Tasks",
@@ -3822,8 +3840,8 @@
         "tags": [
           "Tasks"
         ],
-        "summary": "Log all tasks completed today",
-        "description": "Marks all tasks completed/cancelled today as logged. Logged tasks only appear in the logbook, not in 'completed today' sections.",
+        "summary": "Log all completed/cancelled tasks",
+        "description": "Marks all unlogged completed/cancelled tasks as logged. Logged tasks only appear in the logbook, not in 'completed today' sections.",
         "responses": {
           "200": {
             "description": "Tasks logged",

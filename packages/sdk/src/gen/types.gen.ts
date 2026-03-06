@@ -778,7 +778,16 @@ export type GetApiV1ViewsAreaByIdResponse = GetApiV1ViewsAreaByIdResponses[keyof
 export type GetApiV1TasksData = {
   body?: never
   path?: never
-  query?: never
+  query?: {
+    /**
+     * When true, return only non-trashed tasks with active/null status
+     */
+    active?: boolean
+    /**
+     * Filter tasks by tag ID
+     */
+    tagId?: string
+  }
   url: "/api/v1/tasks"
 }
 
