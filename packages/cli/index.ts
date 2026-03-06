@@ -177,6 +177,12 @@ type ParsedAdd = {
   notes: string | undefined
 }
 
+type ParsedLogbook = {
+  list: string | undefined
+  days: number | undefined
+  since: string | undefined
+}
+
 function parseAdd(words: string[]): ParsedAdd {
   const description: string[] = []
   let date: string | undefined
@@ -205,6 +211,124 @@ function parseAdd(words: string[]): ParsedAdd {
     project,
     notes,
   }
+}
+
+function parseFlag(
+  words: string[],
+  key: string,
+): { value: string | undefined; used: number[]; error: string | undefined } {
+  const exact = words.findIndex((word) => word === key)
+  const inline = words.findIndex((word) => word.startsWith(`${key}=`))
+
+  if (exact !== -1 && inline !== -1) {
+    return { value: undefined, used: [], error: `Error: Duplicate ${key} flag.` }
+  }
+
+  if (inline !== -1) {
+    const token = words[inline]
+    const value = token.slice(key.length + 1).trim()
+    if (!value) {
+      return { value: undefined, used: [inline], error: `Error: ${key} requires a value.` }
+    }
+    return { value, used: [inline], error: undefined }
+  }
+
+  if (exact === -1) {
+    return { value: undefined, used: [], error: undefined }
+  }
+
+  const value = words[exact + 1]
+  if (!value || value.startsWith("--")) {
+    return { value: undefined, used: [exact], error: `Error: ${key} requires a value.` }
+  }
+
+  return { value, used: [exact, exact + 1], error: undefined }
+}
+
+function parseLogbook(words: string[]): ParsedLogbook {
+  const day = parseFlag(words, "--days")
+  if (day.error) {
+    console.error(day.error)
+    process.exit(1)
+  }
+
+  const since = parseFlag(words, "--since")
+  if (since.error) {
+    console.error(since.error)
+    process.exit(1)
+  }
+
+  const list = parseFlag(words, "--list")
+  if (list.error) {
+    console.error(list.error)
+    process.exit(1)
+  }
+
+  if (day.value && since.value) {
+    console.error("Error: Use either --days or --since, not both.")
+    process.exit(1)
+  }
+
+  const dayCount = day.value
+    ? (() => {
+        const value = Number.parseInt(day.value, 10)
+        if (!Number.isFinite(value) || value <= 0) {
+          console.error("Error: --days must be a positive integer.")
+          process.exit(1)
+        }
+        return value
+      })()
+    : undefined
+
+  const sinceDate = since.value
+    ? (() => {
+        const value = new Date(`${since.value}T00:00:00`)
+        if (Number.isNaN(value.getTime())) {
+          console.error("Error: --since must be a date like YYYY-MM-DD.")
+          process.exit(1)
+        }
+        return since.value
+      })()
+    : undefined
+
+  const used = new Set([...day.used, ...since.used, ...list.used])
+  const leftover = words.filter((_, index) => !used.has(index))
+  const unknown = leftover.find((word) => word.startsWith("--"))
+  if (unknown) {
+    console.error(`Error: Unknown flag '${unknown}' for logbook.`)
+    process.exit(1)
+  }
+
+  const positional = leftover.join(" ").trim() || undefined
+  if (list.value && positional) {
+    console.error("Error: Provide list only once (positional or --list).")
+    process.exit(1)
+  }
+
+  return {
+    list: list.value || positional,
+    days: dayCount,
+    since: sinceDate,
+  }
+}
+
+function filterByDate(tasks: ViewTask[], args: ParsedLogbook): ViewTask[] {
+  const cutoff = args.days
+    ? new Date(Date.now() - args.days * 24 * 60 * 60 * 1000)
+    : args.since
+      ? new Date(`${args.since}T00:00:00`)
+      : null
+
+  if (!cutoff) {
+    return tasks
+  }
+
+  return tasks.filter((task) => {
+    if (!task.completedAt) {
+      return false
+    }
+    return new Date(task.completedAt).getTime() >= cutoff.getTime()
+  })
 }
 
 // ── Project name resolution ──────────────────────────────────────────────────
@@ -527,12 +651,51 @@ async function main() {
 
   if (command === "logbook") {
     const c = requireAuth()
+    const params = parseLogbook(filtered.slice(1))
     const { data, error } = await c.getApiV1ViewsLogbook()
     if (error) {
       console.error("Error:", error)
       process.exit(1)
     }
-    printSections(data?.sections || [], { json })
+
+    const all = (data?.sections || []).flatMap((section) => section.tasks)
+    const byDate = filterByDate(all, params)
+
+    if (!params.list) {
+      printSections([{ title: "Logbook", tasks: byDate }], { json })
+      return
+    }
+
+    const [projectResult, areaResult] = await Promise.all([c.getApiV1Projects(), c.getApiV1Areas()])
+    if (projectResult.error) {
+      console.error("Error:", projectResult.error)
+      process.exit(1)
+    }
+    if (areaResult.error) {
+      console.error("Error:", areaResult.error)
+      process.exit(1)
+    }
+
+    const projects = projectResult.data || []
+    const areas = areaResult.data || []
+    const key = params.list.toLowerCase()
+    const project = projects.find((item) => item.title.toLowerCase() === key)
+
+    if (project) {
+      const tasks = byDate.filter((item) => item.listId === project.id)
+      printSections([{ title: `Logbook: ${project.title}`, tasks }], { json })
+      return
+    }
+
+    const area = areas.find((item) => item.title.toLowerCase() === key)
+    if (!area) {
+      console.error(`No project or area named '${params.list}'.`)
+      process.exit(1)
+    }
+
+    const ids = new Set([area.id, ...projects.filter((item) => item.areaId === area.id).map((item) => item.id)])
+    const tasks = byDate.filter((item) => (item.listId ? ids.has(item.listId) : false))
+    printSections([{ title: `Logbook: ${area.title}`, tasks }], { json })
     return
   }
 
@@ -584,7 +747,7 @@ Commands:
   upcoming              Show upcoming tasks
   anytime               Show anytime tasks
   someday               Show someday tasks
-  logbook               Show completed tasks
+  logbook [list]        Show completed tasks (filterable)
   trash                 Show trashed tasks
 
   login [url]           Authenticate with Things
@@ -595,6 +758,11 @@ Flags:
   --json                Output raw JSON (includes IDs and all fields)
   --help, -h            Show this help
   --version, -v         Show version
+
+Logbook filters:
+  --days N              Show tasks completed in the last N days
+  --since YYYY-MM-DD    Show tasks completed on/after date
+  --list Name           Filter to a project or area
 
 Add tokens:
   date:YYYY-MM-DD       Set scheduled date
@@ -609,6 +777,8 @@ Examples:
   things today
   things done tsk_abc123
   things list Work
+  things logbook --days 7
+  things logbook Work --days 7
   things tree
   things tree --json`)
 }
