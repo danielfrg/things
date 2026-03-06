@@ -1,5 +1,5 @@
 {
-  "name": "@things/cli",
+  "name": "@danielfrg/things-cli",
   "type": "module",
   "version": "1.0.0",
   "bin": {
