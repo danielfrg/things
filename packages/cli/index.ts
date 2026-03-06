@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { createClient } from "@things/sdk"
-import type { ThingsClient } from "@things/sdk"
-import type { ViewTask, Task, Project, Area } from "@things/sdk"
+import { createClient } from "@danielfrg/things-sdk"
+import type { ThingsClient } from "@danielfrg/things-sdk"
+import type { ViewTask, Task, Project, Area } from "@danielfrg/things-sdk"
 import { login, logout, whoami } from "./src/auth"
 import { getCredentials, getCredentialsPath } from "./src/config"
 

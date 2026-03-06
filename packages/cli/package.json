@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@things/sdk": "workspace:*"
+    "@danielfrg/things-sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "catalog:"

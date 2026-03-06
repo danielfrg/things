@@ -1,5 +1,5 @@
 {
-  "name": "@things/web",
+  "name": "@danielfrg/things-web",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -19,7 +19,7 @@
     "@solidjs/router": "catalog:",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "catalog:",
-    "@things/sdk": "workspace:*",
+    "@danielfrg/things-sdk": "workspace:*",
     "@thisbeyond/solid-dnd": "^0.7.5",
     "better-auth": "catalog:",
     "class-variance-authority": "^0.7.1",

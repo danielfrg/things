@@ -1,4 +1,4 @@
-import { createClient } from "@things/sdk"
+import { createClient } from "@danielfrg/things-sdk"
 import { useAuth } from "./auth"
 import { createSimpleContext } from "./context"
 

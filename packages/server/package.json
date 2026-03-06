@@ -1,5 +1,5 @@
 {
-  "name": "@things/server",
+  "name": "@danielfrg/things-server",
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@hono/standard-validator": "^0.2.2",
-    "@things/sdk": "workspace:*",
+    "@danielfrg/things-sdk": "workspace:*",
     "@hono/zod-validator": "catalog:",
     "@noble/hashes": "^2.0.1",
     "@scalar/hono-api-reference": "^0.9.32",

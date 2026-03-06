@@ -1,4 +1,4 @@
-import { parseLocalDate } from "@things/sdk"
+import { parseLocalDate } from "@danielfrg/things-sdk"
 import { addDays, format, isBefore, isSameDay, isToday, startOfDay } from "date-fns"
 import { and, desc, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm"
 import { db } from "@/db"

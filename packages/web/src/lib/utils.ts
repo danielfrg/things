@@ -2,8 +2,8 @@ import { type ClassValue, clsx } from "clsx"
 import { format, isPast, isThisWeek, isToday, isTomorrow, startOfDay } from "date-fns"
 import { twMerge } from "tailwind-merge"
 
-export { parseLocalDate, formatLocalDate } from "@things/sdk"
-import { parseLocalDate, formatLocalDate } from "@things/sdk"
+export { parseLocalDate, formatLocalDate } from "@danielfrg/things-sdk"
+import { parseLocalDate, formatLocalDate } from "@danielfrg/things-sdk"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

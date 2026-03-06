@@ -1,5 +1,5 @@
 {
-  "name": "things",
+  "name": "@danielfrg/things",
   "private": true,
   "packageManager": "bun@1.3.5",
   "scripts": {

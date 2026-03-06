@@ -14,20 +14,21 @@
       },
     },
     "packages/cli": {
-      "name": "@things/cli",
+      "name": "@danielfrg/things-cli",
       "version": "1.0.0",
       "bin": {
         "things": "./index.ts",
       },
       "dependencies": {
-        "@things/sdk": "workspace:*",
+        "@danielfrg/things-sdk": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "catalog:",
       },
     },
     "packages/sdk": {
-      "name": "@things/sdk",
+      "name": "@danielfrg/things-sdk",
+      "version": "0.1.0",
       "dependencies": {
         "@hey-api/client-fetch": "^0.5.3",
       },
@@ -37,13 +38,13 @@
       },
     },
     "packages/server": {
-      "name": "@things/server",
+      "name": "@danielfrg/things-server",
       "dependencies": {
+        "@danielfrg/things-sdk": "workspace:*",
         "@hono/standard-validator": "^0.2.2",
         "@hono/zod-validator": "catalog:",
         "@noble/hashes": "^2.0.1",
         "@scalar/hono-api-reference": "^0.9.32",
-        "@things/sdk": "workspace:*",
         "better-auth": "catalog:",
         "date-fns": "catalog:",
         "drizzle-orm": "^0.45.1",
@@ -61,18 +62,18 @@
       },
     },
     "packages/web": {
-      "name": "@things/web",
+      "name": "@danielfrg/things-web",
       "version": "1.0.0",
       "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
         "@atlaskit/pragmatic-drag-and-drop-flourish": "^2.0.12",
         "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
+        "@danielfrg/things-sdk": "workspace:*",
         "@kobalte/core": "catalog:",
         "@solid-primitives/event-bus": "^1.0.12",
         "@solidjs/router": "catalog:",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "catalog:",
-        "@things/sdk": "workspace:*",
         "@thisbeyond/solid-dnd": "^0.7.5",
         "better-auth": "catalog:",
         "class-variance-authority": "^0.7.1",
@@ -192,6 +193,14 @@
     "@compiled/react": ["@compiled/react@0.18.6", "", { "dependencies": { "csstype": "^3.1.3" }, "peerDependencies": { "react": ">= 16.12.0" } }, "sha512-Mt6sJOwykeoToEBFbOUNR4xABi2gOr/+X5QSGqGEYiCBMh+XPDAclG2UX94zveiYJXO4AUJIQBCVwa4/lwPMBA=="],
 
     "@corvu/utils": ["@corvu/utils@0.4.2", "", { "dependencies": { "@floating-ui/dom": "^1.6.11" }, "peerDependencies": { "solid-js": "^1.8" } }, "sha512-Ox2kYyxy7NoXdKWdHeDEjZxClwzO4SKM8plAaVwmAJPxHMqA0rLOoAsa+hBDwRLpctf+ZRnAd/ykguuJidnaTA=="],
+
+    "@danielfrg/things-cli": ["@danielfrg/things-cli@workspace:packages/cli"],
+
+    "@danielfrg/things-sdk": ["@danielfrg/things-sdk@workspace:packages/sdk"],
+
+    "@danielfrg/things-server": ["@danielfrg/things-server@workspace:packages/server"],
+
+    "@danielfrg/things-web": ["@danielfrg/things-web@workspace:packages/web"],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
@@ -434,14 +443,6 @@
     "@tailwindcss/typography": ["@tailwindcss/typography@0.5.19", "", { "dependencies": { "postcss-selector-parser": "6.0.10" }, "peerDependencies": { "tailwindcss": ">=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1" } }, "sha512-w31dd8HOx3k9vPtcQh5QHP9GwKcgbMp87j58qi6xgiBnFFtKEAgCWnDw4qUT8aHwkCp8bKvb/KGKWWHedP0AAg=="],
 
     "@tailwindcss/vite": ["@tailwindcss/vite@4.1.18", "", { "dependencies": { "@tailwindcss/node": "4.1.18", "@tailwindcss/oxide": "4.1.18", "tailwindcss": "4.1.18" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7" } }, "sha512-jVA+/UpKL1vRLg6Hkao5jldawNmRo7mQYrZtNHMIVpLfLhDml5nMRUo/8MwoX2vNXvnaXNNMedrMfMugAVX1nA=="],
-
-    "@things/cli": ["@things/cli@workspace:packages/cli"],
-
-    "@things/sdk": ["@things/sdk@workspace:packages/sdk"],
-
-    "@things/server": ["@things/server@workspace:packages/server"],
-
-    "@things/web": ["@things/web@workspace:packages/web"],
 
     "@thisbeyond/solid-dnd": ["@thisbeyond/solid-dnd@0.7.5", "", { "peerDependencies": { "solid-js": "^1.5" } }, "sha512-DfI5ff+yYGpK9M21LhYwIPlbP2msKxN2ARwuu6GF8tT1GgNVDTI8VCQvH4TJFoVApP9d44izmAcTh/iTCH2UUw=="],
 
