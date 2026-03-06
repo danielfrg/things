@@ -1,9 +1,9 @@
-export * from "./gen/types.gen"
-export { parseLocalDate, formatLocalDate } from "./dates"
+export * from "./gen/types.gen.js"
+export { parseLocalDate, formatLocalDate } from "./dates.js"
 
-import { createClient as genCreateClient } from "./gen/client/client.gen"
-import type { Config } from "./gen/client/types.gen"
-import { ThingsClient } from "./gen/sdk.gen"
+import { createClient as genCreateClient } from "./gen/client/client.gen.js"
+import type { Config } from "./gen/client/types.gen.js"
+import { ThingsClient } from "./gen/sdk.gen.js"
 export { type Config as ClientConfig, ThingsClient }
 
 export function createClient(config?: Config & { directory?: string }) {

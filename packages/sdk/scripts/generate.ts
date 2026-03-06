@@ -1,6 +1,10 @@
+import { fileURLToPath } from "url"
 import { createClient } from "@hey-api/openapi-ts"
 import { $ } from "bun"
 import path from "path"
+
+const dir = fileURLToPath(new URL("..", import.meta.url))
+process.chdir(dir)
 
 // Generate OpenAPI spec from the server
 console.log("Generating OpenAPI spec...")
@@ -12,7 +16,7 @@ await createClient({
   input: "./openapi.json",
   output: {
     path: "./src/gen",
-    tsConfigPath: path.join("tsconfig.json"),
+    tsConfigPath: path.join(dir, "tsconfig.json"),
     clean: true,
   },
   plugins: [

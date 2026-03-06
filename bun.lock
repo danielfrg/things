@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "things",
@@ -35,6 +34,7 @@
       "devDependencies": {
         "@hey-api/openapi-ts": "^0.91.1",
         "@types/bun": "catalog:",
+        "typescript": "catalog:",
       },
     },
     "packages/server": {

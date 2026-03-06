@@ -10,14 +10,15 @@
   },
   "scripts": {
     "build": "bun run scripts/generate.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bunx tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.5.3"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.91.1",
-    "@types/bun": "catalog:"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   },
   "version": "0.1.0",
   "publishConfig": {
