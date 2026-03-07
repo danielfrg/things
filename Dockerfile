@@ -31,10 +31,8 @@ RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy node_modules from builder to avoid needing native build tools in slim image
+# Copy root node_modules from builder (workspace deps are installed here)
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/server/node_modules ./packages/server/node_modules
-COPY --from=builder /app/packages/sdk/node_modules ./packages/sdk/node_modules
 COPY --from=builder /app/package.json ./
 
 # Copy server source code and config
