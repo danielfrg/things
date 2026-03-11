@@ -541,17 +541,12 @@ function SidebarContent() {
       {/* Mobile: Overlay sidebar */}
       <>
         <Show when={sidebar.openMobile()}>
-          <button
-            type="button"
-            class="fixed inset-0 z-40 bg-black/80 animate-in fade-in-0 duration-200 cursor-default"
-            onClick={() => sidebar.setOpenMobile(false)}
-            aria-label="Close Sidebar"
-          />
+          <div class="fixed inset-0 z-40 animate-in fade-in-0 duration-200" />
         </Show>
 
         <aside
           class={cn(
-            "fixed left-0 top-0 h-full w-full bg-sidebar z-50",
+            "fixed left-0 top-0 h-full w-full bg-background z-50",
             "flex flex-col transition-transform duration-200 ease-out",
             sidebar.openMobile() ? "translate-x-0" : "-translate-x-full",
           )}
@@ -621,18 +616,6 @@ export function SidebarProvider(props: ParentProps) {
       setOpen((prev) => !prev)
     }
   }
-
-  // Update iOS theme-color when mobile sidebar opens/closes
-  createEffect(() => {
-    const meta = document.querySelector('meta[name="theme-color"]:not([media])')
-    if (!meta) return
-    const isDark = document.documentElement.classList.contains("dark")
-    if (openMobile()) {
-      meta.setAttribute("content", isDark ? "#1d1f22" : "#f8f9f9")
-    } else {
-      meta.setAttribute("content", isDark ? "#23262a" : "#ffffff")
-    }
-  })
 
   const value: SidebarContextValue = {
     isMobile,
