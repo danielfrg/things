@@ -1,5 +1,6 @@
 import type { JSX, ParentProps } from "solid-js"
 import { Show } from "solid-js"
+import { SidebarTrigger } from "@/components/layout/sidebar"
 import { SyncStatus } from "@/components/sync-status"
 import { EditableText } from "@/components/ui/editable-text"
 
@@ -16,14 +17,13 @@ type ViewContainerProps = ParentProps<{
 export function ViewContainer(props: ViewContainerProps) {
   return (
     <div class="flex flex-col h-full bg-background overflow-hidden relative">
-      {/* Mobile floating sync status */}
-      <div class="md:hidden fixed top-3 right-3 z-30">
-        <SyncStatus />
-      </div>
-
       <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <header class="flex flex-col justify-between px-0 md:px-20 pt-12 pb-8">
+        <header class="flex flex-col justify-between px-0 md:px-20 pt-2 md:pt-12 pb-8">
+          <div class="md:hidden flex items-center justify-between px-6 mb-9">
+            <SidebarTrigger class="-ml-1.5" />
+            <SyncStatus />
+          </div>
           <div class="flex items-center gap-3 px-4 md:px-2 flex-1 min-w-0 group/header">
             <Show when={props.icon}>
               <div class="shrink-0">{props.icon}</div>
@@ -31,7 +31,7 @@ export function ViewContainer(props: ViewContainerProps) {
             <div class="flex items-center gap-1 min-w-0">
               <Show
                 when={props.onTitleChange}
-                fallback={<h1 class="text-2xl font-bold text-foreground leading-none">{props.title}</h1>}
+                fallback={<h1 class="text-3xl md:text-2xl font-bold text-foreground leading-none">{props.title}</h1>}
               >
                 <EditableText
                   value={props.title}

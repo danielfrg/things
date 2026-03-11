@@ -4,7 +4,12 @@ import { isToday } from "date-fns"
 import type { Accessor, JSX, ParentProps } from "solid-js"
 import { createContext, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js"
 import { isTaskData } from "@/components/dnd/task-data"
-import { BookCheck as BookCheckIcon, Plus as PlusIcon, Settings2 as Settings2Icon } from "lucide-solid"
+import {
+  ArrowLeft as ArrowLeftIcon,
+  BookCheck as BookCheckIcon,
+  Plus as PlusIcon,
+  Settings2 as Settings2Icon,
+} from "lucide-solid"
 import { CalendarIcon, InboxIcon, LayersIcon, SomedayIcon, TodayStarIcon, TrashIcon } from "@/components/icons"
 import { DraggableSidebarList } from "@/components/layout/sidebar-items"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -64,13 +69,13 @@ export function SidebarTrigger(props: { class?: string }) {
         type="button"
         onClick={() => sidebar.setOpenMobile(true)}
         class={cn(
-          "flex items-center justify-center gap-1.5 px-4 py-1 min-w-[100px] h-9 text-[13px] font-medium rounded-full",
-          "text-muted-foreground border border-transparent hover:border-border transition-colors",
+          "flex items-center justify-center w-8 h-8 rounded-md",
+          "text-muted-foreground hover:text-foreground transition-colors",
           props.class,
         )}
         aria-label="Open Sidebar"
       >
-        <PanelLeftIcon class="w-5 h-5 md:w-4 md:h-4" />
+        <ArrowLeftIcon class="w-8 h-8" />
       </button>
     </Show>
   )
@@ -371,7 +376,7 @@ function SidebarContent() {
 
   const SidebarInner = () => (
     <>
-      <div class="h-8 flex-shrink-0" />
+      <div class="h-8 md:h-12 flex-shrink-0" />
 
       <div class="flex-1 min-h-0 overflow-auto">
         <div class="pb-2 pt-1">
@@ -512,25 +517,24 @@ function SidebarContent() {
             )}
           >
             <SidebarInner />
-
-            {/* Hover rail on right edge to collapse */}
-            <button
-              type="button"
-              class="absolute right-0 top-0 h-full w-1 z-20 hover:bg-sidebar-accent/50 transition-colors cursor-w-resize"
-              onClick={() => sidebar.setOpen(false)}
-              aria-label="Collapse Sidebar"
-            />
           </aside>
 
-          {/* Hover rail on left edge to expand */}
-          <Show when={!sidebar.open()}>
+          {/* Floating toggle button — always on top of sidebar (open) or content (closed) */}
+          <div class="pointer-events-auto fixed top-2 left-2 z-50 flex flex-row p-1">
+            <div class="pointer-events-none absolute inset-0 -z-10 rounded-md bg-sidebar/80 backdrop-blur-sm" />
             <button
               type="button"
-              class="fixed left-0 top-0 h-full w-2 z-20 hover:bg-sidebar-accent/50 transition-colors cursor-e-resize"
-              onClick={() => sidebar.setOpen(true)}
-              aria-label="Expand Sidebar"
-            />
-          </Show>
+              onClick={() => sidebar.toggle()}
+              class={cn(
+                "flex h-8 w-8 items-center justify-center rounded-md",
+                "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                "transition-colors",
+              )}
+              aria-label={sidebar.open() ? "Collapse Sidebar" : "Expand Sidebar"}
+            >
+              <PanelLeftIcon class="w-4 h-4" />
+            </button>
+          </div>
         </>
       }
     >
