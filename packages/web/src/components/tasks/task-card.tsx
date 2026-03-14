@@ -63,7 +63,7 @@ function TaskPreview(props: { task: TaskInfo; dragging: DOMRect; isSomeday?: boo
       <span
         class={cn(
           "flex-1 min-w-0 text-lg md:text-[15px] leading-tight truncate",
-          isCompleted() ? "line-through text-muted-foreground" : "text-foreground",
+          isCompleted() ? "text-muted-foreground" : "text-foreground",
         )}
       >
         {props.task.title}
@@ -509,9 +509,8 @@ export function TaskCard(props: TaskCardProps) {
               <span
                 class={cn(
                   "text-lg md:text-[15px] leading-tight truncate",
-                  // Don't strikethrough in logbook/trash view
                   !props.showCompletedDate && !props.isTrashView && (isCompleted() || isCancelled())
-                    ? "line-through text-muted-foreground"
+                    ? "text-muted-foreground"
                     : "text-foreground",
                 )}
               >
@@ -575,9 +574,8 @@ export function TaskCard(props: TaskCardProps) {
           placeholder="Task title"
           class={cn(
             "flex-1 text-lg md:text-[15px] leading-tight",
-            // Don't strikethrough in logbook/trash view
             !props.showCompletedDate && !props.isTrashView && (isCompleted() || isCancelled())
-              ? "line-through text-muted-foreground"
+              ? "text-muted-foreground"
               : "text-foreground",
           )}
         />

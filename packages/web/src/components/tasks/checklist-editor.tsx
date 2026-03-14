@@ -239,7 +239,7 @@ function ChecklistItemRow(props: {
         disabled={props.disabled}
         class={cn(
           "flex-1 w-full min-w-0 bg-transparent outline-none text-base md:text-[15px] placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-          isCompleted() && "line-through text-muted-foreground",
+          isCompleted() && "text-muted-foreground",
         )}
         placeholder={props.index === 0 ? (isInline() ? "Add item..." : "Add checklist item...") : ""}
       />
