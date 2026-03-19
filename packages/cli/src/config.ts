@@ -1,3 +1,4 @@
+import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises"
 import { homedir } from "os"
 import { join } from "path"
 
@@ -11,13 +12,17 @@ type Credentials = {
 }
 
 export async function getCredentials(): Promise<Credentials | null> {
-  const file = Bun.file(CREDENTIALS_FILE)
-  if (!(await file.exists())) return null
+  const exists = await access(CREDENTIALS_FILE)
+    .then(() => true)
+    .catch(() => false)
+
+  if (!exists) return null
 
   try {
-    const content = await file.json()
+    const raw = await readFile(CREDENTIALS_FILE, "utf8")
+    const content = JSON.parse(raw) as Credentials
     if (content.apiKey && content.baseUrl) {
-      return content as Credentials
+      return content
     }
     return null
   } catch {
@@ -26,13 +31,16 @@ export async function getCredentials(): Promise<Credentials | null> {
 }
 
 export async function saveCredentials(credentials: Credentials): Promise<void> {
-  await Bun.write(CREDENTIALS_FILE, JSON.stringify(credentials, null, 2))
+  await mkdir(CONFIG_DIR, { recursive: true })
+  await writeFile(CREDENTIALS_FILE, JSON.stringify(credentials, null, 2))
 }
 
 export async function deleteCredentials(): Promise<void> {
-  const file = Bun.file(CREDENTIALS_FILE)
-  if (await file.exists()) {
-    const { unlink } = await import("fs/promises")
+  const exists = await access(CREDENTIALS_FILE)
+    .then(() => true)
+    .catch(() => false)
+
+  if (exists) {
     await unlink(CREDENTIALS_FILE)
   }
 }

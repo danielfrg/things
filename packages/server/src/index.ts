@@ -1,9 +1,11 @@
 import { Scalar } from "@scalar/hono-api-reference"
+import { serve } from "@hono/node-server"
+import { serveStatic } from "@hono/node-server/serve-static"
 import { eq } from "drizzle-orm"
 import { Hono } from "hono"
-import { serveStatic } from "hono/bun"
 import { cors } from "hono/cors"
 import { openAPIRouteHandler } from "hono-openapi"
+import { pathToFileURL } from "node:url"
 import z from "zod"
 import { db } from "@/db"
 import { users } from "@/db/schema"
@@ -220,14 +222,23 @@ if (isProd) {
         headers: response.headers,
       })
     } catch {
-      return c.text("Vite dev server not running. Start it with: cd packages/web && bun run dev", 502)
+      return c.text("Vite dev server not running. Start it with: cd packages/web && vp run dev", 502)
     }
   })
 }
 
-export default {
-  port: process.env.PORT ? Number(process.env.PORT) : 3000,
-  hostname: "0.0.0.0",
-  idleTimeout: 0,
-  fetch: app.fetch,
+export function startServer(port = process.env.PORT ? Number(process.env.PORT) : 3000) {
+  return serve({
+    fetch: app.fetch,
+    port,
+    hostname: "0.0.0.0",
+  })
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const port = process.env.PORT ? Number(process.env.PORT) : 3000
+  const server = startServer(port)
+  const address = server.address()
+  const value = !address || typeof address === "string" ? port : address.port
+  console.log(`Started server: http://0.0.0.0:${value}`)
 }

@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process"
+import { createServer, type Server } from "node:http"
 import { hostname } from "os"
 import { deleteCredentials, getCredentials, saveCredentials } from "./config"
 
@@ -24,11 +26,16 @@ export async function login(baseUrl: string): Promise<LoginResult> {
 
   return new Promise((resolve) => {
     let resolved = false
-    let server: ReturnType<typeof Bun.serve> | null = null
+    let server: Server | null = null
+
+    const reply = (res: import("node:http").ServerResponse, code: number, body: string) => {
+      res.writeHead(code, { "Content-Type": "text/html" })
+      res.end(body)
+    }
 
     const cleanup = () => {
       if (server) {
-        server.stop()
+        server.close()
         server = null
       }
     }
@@ -44,63 +51,59 @@ export async function login(baseUrl: string): Promise<LoginResult> {
       }
     }, CALLBACK_TIMEOUT)
 
-    server = Bun.serve({
-      port,
-      hostname: "127.0.0.1",
-      fetch: async (req) => {
-        const url = new URL(req.url)
+    server = createServer(async (req, res) => {
+      const origin = `http://${req.headers.host || `127.0.0.1:${port}`}`
+      const url = new URL(req.url || "/", origin)
 
-        if (url.pathname === "/callback") {
-          const returnedState = url.searchParams.get("state")
-          const apiKey = url.searchParams.get("key")
-          const email = url.searchParams.get("email")
-          const error = url.searchParams.get("error")
+      if (url.pathname !== "/callback") {
+        res.writeHead(404)
+        res.end("Not found")
+        return
+      }
 
-          if (error) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error })
-            return new Response(errorHtml(error), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      const returnedState = url.searchParams.get("state")
+      const apiKey = url.searchParams.get("key")
+      const email = url.searchParams.get("email")
+      const error = url.searchParams.get("error")
 
-          if (returnedState !== state) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error: "Invalid state parameter" })
-            return new Response(errorHtml("Invalid state parameter"), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      if (error) {
+        resolved = true
+        clearTimeout(timeout)
+        cleanup()
+        resolve({ success: false, error })
+        reply(res, 200, errorHtml(error))
+        return
+      }
 
-          if (!apiKey || !email) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error: "Missing credentials" })
-            return new Response(errorHtml("Missing credentials"), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      if (returnedState !== state) {
+        resolved = true
+        clearTimeout(timeout)
+        cleanup()
+        resolve({ success: false, error: "Invalid state parameter" })
+        reply(res, 400, errorHtml("Invalid state parameter"))
+        return
+      }
 
-          await saveCredentials({ apiKey, baseUrl, email })
+      if (!apiKey || !email) {
+        resolved = true
+        clearTimeout(timeout)
+        cleanup()
+        resolve({ success: false, error: "Missing credentials" })
+        reply(res, 400, errorHtml("Missing credentials"))
+        return
+      }
 
-          resolved = true
-          clearTimeout(timeout)
-          cleanup()
-          resolve({ success: true, email })
+      await saveCredentials({ apiKey, baseUrl, email })
 
-          return new Response(successHtml(email), {
-            headers: { "Content-Type": "text/html" },
-          })
-        }
+      resolved = true
+      clearTimeout(timeout)
+      cleanup()
+      resolve({ success: true, email })
 
-        return new Response("Not found", { status: 404 })
-      },
+      reply(res, 200, successHtml(email))
     })
+
+    server.listen(port, "127.0.0.1")
 
     // /cli-auth is a frontend route that redirects to auth flow
     const authUrl = `${baseUrl}/cli-auth?callback=${encodeURIComponent(callbackUrl)}&state=${state}&hostname=${encodeURIComponent(host)}`
@@ -133,7 +136,7 @@ export async function logout(baseUrl: string): Promise<{ success: boolean; error
       const text = await response.text()
       console.warn(`Warning: Could not revoke API key on server: ${text}`)
     }
-  } catch (e) {
+  } catch {
     console.warn(`Warning: Could not connect to server to revoke API key`)
   }
 
@@ -168,20 +171,17 @@ export async function whoami(baseUrl: string): Promise<{ email?: string; error?:
 
 function openBrowser(url: string) {
   const platform = process.platform
-  let command: string
+  const processRef =
+    platform === "darwin"
+      ? spawn("open", [url], { detached: true, stdio: "ignore" })
+      : platform === "win32"
+        ? spawn("cmd", ["/c", "start", "", url], {
+            detached: true,
+            stdio: "ignore",
+          })
+        : spawn("xdg-open", [url], { detached: true, stdio: "ignore" })
 
-  switch (platform) {
-    case "darwin":
-      command = "open"
-      break
-    case "win32":
-      command = "start"
-      break
-    default:
-      command = "xdg-open"
-  }
-
-  Bun.spawn([command, url], { stdout: "ignore", stderr: "ignore" })
+  processRef.unref()
 }
 
 function successHtml(email: string): string {

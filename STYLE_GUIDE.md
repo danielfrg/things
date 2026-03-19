@@ -6,7 +6,7 @@
 - Avoid using the `any` type
 - Prefer single word variable names where possible
 - Keep all files lowercase, with words separated by dashes
-- Use Bun APIs when possible, like `Bun.file()`
+- Use Node APIs when possible, like `fs/promises.readFile()`
 
 ## Avoid let statements
 

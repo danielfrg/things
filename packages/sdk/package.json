@@ -9,15 +9,15 @@
     "./dates": "./src/dates.ts"
   },
   "scripts": {
-    "build": "bun run scripts/generate.ts",
-    "typecheck": "bunx tsc --noEmit --project tsconfig.json"
+    "build": "tsx scripts/generate.ts",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.5.3"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.91.1",
-    "@types/bun": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   },
   "version": "0.1.0",

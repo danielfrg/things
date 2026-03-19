@@ -1,9 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import { unlink } from "node:fs/promises"
 import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 
-const dbPath = join(import.meta.dir, "../data/things.db")
+const dbPath = join(fileURLToPath(new URL("../data/things.db", import.meta.url)))
 
 async function clean() {
   console.log("Cleaning database...")
@@ -19,7 +20,7 @@ async function clean() {
     }
   }
 
-  console.log("\nDone! Run `bun run db:migrate` to recreate the database.")
+  console.log("\nDone! Run `vp run db:migrate` to recreate the database.")
 }
 
 clean().catch((error) => {

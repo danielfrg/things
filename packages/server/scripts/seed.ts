@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import { eq } from "drizzle-orm"
 import { db, schema } from "../src/db"
@@ -427,10 +427,30 @@ async function seed() {
 
   // Add tags to templates
   await db.insert(taskTags).values([
-    { id: createId("taskTag"), userId, taskId: dailyJournalTemplateId, tagId: planningTagId },
-    { id: createId("taskTag"), userId, taskId: weeklyReviewTemplateId, tagId: planningTagId },
-    { id: createId("taskTag"), userId, taskId: weeklyReviewTemplateId, tagId: researchTagId },
-    { id: createId("taskTag"), userId, taskId: payRentTemplateId, tagId: urgentTagId },
+    {
+      id: createId("taskTag"),
+      userId,
+      taskId: dailyJournalTemplateId,
+      tagId: planningTagId,
+    },
+    {
+      id: createId("taskTag"),
+      userId,
+      taskId: weeklyReviewTemplateId,
+      tagId: planningTagId,
+    },
+    {
+      id: createId("taskTag"),
+      userId,
+      taskId: weeklyReviewTemplateId,
+      tagId: researchTagId,
+    },
+    {
+      id: createId("taskTag"),
+      userId,
+      taskId: payRentTemplateId,
+      tagId: urgentTagId,
+    },
   ])
   console.log("Repeating templates created")
 
@@ -980,14 +1000,26 @@ async function seed() {
     status: "active",
     isSomeday: true,
   })
-  await createTask({ title: "Plan summer vacation", status: "active", isSomeday: true })
+  await createTask({
+    title: "Plan summer vacation",
+    status: "active",
+    isSomeday: true,
+  })
   await createTask({
     title: "Research investment strategies",
     status: "active",
     isSomeday: true,
   })
-  await createTask({ title: "Start a personal blog", status: "active", isSomeday: true })
-  await createTask({ title: "Learn to play guitar", status: "active", isSomeday: true })
+  await createTask({
+    title: "Start a personal blog",
+    status: "active",
+    isSomeday: true,
+  })
+  await createTask({
+    title: "Learn to play guitar",
+    status: "active",
+    isSomeday: true,
+  })
 
   // Area-only tasks (assigned to area but not to any project)
   await createTask({
@@ -1184,18 +1216,78 @@ async function seed() {
   // These appear in the project's collapsible "Logged" section
   // =========================================================================
   const loggedProjectTasks = [
-    { title: "Initial wireframe review", status: "completed" as const, pid: webAppProjectId, age: 3 },
-    { title: "Setup CI/CD pipeline", status: "completed" as const, pid: webAppProjectId, age: 5 },
-    { title: "Flash animation prototype", status: "cancelled" as const, pid: webAppProjectId, age: 7 },
-    { title: "Design system v1 approval", status: "completed" as const, pid: webAppProjectId, age: 10 },
-    { title: "Use PHP backend", status: "cancelled" as const, pid: webAppProjectId, age: 12 },
-    { title: "Beta TestFlight build", status: "completed" as const, pid: mobileAppProjectId, age: 2 },
-    { title: "Windows Phone support", status: "cancelled" as const, pid: mobileAppProjectId, age: 4 },
-    { title: "Push notification setup", status: "completed" as const, pid: mobileAppProjectId, age: 8 },
-    { title: "5K race registration", status: "completed" as const, pid: fitnessProjectId, age: 6 },
-    { title: "Buy treadmill for home", status: "cancelled" as const, pid: fitnessProjectId, age: 9 },
-    { title: "Fix kitchen faucet", status: "completed" as const, pid: homeProjectId, age: 3 },
-    { title: "Paint garage door", status: "cancelled" as const, pid: homeProjectId, age: 11 },
+    {
+      title: "Initial wireframe review",
+      status: "completed" as const,
+      pid: webAppProjectId,
+      age: 3,
+    },
+    {
+      title: "Setup CI/CD pipeline",
+      status: "completed" as const,
+      pid: webAppProjectId,
+      age: 5,
+    },
+    {
+      title: "Flash animation prototype",
+      status: "cancelled" as const,
+      pid: webAppProjectId,
+      age: 7,
+    },
+    {
+      title: "Design system v1 approval",
+      status: "completed" as const,
+      pid: webAppProjectId,
+      age: 10,
+    },
+    {
+      title: "Use PHP backend",
+      status: "cancelled" as const,
+      pid: webAppProjectId,
+      age: 12,
+    },
+    {
+      title: "Beta TestFlight build",
+      status: "completed" as const,
+      pid: mobileAppProjectId,
+      age: 2,
+    },
+    {
+      title: "Windows Phone support",
+      status: "cancelled" as const,
+      pid: mobileAppProjectId,
+      age: 4,
+    },
+    {
+      title: "Push notification setup",
+      status: "completed" as const,
+      pid: mobileAppProjectId,
+      age: 8,
+    },
+    {
+      title: "5K race registration",
+      status: "completed" as const,
+      pid: fitnessProjectId,
+      age: 6,
+    },
+    {
+      title: "Buy treadmill for home",
+      status: "cancelled" as const,
+      pid: fitnessProjectId,
+      age: 9,
+    },
+    {
+      title: "Fix kitchen faucet",
+      status: "completed" as const,
+      pid: homeProjectId,
+      age: 3,
+    },
+    {
+      title: "Paint garage door",
+      status: "cancelled" as const,
+      pid: homeProjectId,
+      age: 11,
+    },
   ]
   const loggedValues = loggedProjectTasks.map((t) => {
     const completed = new Date(today)
@@ -1381,7 +1473,7 @@ async function seed() {
   console.log("   - 1000 completed tasks in logbook")
   console.log("   - 1000 trashed tasks")
   console.log("   - Tasks assigned to areas without projects")
-  console.log("\nYou can now start the dev server with: bun run dev")
+  console.log("\nYou can now start the dev server with: vp run dev")
 }
 
 // Run seed

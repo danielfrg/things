@@ -6,15 +6,16 @@
     "things": "./index.ts"
   },
   "scripts": {
-    "start": "bun run index.ts",
-    "build": "bun run script/build.ts",
-    "build:single": "bun run script/build.ts --single",
+    "start": "tsx index.ts",
+    "build": "node script/pack.mjs",
+    "build:single": "node script/pack.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@danielfrg/things-sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "catalog:"
+    "@tsdown/exe": "0.21.3",
+    "tsx": "catalog:"
   }
 }

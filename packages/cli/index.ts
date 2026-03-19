@@ -1,4 +1,5 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
+import { readFile } from "node:fs/promises"
 import { createClient } from "@danielfrg/things-sdk"
 import type { ThingsClient } from "@danielfrg/things-sdk"
 import type { ViewTask, Task, Project, Area } from "@danielfrg/things-sdk"
@@ -221,14 +222,22 @@ function parseFlag(
   const inline = words.findIndex((word) => word.startsWith(`${key}=`))
 
   if (exact !== -1 && inline !== -1) {
-    return { value: undefined, used: [], error: `Error: Duplicate ${key} flag.` }
+    return {
+      value: undefined,
+      used: [],
+      error: `Error: Duplicate ${key} flag.`,
+    }
   }
 
   if (inline !== -1) {
     const token = words[inline]
     const value = token.slice(key.length + 1).trim()
     if (!value) {
-      return { value: undefined, used: [inline], error: `Error: ${key} requires a value.` }
+      return {
+        value: undefined,
+        used: [inline],
+        error: `Error: ${key} requires a value.`,
+      }
     }
     return { value, used: [inline], error: undefined }
   }
@@ -239,7 +248,11 @@ function parseFlag(
 
   const value = words[exact + 1]
   if (!value || value.startsWith("--")) {
-    return { value: undefined, used: [exact], error: `Error: ${key} requires a value.` }
+    return {
+      value: undefined,
+      used: [exact],
+      error: `Error: ${key} requires a value.`,
+    }
   }
 
   return { value, used: [exact, exact + 1], error: undefined }
@@ -534,7 +547,9 @@ async function main() {
     const { data: projects } = await c.getApiV1Projects()
     const project = (projects || []).find((p) => p.title.toLowerCase() === name.toLowerCase())
     if (project) {
-      const { data, error } = await c.getApiV1ViewsProjectById({ id: project.id })
+      const { data, error } = await c.getApiV1ViewsProjectById({
+        id: project.id,
+      })
       if (error) {
         console.error("Error:", error)
         process.exit(1)
@@ -714,8 +729,7 @@ async function main() {
 
   if (command === "skill") {
     const path = new URL("./SKILL.md", import.meta.url)
-    const file = Bun.file(path)
-    const content = await file.text()
+    const content = await readFile(path, "utf8")
     console.log(content)
     return
   }
@@ -783,4 +797,4 @@ Examples:
   things tree --json`)
 }
 
-main()
+void main()

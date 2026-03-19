@@ -21,13 +21,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
-          bun-version: latest
+          node-version: 25.7.0
+          cache: true
 
       - name: Install dependencies
-        run: bun install
+        run: vp install --frozen-lockfile
 
       - name: Generate version
         id: version
@@ -57,16 +58,29 @@ jobs:
           echo "Version: ${VERSION}"
 
       - name: Build CLI binaries
-        run: bun run cli:build
+        run: vp run cli:build
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Create archives
         run: |
           cd packages/cli/dist
-          for dir in things-*/; do
-            name="${dir%/}"
-            tar -czvf "${name}.tar.gz" -C "$name" things
+          for item in things-*; do
+            [ -e "$item" ] || continue
+            if [ -d "$item" ]; then
+              name="${item%/}"
+              tar -czvf "${name}.tar.gz" -C "$name" things
+              continue
+            fi
+
+            if [ -f "$item" ]; then
+              name="${item##*/}"
+              tmp=$(mktemp -d)
+              cp "$item" "$tmp/things"
+              chmod +x "$tmp/things"
+              tar -czvf "${name}.tar.gz" -C "$tmp" things
+              rm -rf "$tmp"
+            fi
           done
 
       - name: Upload artifacts

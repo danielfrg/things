@@ -2,17 +2,18 @@
   "name": "@danielfrg/things-server",
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run scripts/start.ts",
-    "generate": "bun run scripts/generate.ts",
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx scripts/start.ts",
+    "generate": "tsx scripts/generate.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun run scripts/seed.ts",
-    "db:reset": "bun run scripts/reset.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:reset": "tsx scripts/reset.ts"
   },
   "dependencies": {
+    "@hono/node-server": "latest",
     "@hono/standard-validator": "^0.2.2",
     "@danielfrg/things-sdk": "workspace:*",
     "@hono/zod-validator": "catalog:",
@@ -24,13 +25,14 @@
     "drizzle-zod": "^0.8.3",
     "hono": "catalog:",
     "hono-openapi": "catalog:",
+    "better-sqlite3": "^12.6.2",
     "rrule": "^2.8.1",
     "ulid": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/bun": "catalog:",
-    "better-sqlite3": "^12.6.2",
-    "drizzle-kit": "^0.31.8"
+    "@types/better-sqlite3": "catalog:",
+    "drizzle-kit": "^0.31.8",
+    "tsx": "catalog:"
   }
 }
