@@ -14,8 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: ./.github/actions/setup-bun
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: 22
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
 
       - name: Check formatting
         run: vp fmt --check "packages/**/*.{ts,tsx,js,jsx,json,css,md}"

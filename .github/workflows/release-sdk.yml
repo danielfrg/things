@@ -29,18 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: 22
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
+          cache: true
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install --frozen-lockfile
 
       - name: Generate SDK
         run: vp run --filter @danielfrg/things-sdk build
@@ -58,21 +53,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: 22
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
+          cache: true
 
       - name: Ensure npm supports trusted publishing
         run: npm install -g npm@11.5.1
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install --frozen-lockfile
 
       - name: Set package version
         run: |
