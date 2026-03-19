@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 25.7.0
           cache: pnpm
 
       - name: Setup pnpm
@@ -70,9 +70,22 @@ jobs:
       - name: Create archives
         run: |
           cd packages/cli/dist
-          for dir in things-*/; do
-            name="${dir%/}"
-            tar -czvf "${name}.tar.gz" -C "$name" things
+          for item in things-*; do
+            [ -e "$item" ] || continue
+            if [ -d "$item" ]; then
+              name="${item%/}"
+              tar -czvf "${name}.tar.gz" -C "$name" things
+              continue
+            fi
+
+            if [ -f "$item" ]; then
+              name="${item##*/}"
+              tmp=$(mktemp -d)
+              cp "$item" "$tmp/things"
+              chmod +x "$tmp/things"
+              tar -czvf "${name}.tar.gz" -C "$tmp" things
+              rm -rf "$tmp"
+            fi
           done
 
       - name: Upload artifacts

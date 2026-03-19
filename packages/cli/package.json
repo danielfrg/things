@@ -7,15 +7,15 @@
   },
   "scripts": {
     "start": "tsx index.ts",
-    "build": "tsx script/build.ts",
-    "build:single": "tsx script/build.ts --single",
+    "build": "node script/pack.mjs",
+    "build:single": "node script/pack.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@danielfrg/things-sdk": "workspace:*"
   },
   "devDependencies": {
-    "esbuild": "catalog:",
+    "@tsdown/exe": "0.21.3",
     "tsx": "catalog:"
   }
 }
