@@ -1,74 +1,93 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
-import { $ } from "bun"
-import path from "path"
+import { spawnSync } from "node:child_process";
+import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 
-const dir = path.resolve(import.meta.dirname, "..")
-process.chdir(dir)
+const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+process.chdir(dir);
 
-const single = process.argv.includes("--single")
+const single = process.argv.includes("--single");
 
 const targets: { os: string; arch: "arm64" | "x64" }[] = [
   { os: "darwin", arch: "arm64" },
   { os: "darwin", arch: "x64" },
   { os: "linux", arch: "arm64" },
   { os: "linux", arch: "x64" },
-]
+];
 
-const selected = single ? targets.filter((t) => t.os === process.platform && t.arch === process.arch) : targets
+const selected = single
+  ? targets.filter(
+      (target) =>
+        target.os === process.platform && target.arch === process.arch,
+    )
+  : targets;
 
 if (selected.length === 0) {
-  console.error(`No target found for ${process.platform}-${process.arch}`)
-  process.exit(1)
+  console.error(`No target found for ${process.platform}-${process.arch}`);
+  process.exit(1);
+}
+
+function runGit(args: string[]): string {
+  const result = spawnSync("git", args, { encoding: "utf8" });
+  if (result.status !== 0) {
+    throw new Error(result.stderr);
+  }
+  return result.stdout.trim();
 }
 
 function getVersion(): string {
-  const prNumber = process.env.PR_NUMBER
+  const pr = process.env.PR_NUMBER;
 
   try {
-    const hash = new TextDecoder().decode(Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]).stdout).trim()
+    const hash = runGit(["rev-parse", "--short", "HEAD"]);
 
-    if (prNumber) {
-      return `pr${prNumber}-${hash}`
+    if (pr) {
+      return `pr${pr}-${hash}`;
     }
 
-    const count = new TextDecoder().decode(Bun.spawnSync(["git", "rev-list", "--count", "HEAD"]).stdout).trim()
-    return `v${count}-${hash}`
+    const count = runGit(["rev-list", "--count", "HEAD"]);
+    return `v${count}-${hash}`;
   } catch {
-    return "dev"
+    return "dev";
   }
 }
 
-const version = getVersion()
-console.log(`Building CLI version: ${version}`)
+const version = getVersion();
+console.log(`Building CLI version: ${version}`);
 
-await $`rm -rf dist`
+await rm("dist", { recursive: true, force: true });
 
 for (const target of selected) {
-  const name = `things-${target.os}-${target.arch}`
-  console.log(`Building ${name}...`)
+  const name = `things-${target.os}-${target.arch}`;
+  const outdir = path.join("dist", name);
+  const outfile = path.join(outdir, "things");
 
-  await $`mkdir -p dist/${name}`
+  console.log(`Building ${name}...`);
+  await mkdir(outdir, { recursive: true });
 
-  const bunTarget = `bun-${target.os}-${target.arch}`
-
-  await Bun.build({
-    entrypoints: ["./index.ts"],
-    compile: {
-      target: bunTarget as any,
-      outfile: `dist/${name}/things`,
-    },
+  await build({
+    entryPoints: ["./index.ts"],
+    bundle: true,
+    platform: "node",
+    target: "node22",
+    format: "esm",
+    outfile,
+    banner: { js: "#!/usr/bin/env node" },
     define: {
       THINGS_CLI_VERSION: JSON.stringify(version),
     },
-  })
+  });
 
-  await Bun.write(`dist/${name}/version.txt`, `${version}\n`)
+  await chmod(outfile, 0o755);
+  await writeFile(path.join(outdir, "version.txt"), `${version}\n`);
 
-  console.log(`Built ${name}`)
+  console.log(`Built ${name}`);
 }
 
-console.log("\nBuild complete!")
-console.log(`Output: ${path.join(dir, "dist")}`)
+console.log("\nBuild complete!");
+console.log(`Output: ${path.join(dir, "dist")}`);
 
-export { version }
+export { version };

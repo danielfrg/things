@@ -13,11 +13,11 @@ shutdown() {
 trap shutdown SIGTERM SIGINT
 
 # Run migrations
-cd /app/packages/web
-bun run scripts/migrate.ts
+cd /app
+vp run db:migrate
 
 # Start production server in background
-bun run production-server.ts &
+vp run start:server &
 child=$!
 
 # Wait for the process

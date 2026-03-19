@@ -14,8 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Bun
+      - name: Setup Node
         uses: ./.github/actions/setup-bun
 
       - name: Check formatting
-        run: bun run prettier --check "packages/**/*.{ts,tsx,js,jsx,json,css,md}"
+        run: vp fmt --check "packages/**/*.{ts,tsx,js,jsx,json,css,md}"

@@ -29,23 +29,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: pnpm
           registry-url: https://registry.npmjs.org
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Generate SDK
-        run: bun run --cwd packages/sdk build
+        run: vp run --filter @danielfrg/things-sdk build
 
       - name: Typecheck SDK
-        run: bun run --cwd packages/sdk typecheck
+        run: vp run --filter @danielfrg/things-sdk typecheck
 
   release:
     name: Publish to npm
@@ -57,30 +58,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 22
+          cache: pnpm
           registry-url: https://registry.npmjs.org
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Ensure npm supports trusted publishing
         run: npm install -g npm@11.5.1
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Set package version
         run: |
           node -e "const fs = require('node:fs'); const path = 'packages/sdk/package.json'; const pkg = JSON.parse(fs.readFileSync(path, 'utf8')); pkg.name = '@danielfrg/things-sdk'; pkg.version = '${{ inputs.version }}'; pkg.private = false; pkg.publishConfig = { ...(pkg.publishConfig || {}), access: 'public' }; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');"
 
       - name: Generate SDK
-        run: bun run --cwd packages/sdk build
+        run: vp run --filter @danielfrg/things-sdk build
 
       - name: Typecheck SDK
-        run: bun run --cwd packages/sdk typecheck
+        run: vp run --filter @danielfrg/things-sdk typecheck
 
       - name: Publish to npm (dry run)
         if: ${{ inputs['dry-run'] }}

@@ -10,7 +10,7 @@ Packages:
 
 For Coding Style see [STYLE_GUIDE.md](STYLE_GUIDE.md).
 
-- Runtime: Use Bun instead of Node or npm for all tasks.
+- Runtime: Use Node.js + pnpm for all tasks.
 - API Access: NEVER make raw HTTP requests using `fetch`. ALWAYS use the generated client from `@things/sdk`.
 - Naming: Prefer single-word naming for variables and functions where possible.
 - Files: Keep all filenames lowercase with words separated by dashes.
@@ -77,7 +77,7 @@ Follow these strictly to ensure fine-grained reactivity and optimal performance:
 
 - Only fix errors, not warnings.
 - Do not add `eslint-ignore` comments.
-- Run `bun run format` to apply Prettier rules.
+- Run `vp fmt` to apply formatting rules.
 
 ## Debugging
 

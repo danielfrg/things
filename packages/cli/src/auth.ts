@@ -1,121 +1,130 @@
-import { hostname } from "os"
-import { deleteCredentials, getCredentials, saveCredentials } from "./config"
+import { spawn } from "node:child_process";
+import { createServer, type Server } from "node:http";
+import { hostname } from "os";
+import { deleteCredentials, getCredentials, saveCredentials } from "./config";
 
-const DEFAULT_PORT = 9876
-const CALLBACK_TIMEOUT = 120000 // 2 minutes
+const DEFAULT_PORT = 9876;
+const CALLBACK_TIMEOUT = 120000; // 2 minutes
 
 type LoginResult = {
-  success: boolean
-  email?: string
-  error?: string
-}
+  success: boolean;
+  email?: string;
+  error?: string;
+};
 
 function generateState(): string {
-  const array = new Uint8Array(16)
-  crypto.getRandomValues(array)
-  return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("")
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function login(baseUrl: string): Promise<LoginResult> {
-  const state = generateState()
-  const port = DEFAULT_PORT
-  const callbackUrl = `http://127.0.0.1:${port}/callback`
-  const host = hostname()
+  const state = generateState();
+  const port = DEFAULT_PORT;
+  const callbackUrl = `http://127.0.0.1:${port}/callback`;
+  const host = hostname();
 
   return new Promise((resolve) => {
-    let resolved = false
-    let server: ReturnType<typeof Bun.serve> | null = null
+    let resolved = false;
+    let server: Server | null = null;
+
+    const reply = (
+      res: import("node:http").ServerResponse,
+      code: number,
+      body: string,
+    ) => {
+      res.writeHead(code, { "Content-Type": "text/html" });
+      res.end(body);
+    };
 
     const cleanup = () => {
       if (server) {
-        server.stop()
-        server = null
+        server.close();
+        server = null;
       }
-    }
+    };
 
     const timeout = setTimeout(() => {
       if (!resolved) {
-        resolved = true
-        cleanup()
+        resolved = true;
+        cleanup();
         resolve({
           success: false,
           error: "Login timed out. Please try again.",
-        })
+        });
       }
-    }, CALLBACK_TIMEOUT)
+    }, CALLBACK_TIMEOUT);
 
-    server = Bun.serve({
-      port,
-      hostname: "127.0.0.1",
-      fetch: async (req) => {
-        const url = new URL(req.url)
+    server = createServer(async (req, res) => {
+      const origin = `http://${req.headers.host || `127.0.0.1:${port}`}`;
+      const url = new URL(req.url || "/", origin);
 
-        if (url.pathname === "/callback") {
-          const returnedState = url.searchParams.get("state")
-          const apiKey = url.searchParams.get("key")
-          const email = url.searchParams.get("email")
-          const error = url.searchParams.get("error")
+      if (url.pathname !== "/callback") {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
 
-          if (error) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error })
-            return new Response(errorHtml(error), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      const returnedState = url.searchParams.get("state");
+      const apiKey = url.searchParams.get("key");
+      const email = url.searchParams.get("email");
+      const error = url.searchParams.get("error");
 
-          if (returnedState !== state) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error: "Invalid state parameter" })
-            return new Response(errorHtml("Invalid state parameter"), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      if (error) {
+        resolved = true;
+        clearTimeout(timeout);
+        cleanup();
+        resolve({ success: false, error });
+        reply(res, 200, errorHtml(error));
+        return;
+      }
 
-          if (!apiKey || !email) {
-            resolved = true
-            clearTimeout(timeout)
-            cleanup()
-            resolve({ success: false, error: "Missing credentials" })
-            return new Response(errorHtml("Missing credentials"), {
-              headers: { "Content-Type": "text/html" },
-            })
-          }
+      if (returnedState !== state) {
+        resolved = true;
+        clearTimeout(timeout);
+        cleanup();
+        resolve({ success: false, error: "Invalid state parameter" });
+        reply(res, 400, errorHtml("Invalid state parameter"));
+        return;
+      }
 
-          await saveCredentials({ apiKey, baseUrl, email })
+      if (!apiKey || !email) {
+        resolved = true;
+        clearTimeout(timeout);
+        cleanup();
+        resolve({ success: false, error: "Missing credentials" });
+        reply(res, 400, errorHtml("Missing credentials"));
+        return;
+      }
 
-          resolved = true
-          clearTimeout(timeout)
-          cleanup()
-          resolve({ success: true, email })
+      await saveCredentials({ apiKey, baseUrl, email });
 
-          return new Response(successHtml(email), {
-            headers: { "Content-Type": "text/html" },
-          })
-        }
+      resolved = true;
+      clearTimeout(timeout);
+      cleanup();
+      resolve({ success: true, email });
 
-        return new Response("Not found", { status: 404 })
-      },
-    })
+      reply(res, 200, successHtml(email));
+    });
+
+    server.listen(port, "127.0.0.1");
 
     // /cli-auth is a frontend route that redirects to auth flow
-    const authUrl = `${baseUrl}/cli-auth?callback=${encodeURIComponent(callbackUrl)}&state=${state}&hostname=${encodeURIComponent(host)}`
+    const authUrl = `${baseUrl}/cli-auth?callback=${encodeURIComponent(callbackUrl)}&state=${state}&hostname=${encodeURIComponent(host)}`;
 
-    console.log("Opening browser to authenticate...")
-    console.log(`If the browser doesn't open, visit: ${authUrl}`)
+    console.log("Opening browser to authenticate...");
+    console.log(`If the browser doesn't open, visit: ${authUrl}`);
 
-    openBrowser(authUrl)
-  })
+    openBrowser(authUrl);
+  });
 }
 
-export async function logout(baseUrl: string): Promise<{ success: boolean; error?: string }> {
-  const creds = await getCredentials()
+export async function logout(
+  baseUrl: string,
+): Promise<{ success: boolean; error?: string }> {
+  const creds = await getCredentials();
   if (!creds) {
-    return { success: true }
+    return { success: true };
   }
 
   // Revoke the API key on the server
@@ -126,25 +135,27 @@ export async function logout(baseUrl: string): Promise<{ success: boolean; error
         "Content-Type": "application/json",
         Authorization: `Bearer ${creds.apiKey}`,
       },
-    })
+    });
 
     if (!response.ok && response.status !== 401) {
       // 401 is fine - key may already be revoked
-      const text = await response.text()
-      console.warn(`Warning: Could not revoke API key on server: ${text}`)
+      const text = await response.text();
+      console.warn(`Warning: Could not revoke API key on server: ${text}`);
     }
-  } catch (e) {
-    console.warn(`Warning: Could not connect to server to revoke API key`)
+  } catch {
+    console.warn(`Warning: Could not connect to server to revoke API key`);
   }
 
-  await deleteCredentials()
-  return { success: true }
+  await deleteCredentials();
+  return { success: true };
 }
 
-export async function whoami(baseUrl: string): Promise<{ email?: string; error?: string }> {
-  const creds = await getCredentials()
+export async function whoami(
+  baseUrl: string,
+): Promise<{ email?: string; error?: string }> {
+  const creds = await getCredentials();
   if (!creds) {
-    return { error: "Not logged in" }
+    return { error: "Not logged in" };
   }
 
   // Verify the key is still valid
@@ -153,35 +164,32 @@ export async function whoami(baseUrl: string): Promise<{ email?: string; error?:
       headers: {
         Authorization: `Bearer ${creds.apiKey}`,
       },
-    })
+    });
 
     if (!response.ok) {
-      return { error: "Session expired. Please login again." }
+      return { error: "Session expired. Please login again." };
     }
 
-    const data = (await response.json()) as { email?: string }
-    return { email: data.email || creds.email }
+    const data = (await response.json()) as { email?: string };
+    return { email: data.email || creds.email };
   } catch {
-    return { email: creds.email }
+    return { email: creds.email };
   }
 }
 
 function openBrowser(url: string) {
-  const platform = process.platform
-  let command: string
+  const platform = process.platform;
+  const processRef =
+    platform === "darwin"
+      ? spawn("open", [url], { detached: true, stdio: "ignore" })
+      : platform === "win32"
+        ? spawn("cmd", ["/c", "start", "", url], {
+            detached: true,
+            stdio: "ignore",
+          })
+        : spawn("xdg-open", [url], { detached: true, stdio: "ignore" });
 
-  switch (platform) {
-    case "darwin":
-      command = "open"
-      break
-    case "win32":
-      command = "start"
-      break
-    default:
-      command = "xdg-open"
-  }
-
-  Bun.spawn([command, url], { stdout: "ignore", stderr: "ignore" })
+  processRef.unref();
 }
 
 function successHtml(email: string): string {
@@ -225,7 +233,7 @@ function successHtml(email: string): string {
     </div>
   </div>
 </body>
-</html>`
+</html>`;
 }
 
 function errorHtml(error: string): string {
@@ -270,7 +278,7 @@ function errorHtml(error: string): string {
     </div>
   </div>
 </body>
-</html>`
+</html>`;
 }
 
 function escapeHtml(str: string): string {
@@ -279,5 +287,5 @@ function escapeHtml(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
+    .replace(/'/g, "&#039;");
 }

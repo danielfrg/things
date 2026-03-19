@@ -12,5 +12,5 @@ export THINGS_API_KEY="your_api_key_here"
 ## Usage
 
 ```
-bun run start --help
+vp run --filter @danielfrg/things-cli start --help
 ```

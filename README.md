@@ -76,10 +76,12 @@ For AI agents, run `things --skill` to get full documentation.
 
 ```bash
 cp .env.example .env
-bun install
-bun run db:push
-bun run db:seed     # Optional
-bun run dev
+vp install
+vp run db:migrate
+vp run db:seed     # Optional
+# in separate terminals
+vp run dev:server
+vp run dev:web
 ```
 
 ## Contributions
