@@ -1,5 +1,5 @@
 import { useNavigate } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { BookCheck as BookCheckIcon, Search as SearchIcon } from "lucide-solid"
 import {
   AreaIcon,
@@ -50,6 +50,20 @@ export function CommandPalette(props: CommandPaletteProps) {
         fetchAllTasks()
       }
     }
+  })
+
+  createEffect(() => {
+    if (!props.open) return
+
+    const handle = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      e.preventDefault()
+      e.stopPropagation()
+      props.onClose()
+    }
+
+    window.addEventListener("keydown", handle, { capture: true })
+    onCleanup(() => window.removeEventListener("keydown", handle, { capture: true }))
   })
 
   const fetchAllTasks = async () => {
