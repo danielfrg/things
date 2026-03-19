@@ -1,5 +1,5 @@
 # Stage 1: Build web package
-FROM oven/bun:1.3 AS builder
+FROM node:22-bookworm-slim AS builder
 
 # Install build tools needed for native modules (better-sqlite3)
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
@@ -9,22 +9,22 @@ WORKDIR /app
 ARG APP_VERSION=dev
 
 # Copy package files first for better caching
-COPY package.json bun.lock ./
+COPY package.json pnpm-lock.yaml ./
 COPY packages/server/package.json ./packages/server/
 COPY packages/sdk/package.json ./packages/sdk/
 COPY packages/web/package.json ./packages/web/
 
 # Install dependencies
-RUN bun install
+RUN npm install -g vite-plus && vp install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 ENV APP_VERSION=$APP_VERSION
-RUN bun run build:web
+RUN vp run build:web
 
 # Stage 2: Production server
-FROM oven/bun:1.3-slim AS production
+FROM node:22-bookworm-slim AS production
 
 # Install tini for proper signal handling
 RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
@@ -61,4 +61,4 @@ EXPOSE 3000
 VOLUME /data
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["bun", "run", "--cwd", "packages/server", "scripts/start.ts"]
+CMD ["node_modules/.bin/tsx", "packages/server/scripts/start.ts"]
