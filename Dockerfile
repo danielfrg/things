@@ -9,7 +9,7 @@ WORKDIR /app
 ARG APP_VERSION=dev
 
 # Copy package files first for better caching
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/server/package.json ./packages/server/
 COPY packages/sdk/package.json ./packages/sdk/
 COPY packages/web/package.json ./packages/web/
