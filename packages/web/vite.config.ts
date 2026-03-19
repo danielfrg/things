@@ -1,6 +1,6 @@
 import tailwindcss from "@tailwindcss/vite"
 import path from "path"
-import { defineConfig } from "vite"
+import { defineConfig } from "vite-plus"
 import solid from "vite-plugin-solid"
 
 export default defineConfig({
