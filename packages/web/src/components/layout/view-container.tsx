@@ -50,7 +50,7 @@ export function ViewContainer(props: ViewContainerProps) {
           </div>
           {/* Optional extra header content (e.g., project notes) */}
           <Show when={props.headerExtra}>
-            <div class="mt-2 mb-2 mx-2 max-h-32 overflow-y-auto">{props.headerExtra}</div>
+            <div class="mt-2 mb-2 mx-2 md:max-h-32 md:overflow-y-auto">{props.headerExtra}</div>
           </Show>
         </header>
 
