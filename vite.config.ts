@@ -16,7 +16,6 @@ export default defineConfig({
       "**/.vite",
       "**/.turbo",
       "**/node_modules",
-      "**/bun.lockb",
       "**/routeTree.gen.ts",
       "**/styles.css",
       "**/components/ui",
