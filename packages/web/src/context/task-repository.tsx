@@ -413,6 +413,11 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
 
     // In-place update only — no view refetch. Used for optimistic updates where
     // the mutation API call is still in-flight and a refetch would race with it.
+    //
+    // Uses surgical path-based store updates to modify only the specific task
+    // at its exact index. This preserves all section/task object references so
+    // Solid's <For> can efficiently track items without disposing and recreating
+    // DOM nodes (which causes visible order flashing).
     const applyTaskUpdate = (task: TaskInfo) => {
       // Update normalized store, preserving existing tags
       setStore("tasks", task.id, (existing) => ({
@@ -420,16 +425,22 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         tags: task.tags ?? existing?.tags,
       }))
 
-      // Update in all view sections, preserving existing tags
+      // Surgically update only the matching task in each view's sections
       const updateInSections = (viewKey: keyof TaskStore["viewSections"]) => {
-        setStore("viewSections", viewKey, (sections) =>
-          sections.map((section) => ({
-            ...section,
-            tasks: section.tasks
-              .map((t) => (t.id === task.id ? { ...task, tags: task.tags ?? t.tags, position: t.position } : t))
-              .sort((a, b) => a.position - b.position),
-          })),
-        )
+        const sections = store.viewSections[viewKey]
+        for (let i = 0; i < sections.length; i++) {
+          const tasks = sections[i]!.tasks
+          const taskIdx = tasks.findIndex((t) => t.id === task.id)
+          if (taskIdx !== -1) {
+            // Path-based update: only touches this one task object
+            setStore("viewSections", viewKey, i, "tasks", taskIdx, (existing) => ({
+              ...task,
+              tags: task.tags ?? existing.tags,
+              position: existing.position,
+            }))
+            return // Task appears in at most one section per view
+          }
+        }
       }
 
       if (fetched.has("inbox")) updateInSections("inbox")
@@ -468,14 +479,16 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
       // Remove from normalized store
       setStore("tasks", id, undefined as unknown as TaskInfo)
 
-      // Remove from all view sections
+      // Surgically remove from only the section that contains the task in each view
       const removeFromSections = (viewKey: keyof TaskStore["viewSections"]) => {
-        setStore("viewSections", viewKey, (sections) =>
-          sections.map((section) => ({
-            ...section,
-            tasks: section.tasks.filter((t) => t.id !== id),
-          })),
-        )
+        const sections = store.viewSections[viewKey]
+        for (let i = 0; i < sections.length; i++) {
+          const taskIdx = sections[i]!.tasks.findIndex((t) => t.id === id)
+          if (taskIdx !== -1) {
+            setStore("viewSections", viewKey, i, "tasks", (tasks) => tasks.filter((t) => t.id !== id))
+            return // Task appears in at most one section per view
+          }
+        }
       }
 
       removeFromSections("inbox")
@@ -696,7 +709,7 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         setStore("tasks", id, optimistic)
         applyTaskUpdate(optimistic)
 
-        // Remove the task from any view it no longer belongs to
+        // Surgically remove the task from any view it no longer belongs to
         const viewBelongs: Array<[keyof TaskStore["viewSections"], (t: TaskInfo) => boolean]> = [
           ["inbox", belongsInInbox],
           ["today", belongsInToday],
@@ -706,12 +719,14 @@ export const { use: useTaskRepository, provider: TaskRepositoryProvider } = crea
         ]
         for (const [view, belongs] of viewBelongs) {
           if (fetched.has(view) && !belongs(optimistic)) {
-            setStore("viewSections", view, (sections) =>
-              sections.map((section) => ({
-                ...section,
-                tasks: section.tasks.filter((t) => t.id !== id),
-              })),
-            )
+            const sections = store.viewSections[view]
+            for (let i = 0; i < sections.length; i++) {
+              const taskIdx = sections[i]!.tasks.findIndex((t) => t.id === id)
+              if (taskIdx !== -1) {
+                setStore("viewSections", view, i, "tasks", (tasks) => tasks.filter((t) => t.id !== id))
+                break // Task appears in at most one section per view
+              }
+            }
           }
         }
       }
