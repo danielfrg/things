@@ -3,6 +3,9 @@ import { defineConfig } from "vite-plus"
 export default defineConfig({
   pack: {
     entry: ["index.ts"],
+    deps: {
+      alwaysBundle: [/@danielfrg\/things-sdk/, /@hey-api\/client-fetch/],
+    },
     exe: {
       fileName: "things",
       outDir: "dist",
